@@ -19,6 +19,7 @@ import StockMutationReport from '../pages/admin/Reports/StockMutationReport';
 import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
 import PetList from '../pages/owner/MyPets/PetList';
 import PetForm from '../pages/owner/MyPets/PetForm';
+import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 
 const AppRouter = () => {
   return (
@@ -48,10 +49,19 @@ const AppRouter = () => {
           </Route>
 
           <Route path="services" element={<ServiceRatesList />} />
+
           {/* Owner */}
           <Route path="PetList" element={<PetList />} />
           <Route path="PetList/add" element={<PetForm />} />
+
+          {/* Diagnosis Reference */}
+          <Route path="DiagnosisReferenceList" element={<DiagnosisReferenceList />} />
+
         </Route>
+
+    
+
+        
 
         
 
