@@ -16,6 +16,7 @@ import VisitDemographics from '../pages/admin/Reports/VisitDemographics';
 import TransactionLog from '../pages/admin/Reports/TransactionLog';
 import InvoiceDetail from '../pages/admin/Reports/InvoiceDetail';
 import StockMutationReport from '../pages/admin/Reports/StockMutationReport';
+import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
 
 const AppRouter = () => {
   return (
@@ -43,6 +44,8 @@ const AppRouter = () => {
             <Route path="invoice/:id" element={<InvoiceDetail />} />
             <Route path="stock-mutation" element={<StockMutationReport />} />
           </Route>
+
+          <Route path="services" element={<ServiceRatesList />} />
         </Route>
 
         <Route path="*" element={<div className="p-10 text-center text-2xl">404 - Halaman Tidak Ditemukan</div>} />
