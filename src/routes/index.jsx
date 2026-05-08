@@ -17,6 +17,8 @@ import TransactionLog from '../pages/admin/Reports/TransactionLog';
 import InvoiceDetail from '../pages/admin/Reports/InvoiceDetail';
 import StockMutationReport from '../pages/admin/Reports/StockMutationReport';
 import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
+import PetList from '../pages/owner/MyPets/PetList';
+import PetForm from '../pages/owner/MyPets/PetForm';
 
 const AppRouter = () => {
   return (
@@ -46,7 +48,12 @@ const AppRouter = () => {
           </Route>
 
           <Route path="services" element={<ServiceRatesList />} />
+          {/* Owner */}
+          <Route path="PetList" element={<PetList />} />
+          <Route path="PetList/add" element={<PetForm />} />
         </Route>
+
+        
 
         <Route path="*" element={<div className="p-10 text-center text-2xl">404 - Halaman Tidak Ditemukan</div>} />
       </Routes>
