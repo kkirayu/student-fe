@@ -22,6 +22,8 @@ import PetForm from '../pages/owner/MyPets/PetForm';
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
+import OwnerDashboard from '../pages/owner/Dashboard';
+import MedicalHistory from '../pages/owner/MedicalHistory';
 
 const AppRouter = () => {
   return (
@@ -56,6 +58,8 @@ const AppRouter = () => {
           <Route path="PetList" element={<PetList />} />
           <Route path="PetList/add" element={<PetForm />} />
           <Route path="PetList/edit/:id" element={<PetForm />} />
+           <Route path="OwnerDashboard" element={<OwnerDashboard />} />
+          <Route path="MedicalHistory" element={<MedicalHistory />} />
 
           {/* Diagnosis Reference */}
           <Route path="DiagnosisReferenceList" element={<DiagnosisReferenceList />} />
