@@ -22,6 +22,8 @@ import PetForm from '../pages/owner/MyPets/PetForm';
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
+import DoctorDashboard from '../pages/doctor/Dashboard';
+import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
 
 const AppRouter = () => {
   return (
@@ -66,6 +68,17 @@ const AppRouter = () => {
           <Route path="LabResultUpload" element={<LabResultUpload />} />
           <Route path="LabResultUpload/add" element={<LabResultUpload />} />
           <Route path="LabResultUpload/edit/:id" element={<LabResultUpload />} />
+
+           {/* DoctorDasboard */}
+          <Route path="DoctorDasboard" element={<DoctorDashboard />} />
+          <Route path="DoctorDasboard/add" element={<DoctorDashboard />} />
+          <Route path="DoctorDasboard/edit/:id" element={<DoctorDashboard />} />
+
+          {/* PatientMedicalProfile */}
+          <Route path="PatientMedicalProfile" element={<PatientMedicalProfile />} />
+          <Route path="PatientMedicalProfile/add" element={<PatientMedicalProfile />} />
+          <Route path="PatientMedicalProfile/edit/:id" element={<PatientMedicalProfile />} />
+
 
         </Route>
 

@@ -42,7 +42,7 @@ const DiagnosisReferenceForm = () => {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            {isEditMode ? 'Edit Data Staf' : 'Tambah Staf Baru'}
+            {isEditMode ? 'Edit Data Diagnosis' : 'Tambah Diagnosis'}
           </h1>
           <p className="mt-0.5 text-sm text-slate-500">
             {isEditMode ? 'Perbarui informasi pegawai klinik.' : 'Daftarkan akun pegawai baru beserta hak aksesnya.'}

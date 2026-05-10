@@ -14,7 +14,7 @@ const DiagnosisReferenceList = () => {
       {/* 1. Header & Breadcrumb */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Manajemen Staf</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Diagnosis Reference</h1>
           <p className="text-sm text-slate-500">Kelola hak akses dan data pegawai klinik VetCare Connect.</p>
         </div>
         
