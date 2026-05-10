@@ -150,6 +150,20 @@ const AdminLayout = () => {
                 </li>
 
 
+                <li>
+                  <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Owner Dashboard
+                  </Link>
+                </li>
+
+                  <li>
+                  <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Medical History
+                  </Link>
+                </li>
+
               </ul>
             </div>
           </nav>
