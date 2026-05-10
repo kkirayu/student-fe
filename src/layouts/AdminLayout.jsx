@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  Search, Bell, MessageSquare, Sun, ChevronDown, 
+import {
+  Search, Bell, MessageSquare, Sun, ChevronDown,
   LayoutDashboard, User, Box, Menu, X, Heart, BarChart3, Tag
 } from 'lucide-react';
 
@@ -15,10 +15,10 @@ const AdminLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
-      
+
       {/* Overlay Mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
@@ -26,9 +26,8 @@ const AdminLayout = () => {
 
       {/* ================== SIDEBAR ================== */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#1C2434] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#1C2434] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Logo */}
         <div className="flex items-center justify-between gap-2 px-6 py-6">
@@ -49,7 +48,7 @@ const AdminLayout = () => {
             <div>
               <h3 className="mb-4 ml-4 text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">MENU UTAMA</h3>
               <ul className="mb-6 flex flex-col gap-1.5">
-                
+
                 {/* Dashboard */}
                 <li>
                   <Link to="/admin" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin') ? 'bg-[#333A48]' : ''}`}>
@@ -57,7 +56,7 @@ const AdminLayout = () => {
                     Dashboard
                   </Link>
                 </li>
-                
+
                 {/* Manajemen Staf */}
                 <li>
                   <Link to="/admin/staff" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/staff') ? 'bg-[#333A48]' : ''}`}>
@@ -76,7 +75,7 @@ const AdminLayout = () => {
 
                 {/* Laporan (Dropdown) */}
                 <li>
-                  <button 
+                  <button
                     onClick={() => setReportsOpen(!reportsOpen)}
                     className={`flex w-full items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isReportsPath ? 'bg-[#333A48]' : ''}`}
                   >
@@ -108,11 +107,19 @@ const AdminLayout = () => {
                   </Link>
                 </li>
 
-                 {/* DiagnosisReferenceList */}
+                {/* DiagnosisReferenceList */}
                 <li>
                   <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
                     <Box className="h-5 w-5" />
                     Diagnosis Reference
+                  </Link>
+                </li>
+
+                {/* LabResultUpload */}
+                <li>
+                  <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Lab Result Upload
                   </Link>
                 </li>
 
@@ -124,7 +131,7 @@ const AdminLayout = () => {
 
       {/* ================== MAIN AREA ================== */}
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        
+
         {/* Header */}
         <header className="sticky top-0 z-40 flex w-full border-b border-slate-200 bg-white shadow-sm">
           <div className="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">

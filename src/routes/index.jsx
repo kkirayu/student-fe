@@ -20,6 +20,8 @@ import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
 import PetList from '../pages/owner/MyPets/PetList';
 import PetForm from '../pages/owner/MyPets/PetForm';
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
+import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
+import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
 
 const AppRouter = () => {
   return (
@@ -30,12 +32,12 @@ const AppRouter = () => {
         {/* Rute Admin Utama */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-          
+
           {/* Manajemen Staf */}
           <Route path="staff" element={<StaffList />} />
           <Route path="staff/add" element={<StaffForm />} />
           <Route path="staff/edit/:id" element={<StaffForm />} />
-          
+
           {/* Pengaturan Klinik */}
           <Route path="settings" element={<ClinicSettings />} />
 
@@ -57,14 +59,21 @@ const AppRouter = () => {
 
           {/* Diagnosis Reference */}
           <Route path="DiagnosisReferenceList" element={<DiagnosisReferenceList />} />
+          <Route path="DiagnosisReferenceList/add" element={<DiagnosisReferenceForm />} />
+          <Route path="DiagnosisReferenceList/edit/:id" element={<DiagnosisReferenceForm />} />
+
+          {/* Diagnosis Reference */}
+          <Route path="LabResultUpload" element={<LabResultUpload />} />
+          <Route path="LabResultUpload/add" element={<LabResultUpload />} />
+          <Route path="LabResultUpload/edit/:id" element={<LabResultUpload />} />
 
         </Route>
 
-    
 
-        
 
-        
+
+
+
 
         <Route path="*" element={<div className="p-10 text-center text-2xl">404 - Halaman Tidak Ditemukan</div>} />
       </Routes>
