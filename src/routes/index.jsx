@@ -53,6 +53,7 @@ const AppRouter = () => {
           {/* Owner */}
           <Route path="PetList" element={<PetList />} />
           <Route path="PetList/add" element={<PetForm />} />
+          <Route path="PetList/edit/:id" element={<PetForm />} />
 
           {/* Diagnosis Reference */}
           <Route path="DiagnosisReferenceList" element={<DiagnosisReferenceList />} />
