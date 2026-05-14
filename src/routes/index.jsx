@@ -40,7 +40,6 @@ import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
 import DoctorDashboard from '../pages/doctor/Dashboard';
 import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
 
-import OwnerDashboard from '../pages/owner/Dashboard';
 import MedicalHistory from '../pages/owner/MedicalHistory';
 
 const AppRouter = () => {
