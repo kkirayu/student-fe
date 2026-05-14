@@ -3,6 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Import Layouts
 import AdminLayout from '../layouts/AdminLayout';
+import MainLayout from '../layouts/MainLayouts';
+import Feedback from '../layouts/Feedback';
+import InfoLayanan from '../layouts/InfoLayanan';
+import Register from '../pages/auth/Register';
+import Login from '../pages/auth/Login';
+import OTPVerification from '../pages/auth/OTPVerification';
+import ForgotPassword from '../pages/auth/ForgotPassword';
 
 // Import Pages (Modul Admin)
 import AdminDashboard from '../pages/admin/Dashboard';
@@ -34,7 +41,15 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        {/* <Route path="/" element={<Navigate to="/admin" replace />} /> */}
+
+        <Route path="/" element={<MainLayout />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/info-layanan" element={<InfoLayanan />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Rute Admin Utama */}
         <Route path="/admin" element={<AdminLayout />}>
@@ -63,7 +78,7 @@ const AppRouter = () => {
           <Route path="PetList" element={<PetList />} />
           <Route path="PetList/add" element={<PetForm />} />
           <Route path="PetList/edit/:id" element={<PetForm />} />
-           <Route path="OwnerDashboard" element={<OwnerDashboard />} />
+          <Route path="OwnerDashboard" element={<OwnerDashboard />} />
           <Route path="MedicalHistory" element={<MedicalHistory />} />
 
           {/* Diagnosis Reference */}
@@ -88,6 +103,7 @@ const AppRouter = () => {
 
 
         </Route>
+
 
 
 
