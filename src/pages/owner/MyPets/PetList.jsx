@@ -23,7 +23,7 @@ const PetList = () => {
 
         {/* Tombol Tambah Staf (Mengarah ke Fitur 3) */}
         <Link
-          to="/admin/PetList/add"
+          to="/owner/pets/add"
           className="inline-flex items-center justify-center gap-2 rounded bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90 transition-all"
         >
           <Plus className="h-4 w-4" />
@@ -89,7 +89,7 @@ const PetList = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3">
                       {/* Tombol Edit (Mengarah ke Fitur 3) */}
-                      <Link to={`/admin/PetList/edit/${pet.id}`} className="text-blue-600 hover:text-blue-800 transition-colors" title="Edit Data">
+                      <Link to={`/owner/pets/edit/${pet.id}`} className="text-blue-600 hover:text-blue-800 transition-colors" title="Edit Data">
                         <Edit className="h-5 w-5" />
                       </Link>
                       {/* Tombol Hapus */}

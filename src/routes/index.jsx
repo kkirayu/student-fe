@@ -11,38 +11,41 @@ import Login from '../pages/auth/Login';
 import OTPVerification from '../pages/auth/OTPVerification';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 
-// Import Pages (Modul Admin)
+// ================= IMPORT PAGES =================
+
+// Modul Admin
 import AdminDashboard from '../pages/admin/Dashboard';
 import StaffList from '../pages/admin/StaffManagement/StaffList';
 import StaffForm from '../pages/admin/StaffManagement/StaffForm';
 import ClinicSettings from '../pages/admin/ClinicSettings';
+import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
 
-// Import Pages (Modul Reports - Fitur 6-10)
+// Modul Admin - Reports
 import FinancialReport from '../pages/admin/Reports/FinancialReport';
 import VisitDemographics from '../pages/admin/Reports/VisitDemographics';
 import TransactionLog from '../pages/admin/Reports/TransactionLog';
 import InvoiceDetail from '../pages/admin/Reports/InvoiceDetail';
 import StockMutationReport from '../pages/admin/Reports/StockMutationReport';
-import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
+
+// Modul Owner
+import OwnerDashboard from '../pages/owner/Dashboard';
 import PetList from '../pages/owner/MyPets/PetList';
 import PetForm from '../pages/owner/MyPets/PetForm';
+import MedicalHistory from '../pages/owner/MedicalHistory';
+
+// Modul Dokter
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
-<<<<<<< HEAD
-import DoctorDashboard from '../pages/doctor/Dashboard';
-import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
-=======
-import OwnerDashboard from '../pages/owner/Dashboard';
-import MedicalHistory from '../pages/owner/MedicalHistory';
->>>>>>> bc803acf22130f82b1362d384f1dff8d573a71e5
+
+// (ADDED) Pastikan path import ini disesuaikan dengan struktur folder kamu
+import DoctorDashboard from '../pages/doctor/Dashboard'; 
+import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile'; 
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* <Route path="/" element={<Navigate to="/admin" replace />} /> */}
-
         <Route path="/" element={<MainLayout />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/info-layanan" element={<InfoLayanan />} />
@@ -51,8 +54,8 @@ const AppRouter = () => {
         <Route path="/otp-verification" element={<OTPVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Rute Admin Utama */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* ================= 1. RUTE ADMIN ================= */}
+        <Route path="/admin" element={<AdminLayout userRole="admin" />}>
           <Route index element={<AdminDashboard />} />
 
           {/* Manajemen Staf */}
@@ -60,10 +63,11 @@ const AppRouter = () => {
           <Route path="staff/add" element={<StaffForm />} />
           <Route path="staff/edit/:id" element={<StaffForm />} />
 
-          {/* Pengaturan Klinik */}
+          {/* Pengaturan & Layanan */}
           <Route path="settings" element={<ClinicSettings />} />
+          <Route path="services" element={<ServiceRatesList />} />
 
-          {/* Grup Laporan (Reports) */}
+          {/* Laporan (Reports) */}
           <Route path="reports">
             <Route path="financial" element={<FinancialReport />} />
             <Route path="demographics" element={<VisitDemographics />} />
@@ -71,8 +75,7 @@ const AppRouter = () => {
             <Route path="invoice/:id" element={<InvoiceDetail />} />
             <Route path="stock-mutation" element={<StockMutationReport />} />
           </Route>
-
-          <Route path="services" element={<ServiceRatesList />} />
+          {/* DIHAPUS: Tag </Route> penutup yang salah tempat sebelumnya ada di sini */}
 
           {/* Owner */}
           <Route path="PetList" element={<PetList />} />
@@ -86,12 +89,12 @@ const AppRouter = () => {
           <Route path="DiagnosisReferenceList/add" element={<DiagnosisReferenceForm />} />
           <Route path="DiagnosisReferenceList/edit/:id" element={<DiagnosisReferenceForm />} />
 
-          {/* Diagnosis Reference */}
+          {/* Lab Result Upload */}
           <Route path="LabResultUpload" element={<LabResultUpload />} />
           <Route path="LabResultUpload/add" element={<LabResultUpload />} />
           <Route path="LabResultUpload/edit/:id" element={<LabResultUpload />} />
 
-           {/* DoctorDasboard */}
+          {/* DoctorDasboard */}
           <Route path="DoctorDasboard" element={<DoctorDashboard />} />
           <Route path="DoctorDasboard/add" element={<DoctorDashboard />} />
           <Route path="DoctorDasboard/edit/:id" element={<DoctorDashboard />} />
@@ -101,17 +104,33 @@ const AppRouter = () => {
           <Route path="PatientMedicalProfile/add" element={<PatientMedicalProfile />} />
           <Route path="PatientMedicalProfile/edit/:id" element={<PatientMedicalProfile />} />
 
+        </Route> {/* Ini adalah penutup yang benar untuk <Route path="/admin"> */}
 
+        {/* ================= 3. RUTE DOKTER ================= */}
+        <Route path="/doctor" element={<AdminLayout userRole="doctor" />}>
+          {/* Sementara di-direct ke list diagnosis jika belum ada dashboard dokter */}
+          <Route index element={<Navigate to="diagnosis" replace />} />
+
+          {/* Master Data Diagnosis */}
+          <Route path="diagnosis" element={<DiagnosisReferenceList />} />
+          <Route path="diagnosis/add" element={<DiagnosisReferenceForm />} />
+          <Route path="diagnosis/edit/:id" element={<DiagnosisReferenceForm />} />
+
+          {/* Rekam Medis / Hasil Lab */}
+          <Route path="lab-results" element={<LabResultUpload />} />
+          <Route path="lab-results/add" element={<LabResultUpload />} />
+          <Route path="lab-results/edit/:id" element={<LabResultUpload />} />
         </Route>
 
-
-
-
-
-
-
-
-        <Route path="*" element={<div className="p-10 text-center text-2xl">404 - Halaman Tidak Ditemukan</div>} />
+        {/* ================= HALAMAN 404 ================= */}
+        <Route path="*" element={
+          <div className="flex h-screen items-center justify-center bg-slate-50">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-slate-800">404</h1>
+              <p className="text-slate-500">Halaman tidak ditemukan.</p>
+            </div>
+          </div>
+        } />
       </Routes>
     </BrowserRouter>
   );

@@ -1,37 +1,45 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import {
-  Search, Bell, MessageSquare, Sun, ChevronDown,
-  LayoutDashboard, User, Box, Menu, X, Heart, BarChart3, Tag
-} from 'lucide-react';
+import { Menu, X, Box, Search, Heart, ChevronDown, BarChart3 } from 'lucide-react'; // Added BarChart3
 
-const AdminLayout = () => {
+// Pastikan file ini sudah kamu buat sesuai instruksi sebelumnya
+import { roleMenus } from '../utils/menuConfig'; 
+
+const AdminLayout = ({ userRole = 'admin' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false); // Added missing state for dropdown
   const location = useLocation();
 
-  const isActive = (path) => location.pathname === path;
-  const isReportsPath = location.pathname.includes('/admin/reports');
+  // Fungsi untuk mengecek menu aktif
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
+  
+  // Added missing variable to check if current path is a report/medical profile
+  const isReportsPath = isActive('/admin/PatientMedicalProfile') || isActive('/admin/reports');
+
+  // Mengambil daftar menu sesuai role yang sedang login
+  const currentMenus = roleMenus[userRole] || [];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
-
-      {/* Overlay Mobile */}
+      
+      {/* ================== OVERLAY MOBILE ================== */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+        <div 
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" 
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
-      {/* ================== SIDEBAR ================== */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#1C2434] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+      {/* ================== SIDEBAR DINAMIS ================== */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#1C2434] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
+        
         {/* Logo */}
-        <div className="flex items-center justify-between gap-2 px-6 py-6">
-          <Link to="/admin" className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-6 py-6">
+          <Link to={`/${userRole}`} className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-blue-600">
               <Box className="h-6 w-6 text-white" />
             </div>
@@ -43,155 +51,137 @@ const AdminLayout = () => {
         </div>
 
         {/* Menu List */}
-        <div className="no-scrollbar flex flex-col overflow-y-auto">
-          <nav className="mt-4 px-4 py-4 lg:px-6">
-            <div>
-              <h3 className="mb-4 ml-4 text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">MENU UTAMA</h3>
-              <ul className="mb-6 flex flex-col gap-1.5">
-
-                {/* Dashboard */}
-                <li>
-                  <Link to="/admin" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin') ? 'bg-[#333A48]' : ''}`}>
-                    <LayoutDashboard className="h-5 w-5" />
-                    Dashboard
-                  </Link>
-                </li>
-
-                {/* Manajemen Staf */}
-                <li>
-                  <Link to="/admin/staff" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/staff') ? 'bg-[#333A48]' : ''}`}>
-                    <User className="h-5 w-5" />
-                    Manajemen Staf
-                  </Link>
-                </li>
-
-                {/* Layanan & Tarif */}
-                <li>
-                  <Link to="/admin/services" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/services') ? 'bg-[#333A48]' : ''}`}>
-                    <Tag className="h-5 w-5" />
-                    Layanan & Tarif
-                  </Link>
-                </li>
-
-                {/* Laporan (Dropdown) */}
-                <li>
-                  <button
-                    onClick={() => setReportsOpen(!reportsOpen)}
-                    className={`flex w-full items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isReportsPath ? 'bg-[#333A48]' : ''}`}
+        <div className="no-scrollbar flex flex-col overflow-y-auto mt-4 px-4 py-4 lg:px-6">
+          <h3 className="mb-4 ml-4 text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">MENU UTAMA</h3>
+          <ul className="mb-6 flex flex-col gap-1.5">
+            
+            {/* Menu List yang di-Render Otomatis */}
+            {currentMenus.map((menu, index) => {
+              const Icon = menu.icon;
+              const isMenuSelected = isActive(menu.path);
+              
+              return (
+                <li key={index}>
+                  <Link 
+                    to={menu.path} 
+                    className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium transition-all duration-300 ease-in-out hover:bg-[#333A48] hover:text-white ${
+                      isMenuSelected ? 'bg-[#333A48] text-white' : 'text-[#DEE4EE]'
+                    }`}
                   >
-                    <BarChart3 className="h-5 w-5" />
-                    Laporan
-                    <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
-                  </button>
-                  <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
-                    <li><Link to="/admin/reports/financial" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/financial') ? 'font-semibold text-white' : ''}`}>Laporan Keuangan</Link></li>
-                    <li><Link to="/admin/reports/demographics" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
-                    <li><Link to="/admin/reports/transactions" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
-                    <li><Link to="/admin/reports/stock-mutation" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
-                  </ul>
-                </li>
-
-                {/* Pengaturan Klinik */}
-                <li>
-                  <Link to="/admin/settings" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/settings') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Pengaturan Klinik
+                    <Icon className="h-5 w-5" />
+                    {menu.title}
                   </Link>
                 </li>
+              ); // FIXED: Closed the return statement here
+            })} {/* FIXED: Closed the map function here */}
 
-                {/* Petlist */}
-                <li>
-                  <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Daftar Hewan Peliharaan
-                  </Link>
-                </li>
+            {/* Petlist */}
+            <li>
+              <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Daftar Hewan Peliharaan
+              </Link>
+            </li>
 
-                {/* DiagnosisReferenceList */}
-                <li>
-                  <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Diagnosis Reference
-                  </Link>
-                </li>
+            {/* DiagnosisReferenceList */}
+            <li>
+              <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Diagnosis Reference
+              </Link>
+            </li>
 
-                {/* LabResultUpload */}
-                <li>
-                  <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Lab Result Upload
-                  </Link>
-                </li>
+            {/* LabResultUpload */}
+            <li>
+              <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Lab Result Upload
+              </Link>
+            </li>
 
-                {/* DoctorDasboard */}
-                <li>
-                  <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Doctor Dasboard
-                  </Link>
-                </li>
+            {/* DoctorDasboard */}
+            <li>
+              <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Doctor Dasboard
+              </Link>
+            </li>
 
-                {/* Patient Medical Profile */}
-                <li>
-                  <button
-                    onClick={() => setReportsOpen(!reportsOpen)}
-                    className={`flex w-full items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isReportsPath ? 'bg-[#333A48]' : ''}`}
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                    Medical Record
-                    <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
-                  </button>
-                  <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
-                    <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/PatientMedicalProfile') ? 'font-semibold text-white' : ''}`}>Pasien Profile</Link></li>
-                    <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
-                    <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
-                    <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
-                  </ul>
-                </li>
-
-
-                <li>
-                  <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Owner Dashboard
-                  </Link>
-                </li>
-
-                  <li>
-                  <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Medical History
-                  </Link>
-                </li>
-
+            {/* Patient Medical Profile */}
+            <li>
+              <button
+                onClick={() => setReportsOpen(!reportsOpen)}
+                className={`flex w-full items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isReportsPath ? 'bg-[#333A48]' : ''}`}
+              >
+                <BarChart3 className="h-5 w-5" />
+                Medical Record
+                <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
+              </button>
+              <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/PatientMedicalProfile') ? 'font-semibold text-white' : ''}`}>Pasien Profile</Link></li>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
               </ul>
-            </div>
-          </nav>
+            </li>
+
+            {/* OwnerDashboard */}
+            <li>
+              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Owner Dashboard
+              </Link>
+            </li>
+
+            {/* MedicalHistory */}
+            <li>
+              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Medical History
+              </Link>
+            </li>
+
+          </ul>
         </div>
       </aside>
 
       {/* ================== MAIN AREA ================== */}
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-
-        {/* Header */}
+        
+        {/* Header Lengkap */}
         <header className="sticky top-0 z-40 flex w-full border-b border-slate-200 bg-white shadow-sm">
           <div className="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
+            
             <div className="flex items-center gap-4">
-              <button onClick={() => setSidebarOpen(true)} className="flex items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 shadow-sm lg:hidden">
+              {/* Tombol Hamburger untuk Mobile */}
+              <button 
+                onClick={() => setSidebarOpen(!sidebarOpen)} 
+                className="flex items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 shadow-sm lg:hidden"
+              >
                 <Menu className="h-5 w-5 text-black" />
               </button>
+              
+              {/* Search Bar */}
               <div className="hidden sm:block">
                 <div className="relative">
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">
                     <Search className="h-5 w-5" />
                   </span>
-                  <input type="text" placeholder="Cari data..." className="w-72 bg-transparent pl-9 pr-4 text-sm font-medium outline-none xl:w-125" />
+                  <input 
+                    type="text" 
+                    placeholder="Ketik untuk mencari..." 
+                    className="w-72 bg-transparent pl-9 pr-4 text-sm font-medium outline-none xl:w-125" 
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3">
+            {/* Profil User & Indikator Role */}
+            <div className="flex items-center gap-4">
+              <div className="hidden rounded bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-600 sm:block">
+                Role: {userRole}
+              </div>
+              <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
                 <div className="hidden text-right lg:block">
                   <p className="text-sm font-bold leading-tight text-black">Muhammad Danil</p>
                   <p className="text-xs font-medium text-slate-500">Quality Assurance</p>
@@ -201,10 +191,11 @@ const AdminLayout = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </header>
 
-        {/* Content */}
+        {/* Konten Halaman */}
         <div className="flex flex-grow flex-col">
           <main className="w-full flex-grow p-4 md:p-6 2xl:p-10">
             <Outlet />
@@ -216,15 +207,10 @@ const AdminLayout = () => {
               <p className="text-sm font-medium text-slate-500">
                 &copy; {new Date().getFullYear()} <span className="font-bold text-slate-800">Zeta Connect</span>. All rights reserved.
               </p>
-              <div className="flex items-center gap-1 text-sm text-slate-500">
-                <span>Made with</span>
-                <Heart className="h-4 w-4 fill-current text-red-500" />
-                <span>by</span>
-                <span className="font-semibold text-blue-600">Informatics Team</span>
-              </div>
             </div>
           </footer>
         </div>
+
       </div>
     </div>
   );
