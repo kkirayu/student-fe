@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import MainLayout from '../layouts/MainLayouts';
 import Feedback from '../layouts/Feedback';
-import InfoLayanan from '../layouts/InfoLayanan';
+import InfoLayanan from '../layouts/ServiceInfo';
 import Register from '../pages/auth/Register';
 import Login from '../pages/auth/Login';
 import OTPVerification from '../pages/auth/OTPVerification';
@@ -37,10 +37,11 @@ import MedicalHistory from '../pages/owner/MedicalHistory';
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
+import DoctorDashboard from '../pages/doctor/Dashboard';
+import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
 
-// (ADDED) Pastikan path import ini disesuaikan dengan struktur folder kamu
-import DoctorDashboard from '../pages/doctor/Dashboard'; 
-import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile'; 
+import OwnerDashboard from '../pages/owner/Dashboard';
+import MedicalHistory from '../pages/owner/MedicalHistory';
 
 const AppRouter = () => {
   return (
