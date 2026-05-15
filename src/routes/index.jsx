@@ -32,6 +32,8 @@ import OwnerDashboard from '../pages/owner/Dashboard';
 import PetList from '../pages/owner/MyPets/PetList';
 import PetForm from '../pages/owner/MyPets/PetForm';
 import MedicalHistory from '../pages/owner/MedicalHistory';
+import AppointmentForm from '../pages/owner/Booking/AppointmentForm';
+import AppointmentHistory from '../pages/owner/Booking/AppointmentHistory';
 
 // Modul Dokter
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
@@ -39,6 +41,9 @@ import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenc
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
 import DoctorDashboard from '../pages/doctor/Dashboard';
 import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
+import Billing from '../pages/owner/Billing';
+import QueueTicket from '../pages/owner/Booking/QueueTicket';
+import PetDetail from '../pages/owner/MyPets/PetDetail';
 
 const AppRouter = () => {
   return (
@@ -81,6 +86,11 @@ const AppRouter = () => {
           <Route path="PetList/edit/:id" element={<PetForm />} />
           <Route path="OwnerDashboard" element={<OwnerDashboard />} />
           <Route path="MedicalHistory" element={<MedicalHistory />} />
+          <Route path='AppointmentForm' element={<AppointmentForm />} /> 
+          <Route path='AppointmentHistory' element={<AppointmentHistory />} />
+          <Route path='Billing' element={<Billing />} />
+          <Route path='QueueTicket' element={<QueueTicket />} />
+          <Route path='PetDetail' element={<PetDetail />} />
 
           {/* Diagnosis Reference */}
           <Route path="DiagnosisReferenceList" element={<DiagnosisReferenceList />} />

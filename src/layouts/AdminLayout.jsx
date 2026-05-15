@@ -83,6 +83,47 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               </Link>
             </li>
 
+            {/* AppointmentForm */}
+            <li>
+              <Link to="/admin/AppointmentForm" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Appointment Form
+              </Link>
+            </li>
+
+             {/* Appointmen History */}
+            <li>
+              <Link to="/admin/AppointmentHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Appointment History
+              </Link>
+            </li>
+
+             {/* Billing */}
+            <li>
+              <Link to="/admin/Billing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Billing
+              </Link>
+            </li>
+
+             {/* QueueTicket */}
+            <li>
+              <Link to="/admin/QueueTicket" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Queue Ticket
+              </Link>
+            </li>
+
+             {/* PetDetail */}
+            <li>
+              <Link to="/admin/PetDetail" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Pet Detail
+              </Link>
+            </li>
+
+
             {/* DiagnosisReferenceList */}
             <li>
               <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
