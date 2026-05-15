@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Popup from '../../components/Popup';
 
@@ -7,16 +7,16 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   
-  // State for flow: 1 = Email, 2 = Code, 3 = New Password
   const [step, setStep] = useState(1);
   
-  // Form Data
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const inputRefs = useRef([]);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Error state
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -30,20 +30,42 @@ const ForgotPassword = () => {
   const handleEmailSubmit = (e) => {
     e.preventDefault();
     setError('');
-    // Mock validation: fail if email doesn't have @
     if (!email.includes('@')) {
       setError('Format email tidak valid atau email tidak terdaftar.');
       return;
     }
-    // Simulate API call success
     setStep(2);
+  };
+
+  const handleOtpChange = (index, e) => {
+    const value = e.target.value;
+    if (isNaN(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setError('');
+
+    if (value !== '' && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
   };
 
   const handleCodeSubmit = (e) => {
     e.preventDefault();
     setError('');
-    // Mock validation: fail if code is not '123456'
-    if (code !== '123456') {
+    const otpCode = otp.join('');
+    if (otpCode.length < 6) {
+      setError('Silakan masukkan 6 digit kode secara lengkap.');
+      return;
+    }
+    if (otpCode !== '123456') {
       setError('Kode reset tidak valid atau sudah kadaluarsa. (Hint: 123456)');
       return;
     }
@@ -61,7 +83,6 @@ const ForgotPassword = () => {
       setError('Konfirmasi kata sandi tidak cocok.');
       return;
     }
-    // Simulate API call success
     setPopup({
       isOpen: true,
       type: 'success',
@@ -76,6 +97,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600 flex flex-col">
+
       {/* Navbar */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
@@ -155,24 +177,28 @@ const ForgotPassword = () => {
             {step === 2 && (
               <form onSubmit={handleCodeSubmit} className="space-y-6 relative z-10">
                 <div>
-                  <label className="block text-sm font-bold text-slate-800 mb-2">Kode Reset</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                      <i className="fa-solid fa-hashtag"></i>
-                    </div>
-                    <input 
-                      type="text" 
-                      required
-                      value={code}
-                      onChange={(e) => { setCode(e.target.value); setError(''); }}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all text-center tracking-widest text-lg font-bold"
-                      placeholder="123456"
-                      maxLength={6}
-                    />
+                  <label className="block text-sm font-bold text-slate-800 mb-4 text-center">Masukkan 6 Digit Kode Reset</label>
+                  <div className="flex justify-center gap-2 sm:gap-4">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        maxLength={1}
+                        value={digit}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        onChange={(e) => handleOtpChange(index, e)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
+                      />
+                    ))}
                   </div>
                 </div>
                 <div className="pt-2">
-                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                  <button 
+                    type="submit" 
+                    disabled={otp.join('').length < 6}
+                    className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none"
+                  >
                     Verifikasi Kode
                   </button>
                   <p className="text-center text-sm text-slate-500 mt-6">
@@ -192,13 +218,20 @@ const ForgotPassword = () => {
                       <i className="fa-solid fa-lock"></i>
                     </div>
                     <input 
-                      type="password" 
+                      type={showPassword ? "text" : "password"} 
                       required
                       value={newPassword}
                       onChange={(e) => { setNewPassword(e.target.value); setError(''); }}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
+                      className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
                       placeholder="Minimal 6 karakter"
                     />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-600 focus:outline-none transition-colors"
+                    >
+                      <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
                   </div>
                 </div>
 
@@ -209,17 +242,24 @@ const ForgotPassword = () => {
                       <i className="fa-solid fa-check-double"></i>
                     </div>
                     <input 
-                      type="password" 
+                      type={showConfirmPassword ? "text" : "password"} 
                       required
                       value={confirmPassword}
                       onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
-                      className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all ${
+                      className={`w-full pl-11 pr-12 py-3 bg-slate-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all ${
                         confirmPassword && newPassword !== confirmPassword 
                           ? 'border-red-300 focus:ring-red-600/20 focus:border-red-500' 
                           : 'border-slate-200 focus:ring-blue-600/20 focus:border-blue-600'
                       }`}
                       placeholder="Ulangi kata sandi baru"
                     />
+                    <button 
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-600 focus:outline-none transition-colors"
+                    >
+                      <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
                   </div>
                 </div>
 
@@ -235,7 +275,7 @@ const ForgotPassword = () => {
         </div>
       </main>
 
-      {/* Simple Footer */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>

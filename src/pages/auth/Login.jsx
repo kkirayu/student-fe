@@ -11,6 +11,7 @@ const Login = () => {
     password: ''
   });
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,18 +33,18 @@ const Login = () => {
       });
       return;
     }
-    // Simulate login
     console.log('Login attempt:', formData);
     navigate('/otp-verification');
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600 flex flex-col">
+
       {/* Navbar */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
-            : 'bg-transparent py-5'
+          ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
+          : 'bg-transparent py-5'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,20 +72,20 @@ const Login = () => {
 
           <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10"></div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              
+
               <div>
                 <label className="block text-sm font-bold text-slate-800 mb-2">Username / Email</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                     <i className="fa-regular fa-user"></i>
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     value={formData.username}
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
                     placeholder="Masukkan username atau email"
                   />
@@ -100,22 +101,28 @@ const Login = () => {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                     <i className="fa-solid fa-lock"></i>
                   </div>
-                  <input 
-                    type="password" 
+                  <input
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
                     placeholder="Masukkan kata sandi"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-600 focus:outline-none transition-colors"
+                  >
+                    <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
                 </div>
               </div>
 
-              {/* reCAPTCHA Mockup */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={captchaVerified}
                     onChange={(e) => setCaptchaVerified(e.target.checked)}
                     className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-600 focus:ring-2 cursor-pointer"
@@ -141,12 +148,12 @@ const Login = () => {
         </div>
       </main>
 
-      {/* Simple Footer */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
 
-      <Popup 
+      <Popup
         isOpen={popup.isOpen}
         type={popup.type}
         title={popup.title}

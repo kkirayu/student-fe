@@ -25,7 +25,6 @@ const OTPVerification = () => {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto-focus next input
     if (value !== '' && index < 5) {
       inputRefs.current[index + 1].focus();
     }
@@ -33,7 +32,6 @@ const OTPVerification = () => {
 
   const handleKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      // Auto-focus previous input on backspace if current is empty
       inputRefs.current[index - 1].focus();
     }
   };
@@ -52,7 +50,6 @@ const OTPVerification = () => {
       return;
     }
     
-    // Simulate OTP Verification
     console.log('OTP Verified:', otpCode);
     setPopup({
       isOpen: true,
@@ -61,13 +58,14 @@ const OTPVerification = () => {
       message: 'Kode OTP valid. Mengalihkan ke Dashboard Owner.',
       onConfirm: () => {
         setPopup((prev) => ({ ...prev, isOpen: false }));
-        navigate('/admin/PetList');
+        navigate('/owner/Dashboard');
       }
     });
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600 flex flex-col">
+
       {/* Navbar */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
@@ -119,7 +117,11 @@ const OTPVerification = () => {
               </div>
 
               <div className="pt-2">
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <button 
+                  type="submit" 
+                  disabled={otp.join('').length < 6}
+                  className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none"
+                >
                   <i className="fa-solid fa-check-circle"></i> Verifikasi OTP
                 </button>
                 <p className="text-center text-sm text-slate-500 mt-6">
@@ -131,7 +133,7 @@ const OTPVerification = () => {
         </div>
       </main>
 
-      {/* Simple Footer */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
