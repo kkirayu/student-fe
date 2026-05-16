@@ -44,9 +44,13 @@ import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalP
 import Billing from '../pages/owner/Billing';
 import QueueTicket from '../pages/owner/Booking/QueueTicket';
 import PetDetail from '../pages/owner/MyPets/PetDetail';
+
+
+// Modul Pharmacy & Cashier
 import PharmacyDashboard from '../pages/pharmacy-cashier/Dashboard';
 import ProductCatalog from '../pages/pharmacy-cashier/Inventory/ProductCatalog';
 import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
+import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
 
 const AppRouter = () => {
   return (
@@ -114,6 +118,17 @@ const AppRouter = () => {
           <Route path="PatientMedicalProfile" element={<PatientMedicalProfile />} />
           <Route path="PatientMedicalProfile/add" element={<PatientMedicalProfile />} />
           <Route path="PatientMedicalProfile/edit/:id" element={<PatientMedicalProfile />} />
+
+          <Route path="pharmacy-cashier" element={<PharmacyDashboard />} />
+
+          {/* Product Catalog */}
+          <Route path="pharmacy-cashier/Inventory/ProductCatalog" element={<ProductCatalog />} />
+
+          {/* Restock Form */}
+          <Route path="pharmacy-cashier/Inventory/FormRestockBarang" element={<FormRestockBarang />} />
+
+          {/* Stock Monitoring */}
+          <Route path="pharmacy-cashier/Inventory/StockMonitoring" element={<StockMonitoring />} />
 
         </Route> {/* Ini adalah penutup yang benar untuk <Route path="/admin"> */}
 

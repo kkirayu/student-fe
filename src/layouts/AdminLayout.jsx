@@ -164,8 +164,29 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 <li><Link to="/admin/reports/transactions" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
                 <li><Link to="/admin/reports/stock-mutation" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
                 
+                
+                
+              </ul>
+            </li>
+
+            {/* OwnerDashboard */}
+            <li>
+              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/OwnerDashboard') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Owner Dashboard
+              </Link>
+            </li>
+
+            {/* MedicalHistory */}
+            <li>
+              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/MedicalHistory') ? 'bg-[#333A48]' : ''}`}>
+                <Box className="h-5 w-5" />
+                Medical History
+              </Link>
+            </li>
+
+            <li>
                 {/* Pharmacy Cashier */}
-                <li>
                   <Link to="/admin/pharmacy-cashier" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier') ? 'bg-[#333A48]' : ''}`}>
                     <Box className="h-5 w-5" />
                     Pharmacy Cashier
@@ -187,24 +208,14 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     Restock Form
                   </Link>
                 </li>
-              </ul>
-            </li>
 
-            {/* OwnerDashboard */}
-            <li>
-              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/OwnerDashboard') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Owner Dashboard
-              </Link>
-            </li>
-
-            {/* MedicalHistory */}
-            <li>
-              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/MedicalHistory') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Medical History
-              </Link>
-            </li>
+                {/* Stock Monitoring */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/inventory/StockMonitoring" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/StockMonitoring') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Stock Monitoring
+                  </Link>
+                </li>
 
           </ul>
         </div>
