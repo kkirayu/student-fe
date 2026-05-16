@@ -44,6 +44,9 @@ import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalP
 import Billing from '../pages/owner/Billing';
 import QueueTicket from '../pages/owner/Booking/QueueTicket';
 import PetDetail from '../pages/owner/MyPets/PetDetail';
+import PharmacyDashboard from '../pages/pharmacy-cashier/Dashboard';
+import ProductCatalog from '../pages/pharmacy-cashier/Inventory/ProductCatalog';
+import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
 
 const AppRouter = () => {
   return (
@@ -128,6 +131,15 @@ const AppRouter = () => {
           <Route path="lab-results" element={<LabResultUpload />} />
           <Route path="lab-results/add" element={<LabResultUpload />} />
           <Route path="lab-results/edit/:id" element={<LabResultUpload />} />
+
+          {/* Pharmacy Cashier */}
+          <Route path="pharmacy-cashier" element={<PharmacyDashboard />} />
+
+          {/* Product Catalog */}
+          <Route path="pharmacy-cashier/Inventory/ProductCatalog" element={<ProductCatalog />} />
+
+          {/* Restock Form */}
+          <Route path="pharmacy-cashier/Inventory/FormRestockBarang" element={<FormRestockBarang />} />
         </Route>
 
         {/* ================= HALAMAN 404 ================= */}

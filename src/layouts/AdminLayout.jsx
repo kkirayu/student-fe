@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Box, Search, Heart, ChevronDown, BarChart3 } from 'lucide-react'; // Added BarChart3
+import { Menu, X, Box, Search, ChevronDown, BarChart3 } from 'lucide-react'; 
 
 // Pastikan file ini sudah kamu buat sesuai instruksi sebelumnya
 import { roleMenus } from '../utils/menuConfig'; 
 
 const AdminLayout = ({ userRole = 'admin' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false); // Added missing state for dropdown
+  const [reportsOpen, setReportsOpen] = useState(false); 
   const location = useLocation();
 
   // Fungsi untuk mengecek menu aktif
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
   
-  // Added missing variable to check if current path is a report/medical profile
-  const isReportsPath = isActive('/admin/PatientMedicalProfile') || isActive('/admin/reports');
+  // Variable to check if current path is a report/medical profile
+  const isReportsPath = isActive('/admin/PatientMedicalProfile') || isActive('/admin/reports') || isActive('/admin/pharmacy-cashier');
 
   // Mengambil daftar menu sesuai role yang sedang login
   const currentMenus = roleMenus[userRole] || [];
@@ -51,7 +51,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
         </div>
 
         {/* Menu List */}
-        <div className="no-scrollbar flex flex-col overflow-y-auto mt-4 px-4 py-4 lg:px-6">
+        <div className="no-scrollbar mt-4 flex flex-col overflow-y-auto px-4 py-4 lg:px-6">
           <h3 className="mb-4 ml-4 text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">MENU UTAMA</h3>
           <ul className="mb-6 flex flex-col gap-1.5">
             
@@ -72,12 +72,12 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     {menu.title}
                   </Link>
                 </li>
-              ); // FIXED: Closed the return statement here
-            })} {/* FIXED: Closed the map function here */}
+              ); 
+            })} 
 
             {/* Petlist */}
             <li>
-              <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetList') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Daftar Hewan Peliharaan
               </Link>
@@ -85,48 +85,47 @@ const AdminLayout = ({ userRole = 'admin' }) => {
 
             {/* AppointmentForm */}
             <li>
-              <Link to="/admin/AppointmentForm" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/AppointmentForm" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/AppointmentForm') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Appointment Form
               </Link>
             </li>
 
-             {/* Appointmen History */}
+            {/* Appointment History */}
             <li>
-              <Link to="/admin/AppointmentHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/AppointmentHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/AppointmentHistory') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Appointment History
               </Link>
             </li>
 
-             {/* Billing */}
+            {/* Billing */}
             <li>
-              <Link to="/admin/Billing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/Billing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/Billing') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Billing
               </Link>
             </li>
 
-             {/* QueueTicket */}
+            {/* QueueTicket */}
             <li>
-              <Link to="/admin/QueueTicket" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/QueueTicket" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/QueueTicket') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Queue Ticket
               </Link>
             </li>
 
-             {/* PetDetail */}
+            {/* PetDetail */}
             <li>
-              <Link to="/admin/PetDetail" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/PetDetail" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetDetail') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Pet Detail
               </Link>
             </li>
 
-
             {/* DiagnosisReferenceList */}
             <li>
-              <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/DiagnosisReferenceList') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Diagnosis Reference
               </Link>
@@ -134,7 +133,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
 
             {/* LabResultUpload */}
             <li>
-              <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/LabResultUpload') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Lab Result Upload
               </Link>
@@ -142,13 +141,13 @@ const AdminLayout = ({ userRole = 'admin' }) => {
 
             {/* DoctorDasboard */}
             <li>
-              <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/DoctorDasboard') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
-                Doctor Dasboard
+                Doctor Dashboard
               </Link>
             </li>
 
-            {/* Patient Medical Profile */}
+            {/* Patient Medical Profile & Submenus */}
             <li>
               <button
                 onClick={() => setReportsOpen(!reportsOpen)}
@@ -158,17 +157,42 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 Medical Record
                 <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
               </button>
+              
               <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
                 <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/PatientMedicalProfile') ? 'font-semibold text-white' : ''}`}>Pasien Profile</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
+                <li><Link to="/admin/reports/demographics" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
+                <li><Link to="/admin/reports/transactions" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
+                <li><Link to="/admin/reports/stock-mutation" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
+                
+                {/* Pharmacy Cashier */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Pharmacy Cashier
+                  </Link>
+                </li>
+
+                {/* Product Catalog */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/inventory/ProductCatalog" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/ProductCatalog') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Product Catalog
+                  </Link>
+                </li>
+
+                {/* Restock Form */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/inventory/FormRestockBarang" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/FormRestockBarang') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Restock Form
+                  </Link>
+                </li>
               </ul>
             </li>
 
             {/* OwnerDashboard */}
             <li>
-              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/OwnerDashboard') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Owner Dashboard
               </Link>
@@ -176,7 +200,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
 
             {/* MedicalHistory */}
             <li>
-              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pets') ? 'bg-[#333A48]' : ''}`}>
+              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/MedicalHistory') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Medical History
               </Link>
