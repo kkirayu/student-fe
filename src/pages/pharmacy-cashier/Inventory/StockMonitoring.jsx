@@ -52,8 +52,8 @@ const StockMonitoring = () => {
       {/* 1. Header & Breadcrumb */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Master Katalog Produk</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">Kelola daftar obat, vaksin, makanan, dan aksesori klinik.</p>
+          <h1 className="text-2xl font-bold text-slate-800">Master Stock Produk</h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">Monitoring stok obat, vaksin, makanan, dan aksesori klinik.</p>
         </div>
         <Link 
           to="/admin/pharmacy-cashier/inventory/FormRestockBarang" 
