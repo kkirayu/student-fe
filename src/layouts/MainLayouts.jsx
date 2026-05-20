@@ -68,13 +68,14 @@ const MainLayouts = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600">
 
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
-            : 'bg-transparent py-5'
-          }`}
-      >
+      {/* Header & Navbar */}
+      <header>
+        <nav
+          className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
+              ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
+              : 'bg-transparent py-5'
+            }`}
+        >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -122,9 +123,12 @@ const MainLayouts = () => {
           </div>
         )}
       </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
+      {/* Main Content */}
+      <main>
+        {/* Hero Section */}
+        <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
         <div className="absolute inset-0 z-0">
           <img
             src="src/assets/home_bg.webp"
@@ -289,6 +293,8 @@ const MainLayouts = () => {
 
 
 
+      </main>
+
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -357,8 +363,8 @@ const MainLayouts = () => {
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
             <p>&copy; {new Date().getFullYear()} Zeta Pet Care. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-blue-500 transition-colors">Syarat & Ketentuan</a>
-              <a href="#" className="hover:text-blue-500 transition-colors">Kebijakan Privasi</a>
+              <Link to="/syarat-dan-ketentuan" className="hover:text-blue-500 transition-colors">Syarat &amp; Ketentuan</Link>
+              <Link to="/kebijakan-privasi" className="hover:text-blue-500 transition-colors">Kebijakan Privasi</Link>
             </div>
           </div>
         </div>

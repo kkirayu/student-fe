@@ -6,6 +6,8 @@ import AdminLayout from '../layouts/AdminLayout';
 import MainLayout from '../layouts/MainLayouts';
 import Feedback from '../layouts/Feedback';
 import InfoLayanan from '../layouts/ServiceInfo';
+import TermsAndConditions from '../layouts/TermsAndConditions';
+import PrivacyPolicy from '../layouts/PrivacyPolicy';
 import Register from '../pages/auth/Register';
 import Login from '../pages/auth/Login';
 import OTPVerification from '../pages/auth/OTPVerification';
@@ -54,6 +56,11 @@ import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring
 import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
 import CashierDashboard from '../pages/pharmacy-cashier/Cashier/CashierDashboard';
 
+// Modul Resepsionis
+import ReceptionistDashboard from '../pages/receptionist/Dashboard';
+import WalkInRegistration from '../pages/receptionist/WalkInRegistration';
+import QueueMonitor from '../pages/receptionist/QueueMonitor';
+
 const AppRouter = () => {
   return (
     <BrowserRouter>
@@ -61,6 +68,8 @@ const AppRouter = () => {
         <Route path="/" element={<MainLayout />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/info-layanan" element={<InfoLayanan />} />
+        <Route path="/syarat-dan-ketentuan" element={<TermsAndConditions />} />
+        <Route path="/kebijakan-privasi" element={<PrivacyPolicy />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/otp-verification" element={<OTPVerification />} />
@@ -87,7 +96,6 @@ const AppRouter = () => {
             <Route path="invoice/:id" element={<InvoiceDetail />} />
             <Route path="stock-mutation" element={<StockMutationReport />} />
           </Route>
-          {/* DIHAPUS: Tag </Route> penutup yang salah tempat sebelumnya ada di sini */}
 
           {/* Owner */}
           <Route path="PetList" element={<PetList />} />
@@ -169,6 +177,13 @@ const AppRouter = () => {
           {/* Cashier Dashboard */}
           <Route path="pharmacy-cashier/cashier/CashierDashboard" element={<CashierDashboard />} />
         </Route>
+
+        {/* ================= 4. RUTE RESEPSIONIS ================= */}
+        <Route path="/receptionist" element={<AdminLayout userRole="receptionist" />}>
+          <Route index element={<ReceptionistDashboard />} />
+          <Route path="walk-in-registration" element={<WalkInRegistration />} />
+        </Route>
+        <Route path="/receptionist/queue-monitor" element={<QueueMonitor />} />
 
         {/* ================= HALAMAN 404 ================= */}
         <Route path="*" element={

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 import dokter1 from '../assets/doctor_img/dokter1.webp';
 import dokter2 from '../assets/doctor_img/dokter2.webp';
@@ -11,6 +12,14 @@ import dokter7 from '../assets/doctor_img/dokter7.webp';
 import dokter8 from '../assets/doctor_img/dokter8.webp';
 import dokter9 from '../assets/doctor_img/dokter9.webp';
 
+const petTipsMetadata = [
+  { category: "Kucing", icon: "fa-cat", color: "text-amber-600 bg-amber-50" },
+  { category: "Anjing", icon: "fa-dog", color: "text-blue-600 bg-blue-50" },
+  { category: "Kelinci", icon: "fa-rabbit", color: "text-emerald-600 bg-emerald-50" },
+  { category: "Kesehatan", icon: "fa-heart-pulse", color: "text-rose-600 bg-rose-50" },
+  { category: "Nutrisi", icon: "fa-apple-whole", color: "text-orange-600 bg-orange-50" },
+];
+
 const InfoLayanan = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -19,6 +28,13 @@ const InfoLayanan = () => {
 
   const [selectedDay, setSelectedDay] = useState(todayString);
   const [selectedSpecialty, setSelectedSpecialty] = useState("Semua");
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [tips, setTips] = useState([]);
+  const [loadingTips, setLoadingTips] = useState(true);
+  const [errorTips, setErrorTips] = useState(null);
+  const tipsContainerRef = useRef(null);
+  const isHoveredTips = useRef(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +43,59 @@ const InfoLayanan = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const fetchTips = async () => {
+      try {
+        setLoadingTips(true);
+        const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10');
+        setTips(response.data);
+      } catch (err) {
+        console.error("Error fetching tips:", err);
+        setErrorTips("Gagal memuat tips kesehatan dari API.");
+      } finally {
+        setLoadingTips(false);
+      }
+    };
+    fetchTips();
+  }, []);
+
+  // Infinite scroll loop for tips carousel
+  useEffect(() => {
+    const container = tipsContainerRef.current;
+    if (!container || tips.length === 0) return;
+
+    const handleLoop = () => {
+      const children = container.children;
+      const firstSetLength = tips.length;
+      if (children.length <= firstSetLength) return;
+
+      const loopStartOffset = children[firstSetLength].offsetLeft - children[0].offsetLeft;
+
+      // Jika scroll sudah mencapai atau melewati set kedua, reset ke set pertama
+      if (container.scrollLeft >= loopStartOffset) {
+        container.scrollLeft -= loopStartOffset;
+      }
+    };
+    
+    container.addEventListener('scroll', handleLoop);
+    return () => container.removeEventListener('scroll', handleLoop);
+  }, [tips]);
+
+  // Auto scroll effect for tips carousel
+  useEffect(() => {
+    const container = tipsContainerRef.current;
+    if (!container || tips.length === 0) return;
+
+    const interval = setInterval(() => {
+      if (!isHoveredTips.current && container.children.length > 1) {
+        const itemWidth = container.children[1].offsetLeft - container.children[0].offsetLeft;
+        container.scrollBy({ left: itemWidth, behavior: 'smooth' });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [tips]);
 
   const doctors = [
     {
@@ -100,7 +169,8 @@ const InfoLayanan = () => {
   const filteredDoctors = doctors.filter(doc => {
     const matchDay = selectedDay === "Semua" || doc.days.includes(selectedDay);
     const matchSpecialty = selectedSpecialty === "Semua" || doc.specialty === selectedSpecialty;
-    return matchDay && matchSpecialty;
+    const matchSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchDay && matchSpecialty && matchSearch;
   });
 
   return (
@@ -111,27 +181,29 @@ const InfoLayanan = () => {
         }
       `}</style>
 
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
-            : 'bg-transparent py-5'
-          }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center gap-2 cursor-pointer">
-              <div className="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-xl">
-                <i className="fa-solid fa-stethoscope text-xl"></i>
-              </div>
-              <span className="text-2xl font-bold text-blue-900">Zeta Pet Care</span>
-            </Link>
-            <Link to="/" className="text-slate-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2">
-              <i className="fa-solid fa-arrow-left"></i> Kembali ke Beranda
-            </Link>
+      {/* Header & Navbar */}
+      <header>
+        <nav
+          className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
+              ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
+              : 'bg-transparent py-5'
+            }`}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <Link to="/" className="flex items-center gap-2 cursor-pointer">
+                <div className="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-xl">
+                  <i className="fa-solid fa-stethoscope text-xl"></i>
+                </div>
+                <span className="text-2xl font-bold text-blue-900">Zeta Pet Care</span>
+              </Link>
+              <Link to="/" className="text-slate-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2">
+                <i className="fa-solid fa-arrow-left"></i> Kembali ke Beranda
+              </Link>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       <main className="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -143,8 +215,29 @@ const InfoLayanan = () => {
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 flex flex-col sm:flex-row gap-6 justify-between items-center">
-            <div className="w-full sm:w-1/2">
+          <form 
+            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            {/* Cari Nama Dokter */}
+            <div className="w-full">
+              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-magnifying-glass text-blue-600 mr-2"></i> Cari Dokter</span>
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <i className="fa-solid fa-user-doctor text-slate-400"></i>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Cari nama dokter..." 
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all text-sm font-medium"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Filter Hari */}
+            <div className="w-full">
               <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-regular fa-calendar-days text-blue-600 mr-2"></i> Filter Hari</span>
               <div className="relative w-full">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -156,7 +249,7 @@ const InfoLayanan = () => {
                   onChange={(e) => setSelectedDay(e.target.value)}
                 >
                   {allDays.map(day => (
-                    <option key={day} value={day}>{day === todayString && day !== "Semua" ? `${day} (𝗛𝗮𝗿𝗶 𝗜𝗻𝗶)` : day}</option>
+                    <option key={day} value={day}>{day === todayString && day !== "Semua" ? `${day} (Hari Ini)` : day}</option>
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
@@ -165,8 +258,9 @@ const InfoLayanan = () => {
               </div>
             </div>
             
-            <div className="w-full sm:w-1/2 flex-shrink-0">
-              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-user-doctor text-blue-600 mr-2"></i> Spesialisasi</span>
+            {/* Spesialisasi */}
+            <div className="w-full">
+              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-stethoscope text-blue-600 mr-2"></i> Spesialisasi</span>
               <div className="relative w-full">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <i className="fa-solid fa-stethoscope text-slate-400"></i>
@@ -185,7 +279,7 @@ const InfoLayanan = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </form>
 
           {/* Doctor Cards */}
           <div className="mb-24 relative">
@@ -244,6 +338,77 @@ const InfoLayanan = () => {
                 >
                   <i className="fa-solid fa-rotate-right"></i> Reset Filter
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Tips Kesehatan Hewan (Data Integration - Axios) */}
+          <div className="border-t border-slate-200 pt-20 mb-20">
+            <div className="text-center mb-12">
+              <span className="text-blue-600 font-bold tracking-wider uppercase text-sm mb-4 block">Edukasi Peliharaan</span>
+              <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Tips Kesehatan Peliharaan</h2>
+            </div>
+
+            {loadingTips ? (
+              /* Loading Indicator */
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 animate-duration-1000"></div>
+                <p className="text-slate-500 font-medium animate-pulse">Mengambil data artikel dari API...</p>
+              </div>
+            ) : errorTips ? (
+              /* Error Alert */
+              <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl max-w-xl mx-auto text-center">
+                <i className="fa-solid fa-triangle-exclamation text-2xl mb-2 text-red-500 block"></i>
+                <p className="font-semibold">{errorTips}</p>
+              </div>
+            ) : (
+              /* Tips Carousel */
+              <div 
+                ref={tipsContainerRef}
+                onMouseEnter={() => isHoveredTips.current = true}
+                onMouseLeave={() => isHoveredTips.current = false}
+                onTouchStart={() => isHoveredTips.current = true}
+                onTouchEnd={() => isHoveredTips.current = false}
+                className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory hide-scrollbar relative" 
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {[...tips, ...tips].map((tip, idx) => {
+                  const meta = petTipsMetadata[idx % petTipsMetadata.length];
+                  return (
+                    <div 
+                      key={`${tip.id}-${idx}`} 
+                      className="w-[85vw] md:w-[calc(50%-12px)] lg:w-[calc(33.333333%-16px)] snap-start bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between flex-shrink-0"
+                    >
+                      <div>
+                        {/* Header card */}
+                        <div className="flex justify-between items-center mb-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${meta.color}`}>
+                            {meta.category}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-400">Tips #{tip.id}</span>
+                        </div>
+                        {/* Title */}
+                        <h3 className="text-lg font-bold text-slate-800 mb-3 line-clamp-2 capitalize hover:text-blue-600 transition-colors">
+                          {tip.title}
+                        </h3>
+                        {/* Body */}
+                        <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-4 text-justify">
+                          {tip.body}
+                        </p>
+                      </div>
+                      
+                      {/* Card Action footer */}
+                      <div className="border-t border-slate-50 pt-4 flex justify-between items-center text-xs text-slate-400">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <i className={`fa-solid ${meta.icon} text-blue-600`}></i> Zeta Pet Care Edu
+                        </span>
+                        <span className="hover:text-blue-600 font-bold cursor-pointer transition-colors flex items-center gap-1">
+                          Baca Selengkapnya <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

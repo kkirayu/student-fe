@@ -75,7 +75,10 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               ); 
             })} 
 
-            {/* Petlist */}
+            {/* Menu Admin Tambahan (Hardcoded) */}
+            {userRole === 'admin' && (
+              <>
+                {/* Petlist */}
             <li>
               <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetList') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
@@ -139,7 +142,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               </Link>
             </li>
 
-            {/* DoctorDasboard */}
+            {/* DoctorDashboard */}
             <li>
               <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/DoctorDasboard') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
@@ -147,7 +150,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               </Link>
             </li>
 
-            {/* Patient Medical Profile & Submenus */}
+            {/* Patient Medical Profile */}
             <li>
               <button
                 onClick={() => setReportsOpen(!reportsOpen)}
@@ -157,15 +160,11 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 Medical Record
                 <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
               </button>
-              
               <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
                 <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/PatientMedicalProfile') ? 'font-semibold text-white' : ''}`}>Pasien Profile</Link></li>
-                <li><Link to="/admin/reports/demographics" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
-                <li><Link to="/admin/reports/transactions" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
-                <li><Link to="/admin/reports/stock-mutation" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
-                
-                
-                
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
+                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
               </ul>
             </li>
 
@@ -230,7 +229,8 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     Cashier Dashboard
                   </Link>
                 </li>
-
+              </>
+            )}
           </ul>
         </div>
       </aside>

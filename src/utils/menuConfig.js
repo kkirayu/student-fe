@@ -45,5 +45,9 @@ export const roleMenus = {
     { title: 'Dashboard Kasir', path: '/cashier', icon: LayoutDashboard },
     { title: 'Antrean Pembayaran', path: '/cashier/queue', icon: Users },
     { title: 'Shift Closing', path: '/cashier/closing', icon: FileText },
+  ],
+  receptionist: [
+    { title: 'List Pasien', path: '/receptionist', icon: Users },
+    { title: 'Monitor', path: '/receptionist/queue-monitor', icon: Monitor },
   ]
 };
