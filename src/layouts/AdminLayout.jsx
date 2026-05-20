@@ -73,13 +73,13 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                   </Link>
                 </li>
               ); 
-            })} 
+            })}
 
             {/* Menu Admin Tambahan (Hardcoded) */}
             {userRole === 'admin' && (
-              <>
+              <ul className="mb-6 flex flex-col gap-1.5">
                 {/* Petlist */}
-            <li>
+                <li>
               <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetList') ? 'bg-[#333A48]' : ''}`}>
                 <Box className="h-5 w-5" />
                 Daftar Hewan Peliharaan
@@ -229,7 +229,35 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     Cashier Dashboard
                   </Link>
                 </li>
-              </>
+                {/* billingqueque */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/cashier/BillingQueue" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/BillingQueue') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    BillingQueue
+                  </Link>
+                </li>
+                {/* CheckoutPOS */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/cashier/CheckoutPOS" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/CheckoutPOS') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Checkout POS
+                  </Link>
+                </li>
+                  {/* InvoiceTemplate */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/cashier/InvoiceTemplate" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/InvoiceTemplate') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Invoice Template
+                  </Link>
+                </li>
+                  {/* ShiftClosing */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/cashier/ShiftClosing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/ShiftClosing') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Shift Closing
+                  </Link>
+                </li>
+              </ul>
             )}
           </ul>
         </div>

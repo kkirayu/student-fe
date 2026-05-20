@@ -55,6 +55,10 @@ import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
 import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
 import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
 import CashierDashboard from '../pages/pharmacy-cashier/Cashier/CashierDashboard';
+import BillingQueue from '../pages/pharmacy-cashier/Cashier/BillingQueue';
+import CheckoutPOS from '../pages/pharmacy-cashier/Cashier/CheckoutPOS';
+import InvoiceTemplate from '../pages/pharmacy-cashier/Cashier/InvoiceTemplate';
+import ShiftClosing from '../pages/pharmacy-cashier/Cashier/ShiftClosing';
 
 // Modul Resepsionis
 import ReceptionistDashboard from '../pages/receptionist/Dashboard';
@@ -144,6 +148,13 @@ const AppRouter = () => {
 
           {/* Cashier Dashboard */}
           <Route path="pharmacy-cashier/cashier/CashierDashboard" element={<CashierDashboard />} />
+
+          {/*billing Queque */}
+          <Route path="pharmacy-cashier/cashier/BillingQueue" element={<BillingQueue />} />
+
+          <Route path="pharmacy-cashier/cashier/CheckoutPOS" element={<CheckoutPOS />} />
+          <Route path="pharmacy-cashier/cashier/InvoiceTemplate" element={<InvoiceTemplate />} />
+          <Route path="pharmacy-cashier/cashier/ShiftClosing" element={<ShiftClosing />} />
 
         </Route> {/* Ini adalah penutup yang benar untuk <Route path="/admin"> */}
 
