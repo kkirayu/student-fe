@@ -52,6 +52,7 @@ import ProductCatalog from '../pages/pharmacy-cashier/Inventory/ProductCatalog';
 import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
 import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
 import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
+import CashierDashboard from '../pages/pharmacy-cashier/Cashier/CashierDashboard';
 
 const AppRouter = () => {
   return (
@@ -133,6 +134,9 @@ const AppRouter = () => {
           {/* Supplier List */}
           <Route path="pharmacy-cashier/supplier/SupplierList" element={<SupplierList />} />
 
+          {/* Cashier Dashboard */}
+          <Route path="pharmacy-cashier/cashier/CashierDashboard" element={<CashierDashboard />} />
+
         </Route> {/* Ini adalah penutup yang benar untuk <Route path="/admin"> */}
 
         {/* ================= 3. RUTE DOKTER ================= */}
@@ -161,6 +165,9 @@ const AppRouter = () => {
 
           {/* Supplier List */}
           <Route path="pharmacy-cashier/supplier/SupplierList" element={<SupplierList />} />
+
+          {/* Cashier Dashboard */}
+          <Route path="pharmacy-cashier/cashier/CashierDashboard" element={<CashierDashboard />} />
         </Route>
 
         {/* ================= HALAMAN 404 ================= */}

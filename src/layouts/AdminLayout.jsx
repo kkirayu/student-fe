@@ -223,6 +223,13 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     Supplier List
                   </Link>
                 </li>
+                {/* Cashier Dashboard */}
+                <li>
+                  <Link to="/admin/pharmacy-cashier/cashier/CashierDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/CashierDashboard') ? 'bg-[#333A48]' : ''}`}>
+                    <Box className="h-5 w-5" />
+                    Cashier Dashboard
+                  </Link>
+                </li>
 
           </ul>
         </div>
