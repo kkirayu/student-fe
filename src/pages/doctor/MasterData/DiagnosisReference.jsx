@@ -20,7 +20,7 @@ const DiagnosisReferenceList = () => {
         
         {/* Tombol Tambah Staf (Mengarah ke Fitur 3) */}
         <Link 
-          to="/doctor/DiagnosisReferenceList/add" 
+          to="/admin/DiagnosisReferenceList/add" 
           className="inline-flex items-center justify-center gap-2 rounded bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90 transition-all"
         >
           <Plus className="h-4 w-4" />
@@ -72,7 +72,7 @@ const DiagnosisReferenceList = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3">
                       {/* Tombol Edit (Mengarah ke Fitur 3) */}
-                      <Link to={`/doctor/DiagnosisReferenceList/edit/${DiagnosisReferenceList.id}`} className="text-blue-600 hover:text-blue-800 transition-colors" title="Edit Data">
+                      <Link to={`/admin/DiagnosisReferenceList/edit/${DiagnosisReferenceList.id}`} className="text-blue-600 hover:text-blue-800 transition-colors" title="Edit Data">
                         <Edit className="h-5 w-5" />
                       </Link>
                       {/* Tombol Hapus */}

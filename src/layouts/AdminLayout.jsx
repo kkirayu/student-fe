@@ -1,29 +1,20 @@
-// eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Box, Search, ChevronDown, BarChart3 } from 'lucide-react'; 
+import { Menu, X, Box, Search } from 'lucide-react'; 
 
-// Pastikan file ini sudah kamu buat sesuai instruksi sebelumnya
 import { roleMenus } from '../utils/menuConfig'; 
 
 const AdminLayout = ({ userRole = 'admin' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false); 
   const location = useLocation();
 
-  // Fungsi untuk mengecek menu aktif
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
   
-  // Variable to check if current path is a report/medical profile
-  const isReportsPath = isActive('/admin/PatientMedicalProfile') || isActive('/admin/reports') || isActive('/admin/pharmacy-cashier');
-
-  // Mengambil daftar menu sesuai role yang sedang login
   const currentMenus = roleMenus[userRole] || [];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
       
-      {/* ================== OVERLAY MOBILE ================== */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" 
@@ -31,7 +22,6 @@ const AdminLayout = ({ userRole = 'admin' }) => {
         ></div>
       )}
 
-      {/* ================== SIDEBAR DINAMIS ================== */}
       <aside 
         className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#1C2434] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -56,7 +46,6 @@ const AdminLayout = ({ userRole = 'admin' }) => {
           <h3 className="mb-4 ml-4 text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">MENU UTAMA</h3>
           <ul className="mb-6 flex flex-col gap-1.5">
             
-            {/* Menu List yang di-Render Otomatis */}
             {currentMenus.map((menu, index) => {
               const Icon = menu.icon;
               const isMenuSelected = isActive(menu.path);
@@ -75,191 +64,6 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 </li>
               ); 
             })}
-
-            {/* Menu Admin Tambahan (Hardcoded) */}
-            {userRole === 'admin' && (
-              <ul className="mb-6 flex flex-col gap-1.5">
-                {/* Petlist */}
-                <li>
-              <Link to="/admin/PetList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetList') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Daftar Hewan Peliharaan
-              </Link>
-            </li>
-
-            {/* AppointmentForm */}
-            <li>
-              <Link to="/admin/AppointmentForm" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/AppointmentForm') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Appointment Form
-              </Link>
-            </li>
-
-            {/* Appointment History */}
-            <li>
-              <Link to="/admin/AppointmentHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/AppointmentHistory') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Appointment History
-              </Link>
-            </li>
-
-            {/* Billing */}
-            <li>
-              <Link to="/admin/Billing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/Billing') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Billing
-              </Link>
-            </li>
-
-            {/* QueueTicket */}
-            <li>
-              <Link to="/admin/QueueTicket" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/QueueTicket') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Queue Ticket
-              </Link>
-            </li>
-
-            {/* PetDetail */}
-            <li>
-              <Link to="/admin/PetDetail" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/PetDetail') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Pet Detail
-              </Link>
-            </li>
-
-            {/* DiagnosisReferenceList */}
-            <li>
-              <Link to="/admin/DiagnosisReferenceList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/DiagnosisReferenceList') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Diagnosis Reference
-              </Link>
-            </li>
-
-            {/* LabResultUpload */}
-            <li>
-              <Link to="/admin/LabResultUpload" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/LabResultUpload') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Lab Result Upload
-              </Link>
-            </li>
-
-            {/* DoctorDashboard */}
-            <li>
-              <Link to="/admin/DoctorDasboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/DoctorDasboard') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Doctor Dashboard
-              </Link>
-            </li>
-
-            {/* Patient Medical Profile */}
-            <li>
-              <button
-                onClick={() => setReportsOpen(!reportsOpen)}
-                className={`flex w-full items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isReportsPath ? 'bg-[#333A48]' : ''}`}
-              >
-                <BarChart3 className="h-5 w-5" />
-                Medical Record
-                <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${reportsOpen || isReportsPath ? 'rotate-180' : ''}`} />
-              </button>
-              <ul className={`mt-2 flex flex-col gap-1.5 pl-9 ${(reportsOpen || isReportsPath) ? 'block' : 'hidden'}`}>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/PatientMedicalProfile') ? 'font-semibold text-white' : ''}`}>Pasien Profile</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/demographics') ? 'font-semibold text-white' : ''}`}>Demografi Pasien</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/transactions') ? 'font-semibold text-white' : ''}`}>Log Transaksi</Link></li>
-                <li><Link to="/admin/PatientMedicalProfile" className={`text-sm text-[#8A99AF] transition-colors hover:text-white ${isActive('/admin/reports/stock-mutation') ? 'font-semibold text-white' : ''}`}>Mutasi Stok</Link></li>
-              </ul>
-            </li>
-
-            {/* OwnerDashboard */}
-            <li>
-              <Link to="/admin/OwnerDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/OwnerDashboard') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Owner Dashboard
-              </Link>
-            </li>
-
-            {/* MedicalHistory */}
-            <li>
-              <Link to="/admin/MedicalHistory" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/MedicalHistory') ? 'bg-[#333A48]' : ''}`}>
-                <Box className="h-5 w-5" />
-                Medical History
-              </Link>
-            </li>
-
-            <li>
-                {/* Pharmacy Cashier */}
-                  <Link to="/admin/pharmacy-cashier" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Pharmacy Cashier
-                  </Link>
-                </li>
-
-                {/* Product Catalog */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/inventory/ProductCatalog" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/ProductCatalog') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Product Catalog
-                  </Link>
-                </li>
-
-                {/* Restock Form */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/inventory/FormRestockBarang" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/FormRestockBarang') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Restock Form
-                  </Link>
-                </li>
-
-                {/* Stock Monitoring */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/inventory/StockMonitoring" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/inventory/StockMonitoring') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Stock Monitoring
-                  </Link>
-                </li>
-                  {/* Supplier List */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/supplier/SupplierList" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/supplier/SupplierList') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Supplier List
-                  </Link>
-                </li>
-                {/* Cashier Dashboard */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/cashier/CashierDashboard" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/CashierDashboard') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Cashier Dashboard
-                  </Link>
-                </li>
-                {/* billingqueque */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/cashier/BillingQueue" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/BillingQueue') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    BillingQueue
-                  </Link>
-                </li>
-                {/* CheckoutPOS */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/cashier/CheckoutPOS" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/CheckoutPOS') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Checkout POS
-                  </Link>
-                </li>
-                  {/* InvoiceTemplate */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/cashier/InvoiceTemplate" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/InvoiceTemplate') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Invoice Template
-                  </Link>
-                </li>
-                  {/* ShiftClosing */}
-                <li>
-                  <Link to="/admin/pharmacy-cashier/cashier/ShiftClosing" className={`flex items-center gap-2.5 rounded-sm px-4 py-2.5 font-medium text-[#DEE4EE] transition-all hover:bg-[#333A48] ${isActive('/admin/pharmacy-cashier/cashier/ShiftClosing') ? 'bg-[#333A48]' : ''}`}>
-                    <Box className="h-5 w-5" />
-                    Shift Closing
-                  </Link>
-                </li>
-              </ul>
-            )}
           </ul>
         </div>
       </aside>
@@ -267,12 +71,11 @@ const AdminLayout = ({ userRole = 'admin' }) => {
       {/* ================== MAIN AREA ================== */}
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         
-        {/* Header Lengkap */}
+        {/* Header */}
         <header className="sticky top-0 z-40 flex w-full border-b border-slate-200 bg-white shadow-sm">
           <div className="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
             
             <div className="flex items-center gap-4">
-              {/* Tombol Hamburger untuk Mobile */}
               <button 
                 onClick={() => setSidebarOpen(!sidebarOpen)} 
                 className="flex items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 shadow-sm lg:hidden"
@@ -280,7 +83,6 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 <Menu className="h-5 w-5 text-black" />
               </button>
               
-              {/* Search Bar */}
               <div className="hidden sm:block">
                 <div className="relative">
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">
@@ -295,7 +97,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               </div>
             </div>
 
-            {/* Profil User & Indikator Role */}
+            {/* Profil User */}
             <div className="flex items-center gap-4">
               <div className="hidden rounded bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-600 sm:block">
                 Role: {userRole}
@@ -303,7 +105,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
                 <div className="hidden text-right lg:block">
                   <p className="text-sm font-bold leading-tight text-black">Muhammad Danil</p>
-                  <p className="text-xs font-medium text-slate-500">Quality Assurance</p>
+                  <p className="text-xs font-medium text-slate-500 capitalize">{userRole}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5">
                   <img src="https://ui-avatars.com/api/?name=Muhammad+Danil&background=3b82f6&color=fff&bold=true" alt="User" className="h-full w-full rounded-full" />
