@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  User, 
-  PawPrint, 
-  Stethoscope, 
-  Save, 
+import {
+  ArrowLeft,
+  User,
+  PawPrint,
+  Stethoscope,
+  Save,
   Calendar,
   Info,
   ChevronRight
@@ -14,17 +14,15 @@ import {
 const WalkInRegistration = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    petName: '',
-    species: '',
-    breed: '',
-    gender: 'Jantan',
-    weight: '',
-    birthDate: '',
     ownerName: '',
     ownerPhone: '',
     ownerAddress: '',
-    doctor: '',
-    complaint: ''
+    petName: '',
+    species: '',
+    service_id: '',
+    schedule_date: '',
+    schedule_time: '',
+    initial_complaint: ''
   });
 
   const handleChange = (e) => {
@@ -35,16 +33,15 @@ const WalkInRegistration = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form Submitted:', formData);
-    // Logic simpan data di sini
     alert('Pendaftaran Berhasil!');
     navigate('/receptionist');
   };
 
   return (
     <div className="space-y-6 pb-10">
-      {/* 1. Header & Back Action */}
+      {/*  Header */}
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => navigate('/receptionist')}
           className="flex h-10 w-10 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50"
         >
@@ -61,10 +58,9 @@ const WalkInRegistration = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* LEFT COLUMN: Patient & Owner Info */}
         <div className="space-y-6 lg:col-span-8">
-          
-          {/* Section: Data Hewan (Pet) */}
+
+          {/* Data Hewan */}
           <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
@@ -72,23 +68,23 @@ const WalkInRegistration = () => {
               </div>
               <h3 className="text-lg font-bold text-slate-800">Informasi Hewan Peliharaan</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nama Hewan <span className="text-red-500">*</span></label>
-                <input 
+                <input
                   required
-                  type="text" 
+                  type="text"
                   name="petName"
                   value={formData.petName}
                   onChange={handleChange}
                   placeholder="Contoh: Milo"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Jenis Hewan <span className="text-red-500">*</span></label>
-                <select 
+                <select
                   required
                   name="species"
                   value={formData.species}
@@ -103,47 +99,10 @@ const WalkInRegistration = () => {
                   <option value="Lainnya">Lainnya</option>
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Ras / Breed</label>
-                <input 
-                  type="text" 
-                  name="breed"
-                  value={formData.breed}
-                  onChange={handleChange}
-                  placeholder="Contoh: Persian"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500" 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Jenis Kelamin</label>
-                  <select 
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
-                  >
-                    <option value="Jantan">Jantan</option>
-                    <option value="Betina">Betina</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Berat (Kg)</label>
-                  <input 
-                    type="number" 
-                    step="0.1"
-                    name="weight"
-                    value={formData.weight}
-                    onChange={handleChange}
-                    placeholder="0.0"
-                    className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500" 
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Section: Data Pemilik (Owner) */}
+          {/* Data Pemilik */}
           <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-orange-600">
@@ -151,35 +110,35 @@ const WalkInRegistration = () => {
               </div>
               <h3 className="text-lg font-bold text-slate-800">Informasi Pemilik</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nama Pemilik <span className="text-red-500">*</span></label>
-                <input 
+                <input
                   required
-                  type="text" 
+                  type="text"
                   name="ownerName"
                   value={formData.ownerName}
                   onChange={handleChange}
                   placeholder="Nama lengkap"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500" 
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nomor Telepon <span className="text-red-500">*</span></label>
-                <input 
+                <input
                   required
-                  type="tel" 
+                  type="tel"
                   name="ownerPhone"
                   value={formData.ownerPhone}
                   onChange={handleChange}
                   placeholder="0812xxxx"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500" 
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
                 />
               </div>
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Alamat</label>
-                <textarea 
+                <textarea
                   rows="2"
                   name="ownerAddress"
                   value={formData.ownerAddress}
@@ -192,10 +151,9 @@ const WalkInRegistration = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Clinical Info & Action */}
         <div className="space-y-6 lg:col-span-4">
-          
-          {/* Section: Visit Details */}
+
+          {/* Visit Details */}
           <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-50 text-purple-600">
@@ -203,36 +161,57 @@ const WalkInRegistration = () => {
               </div>
               <h3 className="text-lg font-bold text-slate-800">Detail Kunjungan</h3>
             </div>
-            
+
             <div className="space-y-4 p-6">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Pilih Dokter <span className="text-red-500">*</span></label>
-                <select 
+                <label className="text-sm font-semibold text-slate-700">Layanan <span className="text-red-500">*</span></label>
+                <select
+                  name="service_id" value={formData.service_id} onChange={handleChange}
+                  className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   required
-                  name="doctor"
-                  value={formData.doctor}
-                  onChange={handleChange}
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
                 >
-                  <option value="">Pilih Dokter</option>
-                  <option value="Drh. Anisa">Drh. Anisa (Umum)</option>
-                  <option value="Drh. Bima">Drh. Bima (Bedah)</option>
-                  <option value="Drh. Cita">Drh. Cita (Internis)</option>
+                  <option value="" disabled>Pilih layanan</option>
+                  <option value="1">Grooming Kucing</option>
+                  <option value="2">Grooming Anjing</option>
+                  <option value="3">Vaksinasi</option>
+                  <option value="4">Penitipan Hewan</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Keluhan / Gejala <span className="text-red-500">*</span></label>
-                <textarea 
+                <label className="text-sm font-semibold text-slate-700">Tanggal Jadwal <span className="text-red-500">*</span></label>
+                <input
+                  type="date" name="schedule_date" value={formData.schedule_date} onChange={handleChange}
+                  className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Waktu Jadwal <span className="text-red-500">*</span></label>
+                <select
+                  name="schedule_time" value={formData.schedule_time} onChange={handleChange}
+                  className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  required
+                >
+                  <option value="" disabled>Pilih Waktu</option>
+                  <option value="1">10.00 - 11.30</option>
+                  <option value="2">13.00 - 14.30</option>
+                  <option value="3">15.00 - 16.30</option>
+                  <option value="4">19.00 - 20.30</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Keluhan Awal / Catatan <span className="text-red-500">*</span></label>
+                <textarea
                   required
                   rows="4"
-                  name="complaint"
-                  value={formData.complaint}
+                  name="initial_complaint"
+                  value={formData.initial_complaint}
                   onChange={handleChange}
-                  placeholder="Jelaskan keluhan hewan..."
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                  placeholder="Contoh: Kucing saya muntah-muntah sejak pagi..."
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 ></textarea>
               </div>
-              
+
               <div className="rounded-sm bg-blue-50 p-4">
                 <div className="flex gap-3">
                   <Info className="h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -246,14 +225,14 @@ const WalkInRegistration = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
-            <button 
+            <button
               type="submit"
               className="flex w-full items-center justify-center gap-2 rounded-sm bg-blue-600 px-6 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-[0.98]"
             >
               <Save className="h-5 w-5" />
               Simpan & Cetak Antrian
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => navigate('/receptionist')}
               className="w-full rounded-sm border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition-all hover:bg-slate-50"

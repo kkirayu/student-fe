@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Popup from '../../components/Popup';
@@ -49,7 +50,7 @@ const OTPVerification = () => {
       });
       return;
     }
-    
+
     console.log('OTP Verified:', otpCode);
     setPopup({
       isOpen: true,
@@ -58,7 +59,7 @@ const OTPVerification = () => {
       message: 'Kode OTP valid. Mengalihkan ke Dashboard Owner.',
       onConfirm: () => {
         setPopup((prev) => ({ ...prev, isOpen: false }));
-        navigate('/owner/Dashboard');
+        navigate('/admin/OwnerDashboard');
       }
     });
   };
@@ -69,8 +70,8 @@ const OTPVerification = () => {
       {/* Navbar */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
-            : 'bg-transparent py-5'
+          ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
+          : 'bg-transparent py-5'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,9 +99,9 @@ const OTPVerification = () => {
 
           <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-32 h-32 bg-blue-50 rounded-br-full -z-10"></div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
-              
+
               <div className="flex justify-center gap-2 sm:gap-4">
                 {otp.map((digit, index) => (
                   <input
@@ -117,8 +118,8 @@ const OTPVerification = () => {
               </div>
 
               <div className="pt-2">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={otp.join('').length < 6}
                   className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none"
                 >
@@ -138,7 +139,7 @@ const OTPVerification = () => {
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
 
-      <Popup 
+      <Popup
         isOpen={popup.isOpen}
         type={popup.type}
         title={popup.title}

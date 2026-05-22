@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Popup from '../../components/Popup';
@@ -146,7 +147,7 @@ const ForgotPassword = () => {
               </div>
             )}
 
-            {/* Step 1: Input Email */}
+            {/* Input Email */}
             {step === 1 && (
               <form onSubmit={handleEmailSubmit} className="space-y-6 relative z-10">
                 <div>
@@ -173,7 +174,7 @@ const ForgotPassword = () => {
               </form>
             )}
 
-            {/* Step 2: Input Code */}
+            {/* Input Code */}
             {step === 2 && (
               <form onSubmit={handleCodeSubmit} className="space-y-6 relative z-10">
                 <div>
@@ -208,7 +209,7 @@ const ForgotPassword = () => {
               </form>
             )}
 
-            {/* Step 3: Input New Password */}
+            {/* Input New Password */}
             {step === 3 && (
               <form onSubmit={handlePasswordSubmit} className="space-y-6 relative z-10">
                 <div>

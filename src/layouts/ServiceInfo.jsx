@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -60,7 +61,6 @@ const InfoLayanan = () => {
     fetchTips();
   }, []);
 
-  // Infinite scroll loop for tips carousel
   useEffect(() => {
     const container = tipsContainerRef.current;
     if (!container || tips.length === 0) return;
@@ -72,7 +72,6 @@ const InfoLayanan = () => {
 
       const loopStartOffset = children[firstSetLength].offsetLeft - children[0].offsetLeft;
 
-      // Jika scroll sudah mencapai atau melewati set kedua, reset ke set pertama
       if (container.scrollLeft >= loopStartOffset) {
         container.scrollLeft -= loopStartOffset;
       }
@@ -82,7 +81,6 @@ const InfoLayanan = () => {
     return () => container.removeEventListener('scroll', handleLoop);
   }, [tips]);
 
-  // Auto scroll effect for tips carousel
   useEffect(() => {
     const container = tipsContainerRef.current;
     if (!container || tips.length === 0) return;
@@ -181,7 +179,7 @@ const InfoLayanan = () => {
         }
       `}</style>
 
-      {/* Header & Navbar */}
+      {/* Navbar */}
       <header>
         <nav
           className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
@@ -258,7 +256,7 @@ const InfoLayanan = () => {
               </div>
             </div>
             
-            {/* Spesialisasi */}
+            {/* Filter Spesialisasi */}
             <div className="w-full">
               <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-stethoscope text-blue-600 mr-2"></i> Spesialisasi</span>
               <div className="relative w-full">
@@ -342,7 +340,7 @@ const InfoLayanan = () => {
             )}
           </div>
 
-          {/* Section: Tips Kesehatan Hewan (Data Integration - Axios) */}
+          {/* Tips Kesehatan Hewan */}
           <div className="border-t border-slate-200 pt-20 mb-20">
             <div className="text-center mb-12">
               <span className="text-blue-600 font-bold tracking-wider uppercase text-sm mb-4 block">Edukasi Peliharaan</span>
@@ -350,19 +348,16 @@ const InfoLayanan = () => {
             </div>
 
             {loadingTips ? (
-              /* Loading Indicator */
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 animate-duration-1000"></div>
                 <p className="text-slate-500 font-medium animate-pulse">Mengambil data artikel dari API...</p>
               </div>
             ) : errorTips ? (
-              /* Error Alert */
               <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl max-w-xl mx-auto text-center">
                 <i className="fa-solid fa-triangle-exclamation text-2xl mb-2 text-red-500 block"></i>
                 <p className="font-semibold">{errorTips}</p>
               </div>
             ) : (
-              /* Tips Carousel */
               <div 
                 ref={tipsContainerRef}
                 onMouseEnter={() => isHoveredTips.current = true}
@@ -387,17 +382,14 @@ const InfoLayanan = () => {
                           </span>
                           <span className="text-xs font-semibold text-slate-400">Tips #{tip.id}</span>
                         </div>
-                        {/* Title */}
                         <h3 className="text-lg font-bold text-slate-800 mb-3 line-clamp-2 capitalize hover:text-blue-600 transition-colors">
                           {tip.title}
                         </h3>
-                        {/* Body */}
                         <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-4 text-justify">
                           {tip.body}
                         </p>
                       </div>
                       
-                      {/* Card Action footer */}
                       <div className="border-t border-slate-50 pt-4 flex justify-between items-center text-xs text-slate-400">
                         <span className="flex items-center gap-1.5 font-medium">
                           <i className={`fa-solid ${meta.icon} text-blue-600`}></i> Zeta Pet Care Edu

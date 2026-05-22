@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -7,7 +8,6 @@ import {
   Activity, 
   Search, 
   Filter, 
-  MonitorPlay, 
   Plus 
 } from 'lucide-react';
 
@@ -15,7 +15,6 @@ const ReceptionistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
 
-  // Dummy stats data
   const stats = [
     {
       title: 'Total Antrian Hari Ini',
@@ -43,7 +42,6 @@ const ReceptionistDashboard = () => {
     },
   ];
 
-  // Dummy patient queue data
   const queueData = [
     {
       id: 'Q-001',
@@ -115,7 +113,7 @@ const ReceptionistDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header & Actions */}
+      {/* Header & Actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Dashboard Resepsionis</h1>
@@ -132,7 +130,7 @@ const ReceptionistDashboard = () => {
         </div>
       </div>
 
-      {/* 2. Stat Cards Grid */}
+      {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat, index) => (
           <div key={index} className="flex flex-col rounded-sm border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
@@ -149,7 +147,7 @@ const ReceptionistDashboard = () => {
         ))}
       </div>
 
-      {/* 3. Pasien List & Filters */}
+      {/* Pasien List & Filters */}
       <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

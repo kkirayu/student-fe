@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -6,7 +7,7 @@ const Feedback = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    type: 'Pujian', // Pujian, Keluhan, Saran
+    type: 'Pujian', 
     message: ''
   });
 
@@ -20,7 +21,6 @@ const Feedback = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate submit
     alert('Terima kasih atas umpan balik Anda!');
     setFormData({ name: '', phone: '', type: 'Pujian', message: '' });
   };
@@ -137,7 +137,7 @@ const Feedback = () => {
         </div>
       </main>
 
-      {/* Simple Footer */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Menu, X, Box, Search, ChevronDown, BarChart3 } from 'lucide-react'; 

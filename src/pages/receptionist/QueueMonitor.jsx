@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Volume2, Clock, Calendar, Heart, ArrowRight } from 'lucide-react';
 import catImage from '../../assets/animals/cat.webp';
@@ -21,7 +22,6 @@ const QueueMonitor = () => {
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  // Data dummy untuk display antrian
   const currentCall = {
     id: 'Q-005',
     petName: 'Milo',
@@ -42,7 +42,7 @@ const QueueMonitor = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col overflow-hidden">
       
-      {/* Header - Glassmorphism style */}
+      {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm px-8 py-4 flex items-center justify-between z-10 relative">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-tr from-blue-600 to-teal-400 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
@@ -68,19 +68,18 @@ const QueueMonitor = () => {
         </div>
       </header>
 
-      {/* Main Content Layout */}
+      {/* Main Content */}
       <main className="flex-1 flex p-8 gap-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative">
-        {/* Background Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
           <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[50%] bg-blue-300/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[60%] bg-teal-300/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Left Section: Current Call (Sedang Dipanggil) */}
+        {/* Current Call */}
         <section className="flex-[3] flex flex-col">
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/50 shadow-2xl overflow-hidden flex flex-col h-full relative group transition-all duration-500">
             
-            {/* Header Current Call */}
+            {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 flex items-center justify-between text-white">
               <h2 className="text-3xl font-bold tracking-wide flex items-center gap-3">
                 <Volume2 className="h-8 w-8 animate-pulse" />
@@ -91,19 +90,16 @@ const QueueMonitor = () => {
               </span>
             </div>
 
-            {/* Content Current Call */}
+            {/* Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-10 text-center relative z-10">
               
-              {/* Nomor Antrian Super Besar */}
               <div className="mb-8">
                 <div className="inline-block bg-blue-100 text-blue-800 px-16 py-6 rounded-[2rem] text-8xl font-black tracking-widest border-4 border-blue-200 shadow-2xl">
                   {currentCall.id}
                 </div>
               </div>
 
-              {/* Foto Pet & Nama (Rata Tengah) */}
               <div className="flex flex-col items-center justify-center gap-6 mb-10 w-full px-8">
-                {/* Foto Profil Anabul */}
                 <img 
                   src={currentCall.image} 
                   alt={currentCall.petName} 
@@ -135,16 +131,14 @@ const QueueMonitor = () => {
               </div>
             </div>
 
-            {/* Decorative abstract shapes for the card */}
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-gradient-to-br from-blue-100 to-transparent rounded-full opacity-50"></div>
             <div className="absolute -top-12 -left-12 w-32 h-32 bg-gradient-to-br from-teal-100 to-transparent rounded-full opacity-50"></div>
           </div>
         </section>
 
-        {/* Right Section: Next in Queue & Info */}
+        {/* Next in Queue & Info */}
         <section className="flex-[2] flex flex-col gap-6">
           
-          {/* Antrian Selanjutnya */}
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl overflow-hidden flex-1 flex flex-col">
             <div className="bg-slate-800 p-5 flex items-center gap-3 text-white">
               <Clock className="h-6 w-6 text-teal-400" />
@@ -157,12 +151,10 @@ const QueueMonitor = () => {
                   key={index} 
                   className="bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-md flex items-center gap-6 transition-transform hover:-translate-y-1"
                 >
-                  {/* Nomor Antrian (Sedang) */}
                   <div className="bg-slate-100 text-slate-800 w-24 h-24 flex items-center justify-center rounded-2xl font-black text-4xl shadow-inner">
                     {item.id.split('-')[1]}
                   </div>
                   
-                  {/* Foto Pet (Kecil) */}
                   <img 
                     src={item.image} 
                     alt={item.petName} 
@@ -189,9 +181,8 @@ const QueueMonitor = () => {
             </div>
           </div>
 
-          {/* Info / Tips Pet Care Box */}
+          {/* Info */}
           <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden h-48 flex items-center">
-            {/* Decors */}
             <div className="absolute right-0 top-0 opacity-10">
               <Heart className="h-48 w-48 -mr-10 -mt-10" fill="currentColor" />
             </div>
