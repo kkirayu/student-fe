@@ -1,151 +1,139 @@
-import React, { useState } from 'react';
-import { Search, Eye, Edit, Trash2, Calendar, Clock, CheckCircle, Timer, X, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Clock, CheckCircle, Search, Loader2 } from 'lucide-react';
 
 const WaitingList = () => {
-  // Data antrian dengan tambahan field status
-  const [waitingData, setWaitingData] = useState([
-    {
-      id: 1,
-      queue_number: 'A001',
-      pet_name: 'Luna',
-      species: 'Kucing',
-      owner_name: 'Siti Aminah',
-      service: 'Konsultasi Medis (SOAP)',
-      date: '2024-05-16',
-      time: '09:00',
-      status: 'Antrian'
-    },
-    {
-      id: 2,
-      queue_number: 'A002',
-      pet_name: 'Bruno',
-      species: 'Anjing',
-      owner_name: 'Budi Santoso',
-      service: 'Vaksinasi',
-      date: '2024-05-16',
-      time: '10:30',
-      status: 'Antrian'
-    }
-  ]);
+  const [patients, setPatients] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // State untuk melacak baris mana yang sedang diedit
-  const [editingId, setEditingId] = useState(null);
-  const [tempStatus, setTempStatus] = useState('');
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await fetch('https://dummyjson.com/users?limit=8');
+        const data = await response.json();
 
-  // Handler untuk mulai edit
-  const handleEditClick = (id, currentStatus) => {
-    setEditingId(id);
-    setTempStatus(currentStatus);
-  };
+        const petNames = ['Milo', 'Luna', 'Kuro', 'Bella', 'Simba', 'Chloe', 'Max', 'Oreo'];
+        const petTypes = ['Kucing', 'Anjing', 'Kucing', 'Hamster', 'Anjing', 'Kelinci', 'Burung', 'Kucing'];
+        
+        const mappedPatients = data.users.map((user, index) => ({
+          id: user.id,
+          ownerName: `${user.firstName} ${user.lastName}`,
+          petName: petNames[index],
+          petType: petTypes[index],
+          status: index < 2 ? 'Sedang Diperiksa' : 'Menunggu',
+          time: `0${9 + index}:00 AM`, // Waktu simulasi
+          image: user.image
+        }));
 
-  // Handler untuk simpan perubahan status
-  const handleSaveStatus = (id) => {
-    setWaitingData(prevData =>
-      prevData.map(item =>
-        item.id === id ? { ...item, status: tempStatus } : item
-      )
-    );
-    setEditingId(null);
-  };
+        setPatients(mappedPatients);
+      } catch (error) {
+        console.error("Gagal mengambil data dari API:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
+  const filteredPatients = patients.filter(p => 
+    p.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.petName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Daftar Antrian (Waiting List)</h1>
-        <p className="text-sm text-slate-500">Kelola status kedatangan dan pemeriksaan pasien.</p>
+    <div className="flex flex-col gap-6">
+      {/* Header Info */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Antrean Pasien</h2>
+          <p className="text-sm text-slate-500">Daftar hewan peliharaan yang menunggu pemeriksaan hari ini.</p>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <Search className="h-4 w-4" />
+          </span>
+          <input 
+            type="text" 
+            placeholder="Cari pasien atau owner..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-md border border-slate-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-64"
+          />
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm">
+      {/* Tabel Data */}
+      <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">No. Antrian</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">Pasien & Pemilik</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">Service</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">Jadwal</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">Status</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold uppercase text-slate-500">Aksi</th>
+                <th className="px-6 py-4 font-medium">No. Antrean</th>
+                <th className="px-6 py-4 font-medium">Informasi Pasien</th>
+                <th className="px-6 py-4 font-medium">Pemilik (Owner)</th>
+                <th className="px-6 py-4 font-medium">Waktu</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {waitingData.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="font-bold text-blue-700">{item.queue_number}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-800">{item.pet_name}</div>
-                    <div className="text-xs text-slate-500">Pemilik: {item.owner_name}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{item.service}</td>
-                  <td className="px-6 py-4">
-                    <div className="text-xs text-slate-600">
-                      <div className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {item.date}</div>
-                      <div className="flex items-center gap-1 mt-1"><Clock className="h-3 w-3" /> {item.time}</div>
-                    </div>
-                  </td>
-                  
-                  {/* Kolom Status */}
-                  <td className="px-6 py-4">
-                    {editingId === item.id ? (
-                      <select 
-                        value={tempStatus}
-                        onChange={(e) => setTempStatus(e.target.value)}
-                        className="rounded border border-blue-400 bg-white py-1 px-2 text-xs outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="Antrian">Antrian</option>
-                        <option value="Selesai">Selesai</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        item.status === 'Selesai' 
-                          ? 'bg-emerald-100 text-emerald-700' 
-                          : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {item.status === 'Selesai' ? <CheckCircle className="h-3 w-3" /> : <Timer className="h-3 w-3" />}
-                        {item.status}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Kolom Aksi dengan Logika Edit */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      {editingId === item.id ? (
-                        <>
-                          <button 
-                            onClick={() => handleSaveStatus(item.id)}
-                            className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50"
-                            title="Simpan"
-                          >
-                            <Save className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => setEditingId(null)}
-                            className="rounded p-1.5 text-red-600 hover:bg-red-50"
-                            title="Batal"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="p-1.5 text-slate-400 hover:text-blue-600"><Eye className="h-4 w-4" /></button>
-                          <button 
-                            onClick={() => handleEditClick(item.id, item.status)}
-                            className="p-1.5 text-slate-400 hover:text-amber-600"
-                            title="Ubah Status"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button className="p-1.5 text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
-                        </>
-                      )}
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="6" className="py-10 text-center">
+                    <div className="flex flex-col items-center justify-center text-blue-500">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="mt-2 text-sm text-slate-500">Memuat data API...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : filteredPatients.length > 0 ? (
+                filteredPatients.map((patient, index) => (
+                  <tr key={patient.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-800">
+                      #{String(index + 1).padStart(3, '0')}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-slate-800">{patient.petName}</div>
+                      <div className="text-xs text-slate-500">{patient.petType}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img src={patient.image} alt="owner" className="h-8 w-8 rounded-full bg-slate-200" />
+                        <span className="font-medium">{patient.ownerName}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-slate-500">
+                        <Clock className="h-4 w-4" />
+                        <span>{patient.time}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                        patient.status === 'Sedang Diperiksa' 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {patient.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors">
+                        Mulai Periksa
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-6 text-center text-slate-500">
+                    Tidak ada antrean pasien yang ditemukan.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -1,4 +1,3 @@
-// src/utils/menuConfig.js
 import { 
   LayoutDashboard, 
   Users, 
@@ -8,7 +7,12 @@ import {
   Activity, 
   Pill, 
   Monitor,
-  History 
+  History,
+  ClipboardList,
+  FileSpreadsheet,
+  FileCheck,
+  ShieldAlert,
+  Syringe
 } from 'lucide-react';
 
 export const roleMenus = {
@@ -20,19 +24,21 @@ export const roleMenus = {
     { title: 'Pengaturan', path: '/admin/settings', icon: Monitor },
   ],
   doctor: [
+    { title: 'Dashboard', path: '/doctor', icon: LayoutDashboard },
+    { title: 'Antrean Pasien', path: '/doctor/waiting-list', icon: Users },
+    { title: 'Catatan SOAP', path: '/doctor/soap', icon: ClipboardList },
     { title: 'Kamus Penyakit', path: '/doctor/diagnosis', icon: FileText },
     { title: 'Hasil Lab', path: '/doctor/lab-results', icon: Activity },
-    // Nanti bisa ditambah menu Antrean Pasien di sini
+    { title: 'E-Resep', path: '/doctor/e-receipt', icon: Pill },
+    { title: 'Surat Keterangan Medis', path: '/doctor/certificate', icon: FileSpreadsheet },
+    { title: 'Laporan Operasi', path: '/doctor/surgery-report', icon: ShieldAlert },
+    { title: 'Buku Vaksinasi', path: '/doctor/vaccination', icon: Syringe },
   ],
   owner: [
     { title: 'Dashboard', path: '/owner', icon: LayoutDashboard },
     { title: 'Hewan Peliharaanku', path: '/owner/pets', icon: User },
     { title: 'Buat Janji Temu', path: '/owner/booking', icon: FileText },
-    
-    // ======== INI MENU BARUNYA ========
     { title: 'Riwayat Medis', path: '/owner/medical-history', icon: History },
-    // ==================================
-    
     { title: 'Tagihan & Pembayaran', path: '/owner/billing', icon: Activity },
   ],
   pharmacy: [
