@@ -7,6 +7,7 @@ import anjingImg from '../assets/animals/dog.webp';
 import kelinciImg from '../assets/animals/rabbit.webp';
 import hamsterImg from '../assets/animals/hamster.webp';
 import burungImg from '../assets/animals/bird.webp';
+import homeBg from '../assets/home_bg.webp';
 
 const MainLayouts = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -131,7 +132,7 @@ const MainLayouts = () => {
         <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
         <div className="absolute inset-0 z-0">
           <img
-            src="src/assets/home_bg.webp"
+            src={homeBg}
             alt="Veterinary Background"
             className="w-full h-full object-cover opacity-15"
           />
