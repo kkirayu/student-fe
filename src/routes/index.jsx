@@ -18,6 +18,8 @@ import StaffForm from '../pages/admin/StaffManagement/StaffForm';
 import ClinicSettings from '../pages/admin/ClinicSettings';
 import ServiceRatesList from '../pages/admin/ServiceRates/ServiceRatesList';
 import ServiceRatesForm from '../pages/admin/ServiceRates/ServiceRatesForm';
+import CustomerManagement from '../pages/admin/CustomerManagement';
+import AuditLog from '../pages/admin/AuditLog';
 
 import FinancialReport from '../pages/admin/Reports/FinancialReport';
 import VisitDemographics from '../pages/admin/Reports/VisitDemographics';
@@ -27,6 +29,7 @@ import StockMutationReport from '../pages/admin/Reports/StockMutationReport';
 import ReportOverview from '../pages/admin/Reports/ReportOverview';
 
 import OwnerDashboard from '../pages/owner/Dashboard';
+import OwnerProfile from '../pages/owner/OwnerProfile';
 import PetList from '../pages/owner/MyPets/PetList';
 import PetForm from '../pages/owner/MyPets/PetForm';
 import PetDetail from '../pages/owner/MyPets/PetDetail';
@@ -73,7 +76,7 @@ const AppRouter = () => {
         <Route path="/info-layanan" element={<InfoLayanan />} />
         <Route path="/syarat-dan-ketentuan" element={<TermsAndConditions />} />
         <Route path="/kebijakan-privasi" element={<PrivacyPolicy />} />
-        
+
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/otp-verification" element={<OTPVerification />} />
@@ -84,11 +87,13 @@ const AppRouter = () => {
           <Route path="staff" element={<StaffList />} />
           <Route path="staff/add" element={<StaffForm />} />
           <Route path="staff/edit/:id" element={<StaffForm />} />
+          <Route path="customers" element={<CustomerManagement />} />
+          <Route path="audit-logs" element={<AuditLog />} />
           <Route path="settings" element={<ClinicSettings />} />
           <Route path="services" element={<ServiceRatesList />} />
           <Route path="services/add" element={<ServiceRatesForm />} />
           <Route path="services/edit/:id" element={<ServiceRatesForm />} />
-          
+
           <Route path="reports">
             <Route index element={<ReportOverview />} />
             <Route path="financial" element={<FinancialReport />} />
@@ -101,6 +106,7 @@ const AppRouter = () => {
 
         <Route path="/owner" element={<AdminLayout userRole="owner" />}>
           <Route index element={<OwnerDashboard />} />
+          <Route path="profile" element={<OwnerProfile />} />
           <Route path="pets" element={<PetList />} />
           <Route path="pets/add" element={<PetForm />} />
           <Route path="pets/edit/:id" element={<PetForm />} />
@@ -116,11 +122,11 @@ const AppRouter = () => {
           <Route index element={<DoctorDashboard />} />
           <Route path="waiting-list" element={<WaitingList />} />
           <Route path="soap" element={<SOAPForm />} />
-          
+
           <Route path="diagnosis" element={<DiagnosisReferenceList />} />
           <Route path="diagnosis/add" element={<DiagnosisReferenceForm />} />
           <Route path="diagnosis/edit/:id" element={<DiagnosisReferenceForm />} />
-          
+
           <Route path="lab-results" element={<LabResultUpload />} />
           <Route path="lab-results/add" element={<LabResultUpload />} />
           <Route path="patient-profile/:id" element={<PatientMedicalProfile />} />

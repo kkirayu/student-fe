@@ -19,6 +19,8 @@ export const roleMenus = {
   admin: [
     { title: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { title: 'Manajemen Staf', path: '/admin/staff', icon: Users },
+    { title: 'Manajemen Pelanggan', path: '/admin/customers', icon: User },
+    { title: 'Audit Log Sistem', path: '/admin/audit-logs', icon: ClipboardList },
     { title: 'Layanan & Tarif', path: '/admin/services', icon: Box },
     { title: 'Laporan Klinik', path: '/admin/reports', icon: FileText },
     { title: 'Pengaturan', path: '/admin/settings', icon: Monitor },
@@ -36,6 +38,7 @@ export const roleMenus = {
   ],
   owner: [
     { title: 'Dashboard', path: '/owner', icon: LayoutDashboard },
+    { title: 'Profil Saya', path: '/owner/profile', icon: User },
     { title: 'Hewan Peliharaanku', path: '/owner/pets', icon: User },
     { title: 'Buat Janji Temu', path: '/owner/booking', icon: FileText },
     { title: 'Riwayat Medis', path: '/owner/medical-history', icon: History },
