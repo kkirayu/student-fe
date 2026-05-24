@@ -259,7 +259,7 @@ const BillingQueue = () => {
                           ) : (
                             <>
                                 <button 
-                                onClick={() => window.location.href = '/admin/pharmacy-cashier/cashier/CheckoutPOS'}
+                                onClick={() => window.location.href = '/cashier/Checkout'}
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
                                 >
                                 <FileText className="h-3.5 w-3.5" />
