@@ -47,6 +47,7 @@ export const roleMenus = {
   pharmacy: [
     { title: 'Dashboard Apotek', path: '/pharmacy', icon: LayoutDashboard },
     { title: 'Katalog Obat', path: '/pharmacy/inventory', icon: Pill },
+    { title: 'Monitoring Stok', path: '/pharmacy/inventory/monitoring', icon: FileCheck },
     { title: 'Restock Barang', path: '/pharmacy/restock', icon: Box },
     { title: 'Data Supplier', path: '/pharmacy/supplier', icon: Users },
   ],
