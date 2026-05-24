@@ -56,7 +56,7 @@ const StockMonitoring = () => {
           <p className="mt-1 text-sm font-medium text-slate-500">Monitoring stok obat, vaksin, makanan, dan aksesori klinik.</p>
         </div>
         <Link 
-          to="/admin/pharmacy-cashier/inventory/FormRestockBarang" 
+          to="/pharmacy/restock" 
           className="inline-flex items-center justify-center gap-2 rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 shadow-sm"
         >
           <Plus className="h-4 w-4" />
