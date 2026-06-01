@@ -8,6 +8,7 @@ import kelinciImg from '../assets/animals/rabbit.webp';
 import hamsterImg from '../assets/animals/hamster.webp';
 import burungImg from '../assets/animals/bird.webp';
 import homeBg from '../assets/home_bg.webp';
+import aboutUsBg from '../assets/about_us.webp';
 
 const MainLayouts = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -165,7 +166,7 @@ const MainLayouts = () => {
       <section id="about-us" className="relative py-32 bg-blue-50/50 overflow-hidden flex items-center min-h-[60vh]">
         <div className="absolute inset-0 z-0 bg-blue-50">
           <img
-            src="src/assets/about_us.webp"
+            src={aboutUsBg}
             alt="About Us Background"
             className="w-full h-full object-cover opacity-40 mix-blend-multiply"
           />

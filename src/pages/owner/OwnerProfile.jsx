@@ -3,8 +3,8 @@ import { User, Mail, Phone, MapPin, Save, Lock, Camera } from 'lucide-react';
 
 const OwnerProfile = () => {
   const [formData, setFormData] = useState({
-    fullName: 'Muhammad Danil',
-    email: 'danil.damanhuri@example.com',
+    fullName: 'Cita Nurcahyani',
+    email: 'cita.nurcahyani@example.com',
     phone: '081234567890',
     address: 'Yogyakarta',
     currentPassword: '',
@@ -42,7 +42,7 @@ const OwnerProfile = () => {
             <div className="relative mb-4">
               <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-slate-50">
                 <img 
-                  src="https://ui-avatars.com/api/?name=Muhammad+Danil&background=3b82f6&color=fff&bold=true&size=128" 
+                  src="https://ui-avatars.com/api/?name=Cita+Nurcahyani&background=3b82f6&color=fff&bold=true&size=128" 
                   alt="Profile" 
                   className="h-full w-full object-cover"
                 />

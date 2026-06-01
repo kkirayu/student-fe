@@ -12,6 +12,16 @@ const AdminLayout = ({ userRole = 'admin' }) => {
   
   const currentMenus = roleMenus[userRole] || [];
 
+  const displayNames = {
+    admin: 'Admin Sistem',
+    doctor: 'Drh. Bunga',
+    owner: 'Cita Nurcahyani',
+    pharmacy: 'Apoteker',
+    cashier: 'Kasir',
+    receptionist: 'Resepsionis'
+  };
+  const currentName = displayNames[userRole] || 'User';
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
       
@@ -104,11 +114,11 @@ const AdminLayout = ({ userRole = 'admin' }) => {
               </div>
               <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
                 <div className="hidden text-right lg:block">
-                  <p className="text-sm font-bold leading-tight text-black">Muhammad Danil</p>
+                  <p className="text-sm font-bold leading-tight text-black">{currentName}</p>
                   <p className="text-xs font-medium text-slate-500 capitalize">{userRole}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5">
-                  <img src="https://ui-avatars.com/api/?name=Muhammad+Danil&background=3b82f6&color=fff&bold=true" alt="User" className="h-full w-full rounded-full" />
+                  <img src={`https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`} alt="User" className="h-full w-full rounded-full" />
                 </div>
               </div>
             </div>
