@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// --- MOCK DATA TRANSAKSI HARI INI ---
+
 const todayTransactions = [
   { id: 'TRX-001', time: '08:30', invoice: 'INV-260520-001', customer: 'Bpk. Ahmad Subarjo', method: 'QRIS', total: 535000 },
   { id: 'TRX-002', time: '09:15', invoice: 'INV-260520-002', customer: 'Ibu Sarah', method: 'Tunai', total: 120000 },

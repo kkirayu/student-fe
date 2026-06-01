@@ -111,7 +111,7 @@ const BillingQueue = () => {
 
   return (
     <div className="space-y-6 font-sans">
-      
+
       {/* HEADER PAGE */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -144,19 +144,19 @@ const BillingQueue = () => {
       <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-3 shadow-sm justify-between items-center">
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-          <input 
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm" 
-            placeholder="Cari nama hewan, pemilik, atau no antrean..." 
+          <input
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm"
+            placeholder="Cari nama hewan, pemilik, atau no antrean..."
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="flex gap-2 w-full md:w-auto justify-end">
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm">
             <Filter className="h-4 w-4 text-slate-400" />
-            <select 
+            <select
               className="bg-transparent border-none p-0 focus:ring-0 text-slate-600 font-medium text-sm outline-none"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -198,18 +198,18 @@ const BillingQueue = () => {
                         <span className="font-bold text-blue-600 block">{queue.id}</span>
                         <span className="text-xs text-slate-400 font-medium block mt-0.5">Jam: {queue.time}</span>
                       </td>
-                      
+
                       {/* Pasien & Pemilik */}
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-800">{queue.petName} <span className="text-xs font-normal text-slate-500">({queue.petType})</span></div>
                         <div className="text-xs text-slate-400 mt-0.5">Pmlk: {queue.ownerName}</div>
                       </td>
-                      
+
                       {/* Dokter */}
                       <td className="px-6 py-4">
                         <span className="text-slate-600 font-medium">{queue.doctor}</span>
                       </td>
-                      
+
                       {/* Rincian Otomatis Komparasi */}
                       <td className="px-6 py-4 max-w-xs">
                         <div className="space-y-1.5">
@@ -237,19 +237,19 @@ const BillingQueue = () => {
                           )}
                         </div>
                       </td>
-                      
+
                       {/* Total Tagihan */}
                       <td className="px-6 py-4">
                         <span className="font-bold text-slate-800">Rp {totalBilling.toLocaleString('id-ID')}</span>
                       </td>
-                      
+
                       {/* Status */}
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${queue.statusColor}`}>
                           {queue.status}
                         </span>
                       </td>
-                      
+
                       {/* Tombol Aksi */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
@@ -260,10 +260,10 @@ const BillingQueue = () => {
                             </>
                           ) : (
                             <>
-                              <button 
-                                onClick={() => navigate('/cashier/checkout')}
+                              <button
+                                onClick={() => window.location.href = '/cashier/Checkout'}
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
-                                >
+                              >
                                 <FileText className="h-3.5 w-3.5" />
                                 <span>Bayar</span>
                               </button>

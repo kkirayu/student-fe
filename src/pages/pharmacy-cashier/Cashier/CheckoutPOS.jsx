@@ -92,7 +92,7 @@ const CheckoutPOS = () => {
         <h2 className="text-3xl font-bold text-slate-800">Pembayaran Berhasil!</h2>
         <p className="text-slate-500">Metode: {paymentMethod} | Nomor Struk: INV-{Math.floor(Math.random() * 1000000)}</p>
         <div className="flex gap-4">
-          <button onClick={() => window.location.href = '/admin/pharmacy-cashier/cashier/InvoiceTemplate'}
+          <button onClick={() => window.location.href = '/cashier/invoice'}
            className="rounded-md bg-blue-600 px-6 py-2.5 font-medium text-white hover:bg-blue-700">
             Cetak Struk
           </button>
