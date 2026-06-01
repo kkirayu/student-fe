@@ -73,7 +73,7 @@ const AppointmentForm = () => {
         
         setTimeout(() => {
             setIsSubmitting(false);
-            navigate('/owner/booking/history');
+            navigate('/owner/booking/ticket');
         }, 1500);
     };
 

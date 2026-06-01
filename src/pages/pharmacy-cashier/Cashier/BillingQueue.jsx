@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, FileText, Printer, CheckCircle2, Clock, AlertCircle, ChevronRight, Eye } from 'lucide-react';
 
 const BillingQueue = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
 
@@ -258,13 +260,13 @@ const BillingQueue = () => {
                             </>
                           ) : (
                             <>
-                                <button 
-                                onClick={() => window.location.href = '/admin/pharmacy-cashier/cashier/CheckoutPOS'}
+                              <button 
+                                onClick={() => navigate('/cashier/checkout')}
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
                                 >
                                 <FileText className="h-3.5 w-3.5" />
                                 <span>Bayar</span>
-                                </button>
+                              </button>
                             </>
                           )}
                         </div>

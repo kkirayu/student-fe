@@ -140,6 +140,20 @@ const Login = () => {
                 <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                   <i className="fa-solid fa-right-to-bracket"></i> Masuk
                 </button>
+                
+                {/* Dummy Login Section untuk Presentasi */}
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <p className="text-center text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Akses Cepat Demo</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button type="button" onClick={() => navigate('/admin')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all text-center">Admin</button>
+                    <button type="button" onClick={() => navigate('/owner')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all text-center">Pet Owner</button>
+                    <button type="button" onClick={() => navigate('/doctor')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all text-center">Dokter</button>
+                    <button type="button" onClick={() => navigate('/pharmacy')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 transition-all text-center">Farmasi</button>
+                    <button type="button" onClick={() => navigate('/cashier')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all text-center">Kasir</button>
+                    <button type="button" onClick={() => navigate('/receptionist')} className="py-2 px-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all text-center">Resepsionis</button>
+                  </div>
+                </div>
+
                 <p className="text-center text-sm text-slate-500 mt-6">
                   Belum punya akun? <Link to="/register" className="text-blue-600 font-bold hover:underline">Daftar sekarang</Link>
                 </p>

@@ -14,6 +14,33 @@ import {
 const ReceptionistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
+  const [approvedBooking, setApprovedBooking] = useState(null);
+
+  const [bookingRequests, setBookingRequests] = useState([
+    {
+      id: 'REQ-089',
+      petName: 'Luna',
+      species: 'Anjing',
+      ownerName: 'Muhammad Danil',
+      service: 'Grooming Medis',
+      date: '18 Mei 2026',
+      time: '10:00 WIB',
+      status: 'Menunggu Konfirmasi'
+    }
+  ]);
+
+  const handleAcceptBooking = (req) => {
+    setBookingRequests(bookingRequests.filter(r => r.id !== req.id));
+    setApprovedBooking(req);
+    // Auto-close modal after 3 seconds
+    setTimeout(() => {
+      setApprovedBooking(null);
+    }, 3000);
+  };
+
+  const handleRejectBooking = (id) => {
+    setBookingRequests(bookingRequests.filter(req => req.id !== id));
+  };
 
   const stats = [
     {
@@ -147,6 +174,63 @@ const ReceptionistDashboard = () => {
         ))}
       </div>
 
+      {/* Booking Requests Section */}
+      {bookingRequests.length > 0 && (
+        <div className="rounded-sm border border-orange-200 bg-white shadow-sm overflow-hidden mb-6">
+          <div className="border-b border-orange-100 bg-orange-50 p-4">
+            <h3 className="text-sm font-bold text-orange-800 flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+              Permintaan Janji Temu Online Baru ({bookingRequests.length})
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                <tr>
+                  <th className="px-6 py-3 font-semibold">ID Request</th>
+                  <th className="px-6 py-3 font-semibold">Pasien & Pemilik</th>
+                  <th className="px-6 py-3 font-semibold">Layanan</th>
+                  <th className="px-6 py-3 font-semibold">Jadwal Pengajuan</th>
+                  <th className="px-6 py-3 font-semibold text-right">Aksi Konfirmasi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {bookingRequests.map((req) => (
+                  <tr key={req.id} className="hover:bg-orange-50/30 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-700">{req.id}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-800">{req.petName} <span className="text-xs font-normal text-slate-500">({req.species})</span></div>
+                      <div className="text-xs text-slate-500 mt-0.5">Pemilik: {req.ownerName}</div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 font-medium">{req.service}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-slate-800">{req.date}</div>
+                      <div className="text-xs text-slate-500">{req.time}</div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => handleAcceptBooking(req)}
+                          className="px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded hover:bg-emerald-700 transition-colors shadow-sm"
+                        >
+                          Setujui
+                        </button>
+                        <button 
+                          onClick={() => handleRejectBooking(req.id)}
+                          className="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded hover:bg-slate-50 transition-colors"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Pasien List & Filters */}
       <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
@@ -229,6 +313,28 @@ const ReceptionistDashboard = () => {
           </table>
         </div>
       </div>
+
+      {/* SUCCESS MODAL */}
+      {approvedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setApprovedBooking(null)}></div>
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 mb-4">
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Jadwal Disetujui!</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Permintaan janji temu untuk pasien <strong className="text-slate-700">{approvedBooking.petName}</strong> telah berhasil dikonfirmasi dan dimasukkan ke daftar antrean klinik hari ini.
+            </p>
+            <button
+              onClick={() => setApprovedBooking(null)}
+              className="w-full rounded-lg bg-slate-800 py-2.5 text-sm font-bold text-white transition-colors hover:bg-slate-900"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

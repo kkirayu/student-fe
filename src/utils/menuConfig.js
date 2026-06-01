@@ -28,7 +28,6 @@ export const roleMenus = {
   doctor: [
     { title: 'Dashboard', path: '/doctor', icon: LayoutDashboard },
     { title: 'Antrean Pasien', path: '/doctor/waiting-list', icon: Users },
-    { title: 'Catatan SOAP', path: '/doctor/soap', icon: ClipboardList },
     { title: 'Kamus Penyakit', path: '/doctor/diagnosis', icon: FileText },
     { title: 'Hasil Lab', path: '/doctor/lab-results', icon: Activity },
     { title: 'E-Resep', path: '/doctor/e-receipt', icon: Pill },
@@ -41,11 +40,13 @@ export const roleMenus = {
     { title: 'Profil Saya', path: '/owner/profile', icon: User },
     { title: 'Hewan Peliharaanku', path: '/owner/pets', icon: User },
     { title: 'Buat Janji Temu', path: '/owner/booking', icon: FileText },
+    { title: 'Tiket Antrean', path: '/owner/booking/ticket', icon: Activity },
     { title: 'Riwayat Medis', path: '/owner/medical-history', icon: History },
     { title: 'Tagihan & Pembayaran', path: '/owner/billing', icon: Activity },
   ],
   pharmacy: [
     { title: 'Dashboard Apotek', path: '/pharmacy', icon: LayoutDashboard },
+    { title: 'Antrean Resep', path: '/pharmacy/prescriptions', icon: ClipboardList },
     { title: 'Katalog Obat', path: '/pharmacy/inventory', icon: Pill },
     { title: 'Restock Barang', path: '/pharmacy/restock', icon: Box },
     { title: 'Data Supplier', path: '/pharmacy/supplier', icon: Users },
