@@ -1,17 +1,49 @@
 // eslint-disable-next-line no-unused-vars
-import React, { useState, useEffect } from 'react';
-import { Volume2, Clock, Calendar, Heart, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Volume2, 
+  Clock, 
+  Calendar, 
+  Heart, 
+  ArrowRight, 
+  Maximize2, 
+  Minimize2,
+  Tv
+} from 'lucide-react';
 import catImage from '../../assets/animals/cat.webp';
 import dogImage from '../../assets/animals/dog.webp';
 import birdImage from '../../assets/animals/bird.webp';
 
 const QueueMonitor = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const monitorRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!monitorRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      monitorRef.current.requestFullscreen()
+        .then(() => setIsFullscreen(true))
+        .catch((err) => console.error("Gagal mengaktifkan mode Fullscreen:", err));
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   const formatDate = (date) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -40,162 +72,227 @@ const QueueMonitor = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col overflow-hidden">
+    <div 
+      ref={monitorRef}
+      className={`font-sans flex flex-col overflow-hidden transition-colors duration-500 ${
+        isFullscreen 
+          ? 'h-screen w-screen bg-[#0B0F19] text-white p-6 justify-between' 
+          : 'min-h-[85vh] rounded-2xl border border-slate-200 bg-slate-50 text-slate-800'
+      }`}
+    >
       
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm px-8 py-4 flex items-center justify-between z-10 relative">
+      <header className={`px-6 py-4 flex items-center justify-between border-b ${
+        isFullscreen 
+          ? 'border-slate-800 bg-[#0F172A]/80 backdrop-blur-md rounded-2xl shadow-xl' 
+          : 'border-slate-200 bg-white/90 backdrop-blur-md rounded-t-2xl shadow-sm'
+      }`}>
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-blue-600 to-teal-400 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
-            <Heart className="h-8 w-8 text-white" fill="currentColor" />
+          <div className="bg-gradient-to-tr from-blue-600 to-teal-400 p-2 rounded-xl shadow-md">
+            <Heart className="h-6 w-6 text-white" fill="currentColor" />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-700 to-teal-600 bg-clip-text text-transparent">
+            <h1 className={`font-extrabold ${isFullscreen ? 'text-2xl text-white' : 'text-xl bg-gradient-to-r from-blue-700 to-teal-600 bg-clip-text text-transparent'}`}>
               Zeta Pet Care
             </h1>
-            <p className="text-slate-500 font-medium text-sm">Klinik Hewan & Perawatan</p>
+            <p className={`text-xs font-semibold ${isFullscreen ? 'text-slate-400' : 'text-slate-500'}`}>Monitor Antrean Pasien</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-slate-600 font-medium bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
-            <Calendar className="h-5 w-5 text-teal-500" />
+        <div className="flex items-center gap-4">
+          <div className={`hidden sm:flex items-center gap-2 font-medium px-3.5 py-1.5 rounded-full text-xs border ${
+            isFullscreen 
+              ? 'bg-[#1E293B] text-slate-300 border-slate-800' 
+              : 'bg-white text-slate-600 border-slate-200 shadow-sm'
+          }`}>
+            <Calendar className="h-4 w-4 text-teal-500" />
             <span>{formatDate(currentTime)}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-800 font-bold text-2xl bg-white px-5 py-2 rounded-full shadow-sm border border-slate-100 min-w-[140px] justify-center">
-            <Clock className="h-6 w-6 text-blue-600" />
+
+          <div className={`flex items-center gap-2 font-bold text-lg px-4 py-1.5 rounded-full border ${
+            isFullscreen 
+              ? 'bg-[#1E293B] text-blue-400 border-slate-850' 
+              : 'bg-white text-blue-600 border-slate-200 shadow-sm'
+          }`}>
+            <Clock className="h-5 w-5" />
             <span>{formatTime(currentTime)}</span>
           </div>
+
+          <button 
+            onClick={toggleFullscreen}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${
+              isFullscreen 
+                ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500'
+            }`}
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="h-4 w-4" />
+                <span>Kecilkan Layar</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="h-4 w-4" />
+                <span>Layar Penuh (TV)</span>
+              </>
+            )}
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex p-8 gap-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[50%] bg-blue-300/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[60%] bg-teal-300/20 rounded-full blur-3xl"></div>
-        </div>
-
-        {/* Current Call */}
-        <section className="flex-[3] flex flex-col">
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/50 shadow-2xl overflow-hidden flex flex-col h-full relative group transition-all duration-500">
+      <main className={`flex-1 flex flex-col lg:flex-row gap-6 p-6 ${isFullscreen ? 'overflow-hidden' : ''}`}>
+        
+        {/* Bagian Panggilan Saat Ini (Left) */}
+        <section className="flex-[5] flex flex-col min-h-0">
+          <div className={`rounded-2xl shadow-xl overflow-hidden flex flex-col h-full border ${
+            isFullscreen 
+              ? 'bg-[#111827]/90 border-slate-800' 
+              : 'bg-white border-slate-100'
+          }`}>
             
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 flex items-center justify-between text-white">
-              <h2 className="text-3xl font-bold tracking-wide flex items-center gap-3">
-                <Volume2 className="h-8 w-8 animate-pulse" />
-                PANGGILAN SAAT INI
+            {/* Call Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+              <h2 className="text-xl font-bold tracking-wide flex items-center gap-3">
+                <Volume2 className="h-6 w-6 animate-pulse" />
+                PANGGILAN AKTIF
               </h2>
-              <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wider">
-                HARAP MENUJU RUANGAN
+              <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                Silakan Masuk
               </span>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center relative z-10">
+            {/* Call Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
               
-              <div className="mb-8">
-                <div className="inline-block bg-blue-100 text-blue-800 px-16 py-6 rounded-[2rem] text-8xl font-black tracking-widest border-4 border-blue-200 shadow-2xl">
+              <div className="mb-4">
+                <span className={`inline-block px-12 py-3 rounded-2xl text-6xl font-black tracking-widest border-2 shadow-md ${
+                  isFullscreen 
+                    ? 'bg-[#1F2937] text-blue-400 border-slate-800' 
+                    : 'bg-blue-50 text-blue-800 border-blue-100'
+                }`}>
                   {currentCall.id}
-                </div>
+                </span>
               </div>
 
-              <div className="flex flex-col items-center justify-center gap-6 mb-10 w-full px-8">
+              <div className="flex flex-col items-center gap-4 mb-6">
                 <img 
                   src={currentCall.image} 
                   alt={currentCall.petName} 
-                  className="w-60 h-60 rounded-full object-cover border-8 border-white shadow-2xl flex-shrink-0"
+                  className={`rounded-full object-cover border-4 shadow-lg ${
+                    isFullscreen ? 'w-44 h-44 border-slate-800' : 'w-36 h-36 border-white'
+                  }`}
                 />
                 
-                <div className="text-center flex flex-col items-center">
-                  <h3 className="text-7xl xl:text-[6rem] font-black text-slate-800 tracking-tight leading-tight mb-4">
+                <div>
+                  <h3 className={`font-black tracking-tight leading-none mb-2 ${
+                    isFullscreen ? 'text-6xl text-white' : 'text-5xl text-slate-800'
+                  }`}>
                     {currentCall.petName}
                   </h3>
-                  <div className="bg-slate-100 inline-block px-8 py-3 rounded-full border border-slate-200 shadow-sm">
-                    <p className="text-3xl text-slate-600 font-semibold">
-                      Pemilik: <span className="text-slate-800">{currentCall.owner}</span> 
-                      <span className="text-slate-400 mx-3">|</span> 
-                      <span className="text-teal-600">{currentCall.species}</span>
-                    </p>
-                  </div>
+                  
+                  <span className={`inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase ${
+                    isFullscreen 
+                      ? 'bg-[#1E293B] border-slate-800 text-slate-350' 
+                      : 'bg-slate-100 border-slate-200 text-slate-600'
+                  }`}>
+                    Pemilik: <span className="font-bold text-blue-500">{currentCall.owner}</span> | {currentCall.species}
+                  </span>
                 </div>
               </div>
 
-              <div className="w-full max-w-3xl bg-slate-50 rounded-[2.5rem] p-10 border-2 border-slate-100 shadow-lg flex flex-col items-center gap-6 mt-auto">
-                <div className="text-slate-500 font-bold text-2xl uppercase tracking-[0.2em]">Silakan Menuju</div>
-                <div className="text-7xl font-extrabold text-teal-600 bg-teal-50 px-12 py-8 rounded-3xl border-2 border-teal-100 w-full text-center shadow-inner">
+              {/* Target Room */}
+              <div className={`w-full max-w-lg rounded-2xl p-5 border shadow-inner flex flex-col items-center gap-2 mt-auto ${
+                isFullscreen 
+                  ? 'bg-[#1E293B]/50 border-slate-800' 
+                  : 'bg-slate-50 border-slate-100'
+              }`}>
+                <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Arah Ruangan</span>
+                <div className="text-3xl font-extrabold text-teal-500 bg-teal-500/10 px-8 py-3 rounded-xl border border-teal-500/20 w-full text-center">
                   {currentCall.room}
                 </div>
-                <div className="text-4xl font-semibold text-slate-700 mt-2">
-                  Bersama {currentCall.doctor}
+                <div className={`text-sm font-semibold mt-1 ${isFullscreen ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Dokter: <span className="text-blue-500">{currentCall.doctor}</span>
                 </div>
               </div>
             </div>
-
-            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-gradient-to-br from-blue-100 to-transparent rounded-full opacity-50"></div>
-            <div className="absolute -top-12 -left-12 w-32 h-32 bg-gradient-to-br from-teal-100 to-transparent rounded-full opacity-50"></div>
           </div>
         </section>
 
-        {/* Next in Queue & Info */}
-        <section className="flex-[2] flex flex-col gap-6">
+        {/* Bagian Antrean Berikutnya & Edukasi (Right) */}
+        <section className="flex-[4] flex flex-col gap-6 min-h-0">
           
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl overflow-hidden flex-1 flex flex-col">
-            <div className="bg-slate-800 p-5 flex items-center gap-3 text-white">
-              <Clock className="h-6 w-6 text-teal-400" />
-              <h2 className="text-xl font-bold">ANTRIAN SELANJUTNYA</h2>
+          {/* List Antrean Berikutnya */}
+          <div className={`rounded-2xl shadow-xl overflow-hidden flex-1 flex flex-col border ${
+            isFullscreen 
+              ? 'bg-[#111827]/90 border-slate-800' 
+              : 'bg-white border-slate-100'
+          }`}>
+            <div className={`px-5 py-4 flex items-center gap-2 text-white border-b ${
+              isFullscreen ? 'bg-slate-900 border-slate-800' : 'bg-slate-850 border-slate-200'
+            }`}>
+              <Tv className="h-5 w-5 text-teal-400" />
+              <h2 className="text-sm font-bold tracking-wider">ANTREAN BERIKUTNYA</h2>
             </div>
             
-            <div className="p-5 flex-1 flex flex-col justify-around gap-4">
+            <div className="p-4 flex-1 flex flex-col gap-3 justify-center">
               {nextQueue.map((item, index) => (
                 <div 
                   key={index} 
-                  className="bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-md flex items-center gap-6 transition-transform hover:-translate-y-1"
+                  className={`rounded-xl p-3 border flex items-center gap-4 transition-all duration-300 ${
+                    isFullscreen 
+                      ? 'bg-[#1F2937]/50 border-slate-800/80 hover:bg-[#1F2937]' 
+                      : 'bg-slate-50 border-slate-100 hover:bg-slate-100/70'
+                  }`}
                 >
-                  <div className="bg-slate-100 text-slate-800 w-24 h-24 flex items-center justify-center rounded-2xl font-black text-4xl shadow-inner">
+                  {/* Nomor Antrean */}
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg shadow-inner ${
+                    isFullscreen ? 'bg-[#111827] text-teal-400' : 'bg-white text-slate-850 border border-slate-200'
+                  }`}>
                     {item.id.split('-')[1]}
                   </div>
                   
+                  {/* Avatar Hewan */}
                   <img 
                     src={item.image} 
                     alt={item.petName} 
-                    className="w-20 h-20 rounded-full object-cover border-4 border-slate-50 shadow-sm flex-shrink-0 hidden xl:block"
+                    className="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0"
                   />
                   
-                  <div className="flex-1">
-                    <h4 className="text-3xl font-bold text-slate-800 mb-1">{item.petName}</h4>
-                    <p className="text-slate-500 text-xl font-medium">{item.species}</p>
+                  {/* Nama Hewan */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-bold truncate text-base ${isFullscreen ? 'text-white' : 'text-slate-800'}`}>{item.petName}</h4>
+                    <p className="text-slate-450 text-xs truncate">{item.species}</p>
                   </div>
                   
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <span className="text-sm font-bold text-teal-600 bg-teal-50 px-5 py-2 rounded-full uppercase tracking-wider border border-teal-100">
+                  {/* Status & Dokter */}
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded-full uppercase border border-teal-500/20">
                       Menunggu
                     </span>
-                    <p className="text-slate-600 text-xl font-medium">{item.doctor}</p>
+                    <p className="text-slate-500 text-xs font-semibold mt-1">{item.doctor}</p>
                   </div>
                 </div>
               ))}
               
-              <div className="mt-auto pt-4 flex justify-center text-slate-400 font-medium text-sm gap-2 items-center">
-                Ada 12 antrian lainnya di belakang <ArrowRight className="h-4 w-4" />
+              <div className="text-center pt-2 text-slate-450 font-medium text-[11px] flex justify-center items-center gap-1.5">
+                Ada 12 antrian lainnya di belakang <ArrowRight className="h-3 w-3" />
               </div>
             </div>
           </div>
 
-          {/* Info */}
-          <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden h-48 flex items-center">
-            <div className="absolute right-0 top-0 opacity-10">
-              <Heart className="h-48 w-48 -mr-10 -mt-10" fill="currentColor" />
-            </div>
-            
+          {/* Info Banner */}
+          <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 shadow-lg text-white relative overflow-hidden flex-shrink-0">
             <div className="relative z-10 w-full">
-              <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">
-                Tips Kesehatan Hewan
+              <span className="bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2.5 inline-block">
+                Tips Kesehatan
               </span>
-              <h3 className="text-xl font-bold leading-tight mb-2">
-                Jangan lupa berikan vaksin tahunan untuk anabul kesayangan Anda!
+              <h3 className="text-sm font-bold leading-snug mb-1">
+                Vaksinasi rutin tahunan melindungi hewan peliharaan Anda!
               </h3>
-              <p className="text-teal-100 text-sm">
-                Vaksinasi rutin mencegah berbagai penyakit virus berbahaya. Tanyakan jadwal vaksin pada dokter hewan kami.
+              <p className="text-teal-50/80 text-[11px] leading-normal">
+                Tanyakan jadwal vaksinasi hewan Anda pada dokter hewan kami hari ini untuk perlindungan dari virus mematikan.
               </p>
             </div>
           </div>
