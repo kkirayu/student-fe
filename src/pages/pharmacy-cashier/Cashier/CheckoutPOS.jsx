@@ -347,7 +347,7 @@ const CheckoutPOS = () => {
                 className="h-full w-full object-contain"
               />
             </div>
-
+            
             <div className="mb-6 rounded-lg bg-slate-50 p-4 text-center">
               <span className="block text-sm text-slate-500">Total Tagihan</span>
               <span className="text-2xl font-bold text-blue-600">{formatRupiah(grandTotal)}</span>
