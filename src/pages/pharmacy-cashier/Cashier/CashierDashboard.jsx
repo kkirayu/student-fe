@@ -125,8 +125,8 @@ const CashierDashboard = () => {
 
         <button className="group h-32 bg-white border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 rounded-xl flex items-center justify-between p-8 text-slate-800 shadow-sm transition-all active:scale-[0.98]">
           <div className="text-left">
-            <h2 className="text-xl font-bold">Buka Laci</h2>
-            <p className="text-sm text-slate-400 mt-1">Akses laci kas manual (Shift: ID #902)</p>
+            <h2 className="text-xl font-bold">Log Transaksi</h2>
+            <p className="text-sm text-slate-400 mt-1">Akses log transaksi </p>
           </div>
           <div className="w-14 h-14 bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-full flex items-center justify-center transition-colors">
             <CreditCard className="h-6 w-6 text-slate-600 group-hover:text-blue-600" />
