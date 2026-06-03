@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const PetDetail = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Mengambil ID dari URL
-
-  // Mock Data Detail (Bisa di-fetch berdasarkan ID nanti)
+  const { id } = useParams();
   const [pet] = useState({
     id: 1,
     name: "Milo",
@@ -28,9 +26,9 @@ const PetDetail = () => {
   return (
     <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
       <div className="max-w-5xl mx-auto">
-        
+
         {/* Breadcrumb & Back Button */}
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-bold text-sm uppercase tracking-widest"
         >
@@ -38,7 +36,7 @@ const PetDetail = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* KIRI: Foto & Identitas Utama */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-200">
@@ -68,13 +66,13 @@ const PetDetail = () => {
 
           {/* KANAN: Detail Informasi & Riwayat */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Card Informasi Umum */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
               <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
                 <span className="p-2 bg-slate-100 rounded-lg text-sm">📄</span> Informasi Detail
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Tanggal Lahir</label>
@@ -104,7 +102,7 @@ const PetDetail = () => {
               <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
                 <span className="p-2 bg-slate-100 rounded-lg text-sm">🩺</span> Riwayat Medis
               </h3>
-              
+
               <div className="space-y-4">
                 {pet.medical_history.map((item, index) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
@@ -120,7 +118,7 @@ const PetDetail = () => {
                   </div>
                 ))}
               </div>
-              
+
               <button className="w-full mt-6 py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs hover:border-blue-300 hover:text-blue-500 transition-all uppercase tracking-widest">
                 + Tambah Catatan Medis
               </button>
