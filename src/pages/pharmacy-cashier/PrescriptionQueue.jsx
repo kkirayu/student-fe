@@ -24,8 +24,8 @@ const PrescriptionQueue = () => {
       time: '09:45 AM',
       patientName: 'Luna',
       ownerName: 'Michael Williams',
-      doctor: 'drh. Bunga',
-      status: 'Sedang Diraba',
+      doctor: 'drh. Krisna',
+      status: 'Selesai',
       items: [
         { name: 'Amoxicillin Drop 15ml', qty: 1, dosage: '0.5ml 2x sehari', notes: 'Habiskan' },
         { name: 'Vitamax Syrup', qty: 1, dosage: '1ml 1x sehari', notes: 'Suplemen tambahan' }
