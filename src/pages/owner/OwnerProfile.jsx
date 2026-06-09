@@ -30,7 +30,7 @@ const OwnerProfile = () => {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Profil Saya</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Pengaturan Akun</h1>
         <p className="mt-1 text-sm text-slate-500">
           Kelola informasi identitas diri dan keamanan akun Anda.
         </p>

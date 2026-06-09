@@ -12,7 +12,8 @@ import {
   FileSpreadsheet,
   FileCheck,
   ShieldAlert,
-  Syringe
+  Syringe,
+  Settings
 } from 'lucide-react';
 
 export const roleMenus = {
@@ -37,7 +38,7 @@ export const roleMenus = {
   ],
   owner: [
     { title: 'Dashboard', path: '/owner', icon: LayoutDashboard },
-    { title: 'Profil Saya', path: '/owner/profile', icon: User },
+    { title: 'Pengaturan Akun', path: '/owner/profile', icon: Settings },
     { title: 'Hewan Peliharaanku', path: '/owner/pets', icon: User },
     { title: 'Buat Janji Temu', path: '/owner/booking', icon: FileText },
     { title: 'Tiket Antrean', path: '/owner/booking/ticket', icon: Activity },
