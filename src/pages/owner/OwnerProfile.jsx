@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Save, Lock, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Lock, Camera, Edit } from 'lucide-react';
 
 const OwnerProfile = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ const OwnerProfile = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,6 +24,7 @@ const OwnerProfile = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
+      setIsEditing(false);
       alert('Profil berhasil diperbarui!');
     }, 1000);
   };
@@ -30,7 +32,7 @@ const OwnerProfile = () => {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Pengaturan Akun</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Profil Saya</h1>
         <p className="mt-1 text-sm text-slate-500">
           Kelola informasi identitas diri dan keamanan akun Anda.
         </p>
@@ -59,12 +61,24 @@ const OwnerProfile = () => {
         <div className="col-span-1 md:col-span-8">
           <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
             <form onSubmit={handleSubmit}>
-              <div className="border-b border-slate-100 p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <div className="border-b border-slate-100 p-6 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   <User className="h-5 w-5 text-blue-600" />
                   Informasi Pribadi
                 </h3>
-                
+                {!isEditing && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 rounded bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Profil
+                  </button>
+                )}
+              </div>
+              
+              <div className="p-6">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <label className="mb-2 block text-sm font-semibold text-slate-800">Nama Lengkap</label>
@@ -77,7 +91,8 @@ const OwnerProfile = () => {
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="w-full rounded border border-slate-300 bg-transparent py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        className={`w-full rounded border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 ${!isEditing ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-transparent'}`}
+                        disabled={!isEditing}
                         required
                       />
                     </div>
@@ -111,7 +126,8 @@ const OwnerProfile = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full rounded border border-slate-300 bg-transparent py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        className={`w-full rounded border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 ${!isEditing ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-transparent'}`}
+                        disabled={!isEditing}
                         required
                       />
                     </div>
@@ -128,7 +144,8 @@ const OwnerProfile = () => {
                         value={formData.address}
                         onChange={handleChange}
                         rows="3"
-                        className="w-full rounded border border-slate-300 bg-transparent py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        className={`w-full rounded border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 ${!isEditing ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-transparent'}`}
+                        disabled={!isEditing}
                         required
                       ></textarea>
                     </div>
@@ -136,61 +153,72 @@ const OwnerProfile = () => {
                 </div>
               </div>
 
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-blue-600" />
-                  Keamanan Akun
-                </h3>
-                
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-slate-800">Password Saat Ini</label>
-                    <input
-                      type="password"
-                      name="currentPassword"
-                      value={formData.currentPassword}
-                      onChange={handleChange}
-                      placeholder="Masukkan jika ingin mengubah password"
-                      className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                    />
+              {isEditing && (
+                <>
+                  <div className="p-6 border-t border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Lock className="h-5 w-5 text-blue-600" />
+                      Keamanan Akun
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className="mb-2 block text-sm font-semibold text-slate-800">Password Saat Ini</label>
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          value={formData.currentPassword}
+                          onChange={handleChange}
+                          placeholder="Masukkan jika ingin mengubah password"
+                          className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-800">Password Baru</label>
+                        <input
+                          type="password"
+                          name="newPassword"
+                          value={formData.newPassword}
+                          onChange={handleChange}
+                          placeholder="Password baru"
+                          className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-800">Konfirmasi Password</label>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          placeholder="Ketik ulang password baru"
+                          className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-800">Password Baru</label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      value={formData.newPassword}
-                      onChange={handleChange}
-                      placeholder="Password baru"
-                      className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                    />
+                  <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="rounded px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 rounded bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-70"
+                    >
+                      <Save className="h-4 w-4" />
+                      {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                    </button>
                   </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-800">Konfirmasi Password</label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Ketik ulang password baru"
-                      className="w-full rounded border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 rounded bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-70"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-                </button>
-              </div>
+                </>
+              )}
             </form>
           </div>
         </div>
