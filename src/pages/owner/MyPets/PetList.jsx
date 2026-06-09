@@ -41,6 +41,12 @@ const PetList = () => {
     fetchPets();
   }, []);
 
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus pet ${name}?`)) {
+      setPetsData(prev => prev.filter(pet => pet.id !== id));
+    }
+  };
+
   const filteredPets = petsData.filter(pet => {
     const matchesSearch = pet.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           pet.breed.toLowerCase().includes(searchTerm.toLowerCase());
@@ -154,6 +160,7 @@ const PetList = () => {
                         </Link>
 
                         <button 
+                          onClick={() => handleDelete(pet.id, pet.name)}
                           className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors" 
                           title="Hapus Data"
                         >
