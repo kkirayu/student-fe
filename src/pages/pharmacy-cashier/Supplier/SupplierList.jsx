@@ -14,7 +14,7 @@ const SupplierManagement = () => {
       companyName: 'PT. Pertamina',
       logo: logoPertamina, // Menggunakan variabel import
       salesName: 'Budi Santoso',
-      whatsapp: '6281234567890',
+      whatsapp: '6282237943100',
       address: 'Jl. Industri Cimareme No. 8, Bandung',
       category: 'Obat & Vaksin',
       suppliedProducts: ['Amoxicillin Sirup', 'Cefadroxil Kapsul', 'Vaksin Rabies']
