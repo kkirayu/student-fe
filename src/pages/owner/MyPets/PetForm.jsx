@@ -14,7 +14,7 @@ const PetForm = () => {
   useEffect(() => {
     if (isEditMode) {
       setFormData({
-        name: 'Oren', email: 'bunga@zetaconnect.com', phone: '081298765432', role: 'Dokter', password: '', status: 'Aktif',
+        name: 'Oren', species: 'Kucing', breed: 'Persia', gender: 'Jantan', dob: '2020-05-15', color: 'Oranye',
       });
     }
   }, [isEditMode]);
@@ -149,7 +149,7 @@ const PetForm = () => {
           <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:px-8">
             <button
               type="button"
-              onClick={() => navigate('/admin/staff')}
+              onClick={() => navigate('/owner/pets')}
               className="rounded-md px-6 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900"
             >
               Batal

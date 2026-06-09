@@ -27,7 +27,6 @@ const PetDetail = () => {
     <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
       <div className="max-w-5xl mx-auto">
 
-        {/* Breadcrumb & Back Button */}
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-bold text-sm uppercase tracking-widest"
@@ -36,8 +35,6 @@ const PetDetail = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* KIRI: Foto & Identitas Utama */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-200">
               <div className="aspect-square rounded-[2rem] overflow-hidden mb-6">
@@ -50,8 +47,6 @@ const PetDetail = () => {
                 </p>
               </div>
             </div>
-
-            {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-blue-600 p-4 rounded-3xl text-white text-center">
                 <p className="text-[10px] font-bold opacity-80 uppercase">Berat</p>
@@ -63,11 +58,7 @@ const PetDetail = () => {
               </div>
             </div>
           </div>
-
-          {/* KANAN: Detail Informasi & Riwayat */}
           <div className="lg:col-span-2 space-y-6">
-
-            {/* Card Informasi Umum */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
               <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
                 <span className="p-2 bg-slate-100 rounded-lg text-sm">📄</span> Informasi Detail

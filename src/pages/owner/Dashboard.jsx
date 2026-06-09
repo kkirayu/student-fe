@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  Dog, 
-  Calendar, 
-  Activity, 
-  Clock, 
-  FileText, 
+import {
+  Dog,
+  Calendar,
+  Activity,
+  Clock,
+  FileText,
   AlertCircle,
   CheckCircle2,
   DollarSign
@@ -17,7 +17,7 @@ const OwnerDashboard = () => {
       title: 'Hewan Peliharaanku',
       value: '3 Ekor',
       subtitle: 'Luna, Bruno, Milo',
-      icon: <Dog className="text-blue-600 h-6 w-6" />, 
+      icon: <Dog className="text-blue-600 h-6 w-6" />,
       bgIcon: 'bg-blue-100',
     },
     {
@@ -124,7 +124,7 @@ const OwnerDashboard = () => {
 
       {/* 3. Main Content Section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        
+
         {/* Jadwal Janji Temu Terdekat */}
         <div className="col-span-1 rounded-sm border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8 flex flex-col justify-between">
           <div>
@@ -167,8 +167,8 @@ const OwnerDashboard = () => {
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-100">
-            <Link 
-              to="/owner/booking" 
+            <Link
+              to="/owner/booking"
               className="inline-flex w-full items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
             >
               <Calendar className="h-4 w-4" />
