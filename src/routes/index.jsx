@@ -63,6 +63,8 @@ import BillingQueue from '../pages/pharmacy-cashier/Cashier/BillingQueue';
 import CheckoutPOS from '../pages/pharmacy-cashier/Cashier/CheckoutPOS';
 import InvoiceTemplate from '../pages/pharmacy-cashier/Cashier/InvoiceTemplate';
 import ShiftClosing from '../pages/pharmacy-cashier/Cashier/ShiftClosing';
+import NewTransaction from '../pages/pharmacy-cashier/Cashier/NewTransaction';
+import LogTransaction from '../pages/pharmacy-cashier/Cashier/LogTransaction';
 
 import ReceptionistDashboard from '../pages/receptionist/Dashboard';
 import WalkInRegistration from '../pages/receptionist/WalkInRegistration';
@@ -152,6 +154,8 @@ const AppRouter = () => {
           <Route path="checkout" element={<CheckoutPOS />} />
           <Route path="invoice" element={<InvoiceTemplate />} />
           <Route path="closing" element={<ShiftClosing />} />
+          <Route path="new-transaction" element={<NewTransaction />} />
+          <Route path="log-transaction" element={<LogTransaction />} />
         </Route>
 
         <Route path="/receptionist" element={<AdminLayout userRole="receptionist" />}>
