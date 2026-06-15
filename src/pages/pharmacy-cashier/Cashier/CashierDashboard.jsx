@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { Link } from 'react-router-dom'; // Tambahkan baris ini
 import { Wallet, CreditCard, Clock, CheckCircle, ChevronRight, PlusCircle, Printer, Eye, Edit } from 'lucide-react';
 
 const CashierDashboard = () => {
@@ -113,17 +113,19 @@ const CashierDashboard = () => {
 
       {/* MIDDLE ROW: PRIMARY ACTIONS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <button className="group h-32 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-between p-8 text-white shadow-md transition-all active:scale-[0.98]">
+        {/* Tombol dibungkus dengan komponen Link agar area klik berfungsi dengan baik secara keseluruhan */}
+        <Link to="/cashier/new-transaction" className="group h-32 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-between p-8 text-white shadow-md transition-all active:scale-[0.98] block">
           <div className="text-left">
             <h2 className="text-xl font-bold">Transaksi Baru</h2>
             <p className="text-sm opacity-80 mt-1">Mulai tagihan klinik atau penjualan retail</p>
           </div>
+          
           <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
             <PlusCircle className="h-8 w-8 text-white" />
           </div>
-        </button>
+        </Link>
 
-        <button className="group h-32 bg-white border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 rounded-xl flex items-center justify-between p-8 text-slate-800 shadow-sm transition-all active:scale-[0.98]">
+        <Link to="/cashier/log-transaction" className="group h-32 bg-white border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 rounded-xl flex items-center justify-between p-8 text-slate-800 shadow-sm transition-all active:scale-[0.98]">
           <div className="text-left">
             <h2 className="text-xl font-bold">Log Transaksi</h2>
             <p className="text-sm text-slate-400 mt-1">Akses log transaksi </p>
@@ -131,7 +133,8 @@ const CashierDashboard = () => {
           <div className="w-14 h-14 bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-full flex items-center justify-center transition-colors">
             <CreditCard className="h-6 w-6 text-slate-600 group-hover:text-blue-600" />
           </div>
-        </button>
+
+        </Link>
       </div>
 
       {/* BOTTOM SECTION: ANTREAN TERBARU TABLE */}
