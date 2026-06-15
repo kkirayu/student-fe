@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
+import { getServices, createAppointment } from '../../../services/ownerService';
+import api from '../../../services/api';
 
 const AppointmentForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
 
+    // TODO: Ganti dengan owner_id dari sistem auth setelah login diimplementasi
+    const OWNER_ID = 1;
+
     const [formData, setFormData] = useState({
-        pet_id: '', 
-        service_id: '', 
-        schedule_date: '', 
-        schedule_time: '', 
+        pet_id: '',
+        service_id: '',
+        booking_type: 'Online',
+        schedule_date: '',
+        schedule_time: '',
         initial_complaint: '',
     });
 
@@ -19,62 +25,129 @@ const AppointmentForm = () => {
     const [servicesData, setServicesData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    // Handles flat array, { data: [] }, or paginated { data: { data: [] } }
+    const extractArray = (res) => {
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
+        if (Array.isArray(res?.data?.data)) return res.data.data;
+        return [];
+    };
 
     useEffect(() => {
         const fetchDropdownData = async () => {
             try {
-                const petsResponse = await fetch('https://dummyjson.com/users?limit=4');
-                const petsJson = await petsResponse.json();
-                
-                const dummyPetNames = ['Arifin', 'Mei-Mei', 'Troton', 'Bebek'];
-                const mappedPets = petsJson.users.map((user, index) => ({
-                    id: user.id,
-                    name: dummyPetNames[index] || user.firstName
-                }));
-                
-                const servicesResponse = await fetch('https://dummyjson.com/products/categories');
-                const servicesJson = await servicesResponse.json();
-                
-                const dummyServiceNames = ['Grooming Kucing', 'Grooming Anjing', 'Vaksinasi', 'Penitipan Hewan'];
-                const mappedServices = servicesJson.slice(0, 4).map((category, index) => ({
-                    id: index + 1,
-                    name: dummyServiceNames[index] || category.name
-                }));
+                setIsLoading(true);
 
-                setPetsData(mappedPets);
-                setServicesData(mappedServices);
+                // Fetch pets — coba /owner/pets dulu, fallback ke /pets
+                let petsArray = [];
+                try {
+                    const res = await api.get('/owner/pets');
+                    petsArray = extractArray(res.data);
+                } catch (_) {
+                    try {
+                        const res = await api.get('/pets');
+                        petsArray = extractArray(res.data);
+                    } catch (e) {
+                        console.warn('Gagal memuat pets:', e?.response?.status);
+                    }
+                }
+                setPetsData(petsArray);
+
+                // Fetch services
+                try {
+                    const res = await getServices();
+                    setServicesData(extractArray(res));
+                } catch (e) {
+                    console.warn('Gagal memuat services:', e?.response?.status);
+                }
+
             } catch (error) {
-                console.error(error);
+                console.error('Gagal memuat data dropdown:', error);
+                setErrorMessage('Gagal memuat data. Silakan refresh halaman.');
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchDropdownData();
-
-        if (isEditMode) {
-            setFormData({
-                pet_id: '1', 
-                service_id: '1', 
-                schedule_date: '2026-05-16', 
-                schedule_time: '10.00 - 11.30', 
-                initial_complaint: 'pilek, lemes, gamau makan, tidur seharian',
-            });
-        }
-    }, [isEditMode]);
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    // Harga layanan yang dipilih
+    const selectedService = servicesData.find(s => String(s.id) === String(formData.service_id)) ?? null;
+
+    const formatRupiah = (number) => {
+        if (number == null) return '-';
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+        }).format(number);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
-        setTimeout(() => {
+        setErrorMessage('');
+
+        try {
+            const payload = {
+                owner_id: OWNER_ID,
+                pet_id: Number(formData.pet_id),
+                service_id: Number(formData.service_id),
+                booking_type: formData.booking_type,
+                schedule_date: formData.schedule_date,
+                schedule_time: formData.schedule_time,
+                initial_complaint: formData.initial_complaint,
+            };
+
+            console.log('[AppointmentForm] Payload:', payload);
+
+            const response = await createAppointment(payload);
+            console.log('[AppointmentForm] Raw Response:', response);
+
+            // Normalisasi: handle { owner_id: ... } atau { success, data: { owner_id: ... } }
+            const appointmentData = response?.owner_id
+                ? response
+                : response?.data?.owner_id
+                    ? response.data
+                    : response?.data ?? response;
+
+            console.log('[AppointmentForm] Appointment Data:', appointmentData);
+
+            navigate('/owner/booking/ticket', { state: { appointment: appointmentData } });
+        } catch (error) {
+            console.error('[AppointmentForm] Error:', error?.response ?? error);
+
+            const errData = error?.response?.data;
+            let msg = 'Terjadi kesalahan. Silakan coba lagi.';
+            if (errData) {
+                if (typeof errData === 'string') {
+                    msg = errData;
+                } else if (errData.message) {
+                    msg = errData.message;
+                } else if (errData.detail) {
+                    msg = typeof errData.detail === 'string'
+                        ? errData.detail
+                        : JSON.stringify(errData.detail);
+                } else if (errData.errors) {
+                    // Laravel validation errors: { errors: { field: ["msg"] } }
+                    msg = Object.entries(errData.errors)
+                        .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                        .join(' | ');
+                } else {
+                    msg = JSON.stringify(errData);
+                }
+            } else if (error?.message) {
+                msg = error.message;
+            }
+
+            setErrorMessage(msg);
             setIsSubmitting(false);
-            navigate('/owner/booking/ticket');
-        }, 1500);
+        }
     };
 
     return (
@@ -91,103 +164,158 @@ const AppointmentForm = () => {
                         {isEditMode ? 'Edit Data Janji Temu' : 'Buat Janji Temu'}
                     </h1>
                     <p className="mt-0.5 text-sm text-slate-500">
-                        {isEditMode ? 'Perbarui informasi janji temu Anda.' : 'Buat janji temu untuk mengamankan jadwal Anda.'}
+                        {isEditMode
+                            ? 'Perbarui informasi janji temu Anda.'
+                            : 'Buat janji temu untuk mengamankan jadwal Anda.'}
                     </p>
                 </div>
             </div>
+
+            {errorMessage && (
+                <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>{errorMessage}</span>
+                </div>
+            )}
 
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 sm:p-8">
                         <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+
+                            {/* Pet */}
                             <div>
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Pilih Pet <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    name="pet_id" 
-                                    value={formData.pet_id} 
+                                    name="pet_id"
+                                    value={formData.pet_id}
                                     onChange={handleChange}
                                     disabled={isLoading}
                                     className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 disabled:text-slate-400"
                                     required
                                 >
                                     <option value="" disabled>
-                                        {isLoading ? 'Memuat data pets...' : 'Pilih pet'}
+                                        {isLoading ? 'Memuat data pets...' : petsData.length === 0 ? 'Tidak ada pet tersedia' : 'Pilih pet'}
                                     </option>
-                                    {petsData.map(pet => (
-                                        <option key={pet.id} value={pet.id}>{pet.name}</option>
+                                    {petsData.map((pet) => (
+                                        <option key={pet.id} value={pet.id}>
+                                            {pet.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
+                            {/* Service */}
                             <div>
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Layanan <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    name="service_id" 
-                                    value={formData.service_id} 
+                                    name="service_id"
+                                    value={formData.service_id}
                                     onChange={handleChange}
                                     disabled={isLoading}
                                     className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 disabled:text-slate-400"
                                     required
                                 >
                                     <option value="" disabled>
-                                        {isLoading ? 'Memuat layanan...' : 'Pilih layanan'}
+                                        {isLoading ? 'Memuat layanan...' : servicesData.length === 0 ? 'Tidak ada layanan tersedia' : 'Pilih layanan'}
                                     </option>
-                                    {servicesData.map(service => (
-                                        <option key={service.id} value={service.id}>{service.name}</option>
+                                    {servicesData.map((service) => (
+                                        <option key={service.id} value={service.id}>
+                                            {service.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
+                            {/* Harga Layanan (read-only, muncul setelah layanan dipilih) */}
+                            {selectedService && (
+                                <div>
+                                    <label className="mb-2.5 block text-sm font-semibold text-slate-800">
+                                        Harga Layanan
+                                    </label>
+                                    <div className="flex items-center w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-blue-700 cursor-not-allowed select-none">
+                                        {formatRupiah(selectedService.price)}
+                                    </div>
+                                    <p className="mt-1 text-xs text-slate-400">Harga otomatis dari layanan yang dipilih. Tidak dapat diubah.</p>
+                                </div>
+                            )}
+
+                            {/* Booking Type */}
+                            <div>
+                                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
+                                    Tipe Booking <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    name="booking_type"
+                                    value={formData.booking_type}
+                                    onChange={handleChange}
+                                    className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                                    required
+                                >
+                                    <option value="Online">Online</option>
+                                    <option value="Walk-in">Walk-in</option>
+                                </select>
+                            </div>
+
+                            {/* Schedule Date */}
                             <div>
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Tanggal Jadwal <span className="text-red-500">*</span>
                                 </label>
                                 <input
-                                    type="date" 
-                                    name="schedule_date" 
-                                    value={formData.schedule_date} 
+                                    type="date"
+                                    name="schedule_date"
+                                    value={formData.schedule_date}
                                     onChange={handleChange}
+                                    min={new Date().toISOString().split('T')[0]}
                                     className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                                     required
                                 />
                             </div>
 
+                            {/* Schedule Time */}
                             <div>
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Waktu Jadwal <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    name="schedule_time" 
-                                    value={formData.schedule_time} 
+                                    name="schedule_time"
+                                    value={formData.schedule_time}
                                     onChange={handleChange}
                                     className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                                     required
                                 >
                                     <option value="" disabled>Pilih Waktu</option>
-                                    <option value="10.00 - 11.30">10.00 - 11.30</option>
-                                    <option value="13.00 - 14.30">13.00 - 14.30</option>
-                                    <option value="15.00 - 16.30">15.00 - 16.30</option>
-                                    <option value="19.00 - 20.30">19.00 - 20.30</option>
+                                    <option value="08:00">08:00 WIB</option>
+                                    <option value="09:00">09:00 WIB</option>
+                                    <option value="10:00">10:00 WIB</option>
+                                    <option value="11:00">11:00 WIB</option>
+                                    <option value="13:00">13:00 WIB</option>
+                                    <option value="14:00">14:00 WIB</option>
+                                    <option value="14:30">14:30 WIB</option>
+                                    <option value="15:00">15:00 WIB</option>
+                                    <option value="16:00">16:00 WIB</option>
                                 </select>
                             </div>
 
+                            {/* Initial Complaint */}
                             <div className="sm:col-span-2">
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Keluhan Awal / Catatan <span className="text-red-500">*</span>
                                 </label>
-                                <textarea 
-                                    name="initial_complaint" 
+                                <textarea
+                                    name="initial_complaint"
                                     value={formData.initial_complaint}
-                                    onChange={handleChange} 
-                                    rows="3" 
-                                    placeholder="Contoh: Kucing saya muntah-muntah sejak pagi..." 
-                                    required 
+                                    onChange={handleChange}
+                                    rows="3"
+                                    placeholder="Contoh: Kucing saya muntah-muntah sejak pagi..."
+                                    required
                                     className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                ></textarea>
+                                />
                             </div>
 
                         </div>
@@ -203,7 +331,7 @@ const AppointmentForm = () => {
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isLoading}
                             className="flex items-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-70"
                         >
                             {isSubmitting ? (
@@ -219,7 +347,6 @@ const AppointmentForm = () => {
                             )}
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>

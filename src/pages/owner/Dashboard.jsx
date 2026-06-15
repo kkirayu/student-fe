@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dog,
   Calendar,
@@ -7,23 +7,115 @@ import {
   FileText,
   AlertCircle,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
+
+const OWNER_ID = 1;
 
 const OwnerDashboard = () => {
+  const [pets, setPets] = useState([]);
+  const [petsLoading, setPetsLoading] = useState(true);
+  const [petsError, setPetsError] = useState(false);
+
+
+  // Fetch hewan peliharaan milik owner yang login
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        setPetsLoading(true);
+        setPetsError(false);
+        const res = await api.get('/pets', { params: { owner_id: OWNER_ID } });
+        // Response: { success, data: { data: [...], total, ... } }
+        const petList = res.data?.data?.data ?? res.data?.data ?? [];
+        setPets(petList);
+      } catch (err) {
+        console.error('Fetch pets error:', err);
+        setPetsError(true);
+      } finally {
+        setPetsLoading(false);
+      }
+    };
+
+    fetchPets();
+  }, []);
+
+  // Fetch janji temu milik owner (semua status) untuk ditampilkan di dashboard
+  // Diurutkan dari yang paling dekat (schedule_date + schedule_time ascending)
+  const [allAppointments, setAllAppointments] = useState([]);
+  const [allApptLoading, setAllApptLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAllAppointments = async () => {
+      try {
+        setAllApptLoading(true);
+        const res = await api.get('/appointments', {
+          params: { owner_id: OWNER_ID }
+        });
+        const list = res.data?.data?.data ?? res.data?.data ?? [];
+
+        // Urutkan ascending: schedule_date dulu, lalu schedule_time
+        const sorted = [...list].sort((a, b) => {
+          const dtA = new Date(`${a.schedule_date}T${a.schedule_time ?? '00:00'}`);
+          const dtB = new Date(`${b.schedule_date}T${b.schedule_time ?? '00:00'}`);
+          return dtA - dtB;
+        });
+
+        setAllAppointments(sorted);
+      } catch (err) {
+        console.error('Fetch all appointments error:', err);
+      } finally {
+        setAllApptLoading(false);
+      }
+    };
+
+    fetchAllAppointments();
+  }, []);
+
+  // Hitung appointment berstatus 'Disetujui' dari data yang sudah di-fetch
+  const confirmedAppointments = allAppointments.filter(a => a.status === 'Disetujui');
+
+  // Subtitle janji temu: tanggal appointment disetujui terdekat
+  const apptSubtitle = () => {
+    if (allApptLoading) return '...';
+    if (confirmedAppointments.length === 0) return 'Tidak ada jadwal aktif';
+    const nearest = confirmedAppointments[0]; // sudah diurutkan ascending
+    const date = nearest?.schedule_date
+      ? new Date(nearest.schedule_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '—';
+    return `Terdekat: ${date}`;
+  };
+
+  // Nama-nama hewan (maks 3 ditampilkan, sisanya "+N lagi")
+  const petNames = () => {
+    if (petsError) return 'Gagal memuat data';
+    if (petsLoading) return '...';
+    if (pets.length === 0) return 'Belum ada hewan';
+    const names = pets.map(p => p.name);
+    if (names.length <= 3) return names.join(', ');
+    return `${names.slice(0, 3).join(', ')} +${names.length - 3} lagi`;
+  };
+
   const stats = [
     {
       title: 'Hewan Peliharaanku',
-      value: '3 Ekor',
-      subtitle: 'Luna, Bruno, Milo',
+      value: petsLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        : petsError
+          ? <span className="text-base text-red-500">Error</span>
+          : `${pets.length} Ekor`,
+      subtitle: petNames(),
       icon: <Dog className="text-blue-600 h-6 w-6" />,
       bgIcon: 'bg-blue-100',
     },
     {
       title: 'Janji Temu Aktif',
-      value: '1 Jadwal',
-      subtitle: 'Terdekat: 12 Mei 2026',
+      value: allApptLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+        : `${confirmedAppointments.length} Jadwal`,
+      subtitle: apptSubtitle(),
       icon: <Calendar className="text-emerald-600 h-6 w-6" />,
       bgIcon: 'bg-emerald-100',
     },
@@ -43,28 +135,28 @@ const OwnerDashboard = () => {
     },
   ];
 
-  const upcomingAppointments = [
-    {
-      petName: 'Luna',
-      species: 'Kucing',
-      doctor: 'Drh. Bunga',
-      date: '12 Mei 2026',
-      time: '10:00 WIB',
-      purpose: 'Vaksinasi Tricat & Konsultasi Nafsu Makan',
-      status: 'Dikonfirmasi',
-      statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200'
-    },
-    {
-      petName: 'Bruno',
-      species: 'Anjing',
-      doctor: 'Drh. Bunga',
-      date: '20 Mei 2026',
-      time: '14:00 WIB',
-      purpose: 'Scaling Gigi (Pembersihan Karang)',
-      status: 'Menunggu',
-      statusColor: 'text-amber-600 bg-amber-50 border-amber-200'
-    }
-  ];
+  // Ambil maks 3 jadwal terdekat untuk ditampilkan di dashboard
+  const upcomingAppointments = allAppointments.slice(0, 3);
+
+  // Helper format tanggal
+  const formatScheduleDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  };
+
+  // Helper warna badge status
+  const getStatusColor = (status) => {
+    const map = {
+      'Disetujui': 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      'Menunggu': 'text-amber-600 bg-amber-50 border-amber-200',
+      'Dalam Periksa': 'text-purple-600 bg-purple-50 border-purple-200',
+      'Selesai': 'text-blue-600 bg-blue-50 border-blue-200',
+      'Batal': 'text-red-500 bg-red-50 border-red-200',
+    };
+    return map[status] ?? 'text-slate-600 bg-slate-50 border-slate-200';
+  };
 
   const healthReminders = [
     {
@@ -98,10 +190,12 @@ const OwnerDashboard = () => {
       {/* 1. Header Dashboard */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Halo, Cita Nurcahyani</h1>
-          <p className="text-sm text-slate-500">Selamat datang kembali! Berikut adalah ringkasan kesehatan peliharaan Anda.</p>
+          <h1 className="text-2xl font-bold text-slate-800">Halo, Selamat Datang!</h1>
+          <p className="text-sm text-slate-500">Berikut adalah ringkasan kesehatan peliharaan Anda.</p>
         </div>
-        <div className="text-sm font-medium text-slate-500">Hari ini: 10 Mei 2026</div>
+        <div className="text-sm font-medium text-slate-500">
+          Hari ini: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
       </div>
 
       {/* 2. Stat Cards Grid */}
@@ -136,33 +230,47 @@ const OwnerDashboard = () => {
             </div>
 
             <div className="space-y-4">
-              {upcomingAppointments.map((appt, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded border border-slate-100 bg-slate-50 gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 flex h-10 w-10 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold">
-                      {appt.petName[0]}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900">{appt.petName}</h4>
-                        <span className="text-xs text-slate-500">({appt.species})</span>
-                      </div>
-                      <p className="text-sm text-slate-600 mt-1">{appt.purpose}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {appt.date} @ {appt.time}
-                        </span>
-                        <span className="font-medium text-slate-700">
-                          Dokter: {appt.doctor}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className={`inline-flex items-center rounded border px-2.5 py-1 text-xs font-semibold ${appt.statusColor} self-start sm:self-center`}>
-                    {appt.status}
-                  </span>
+              {allApptLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-slate-400">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Memuat jadwal...</span>
                 </div>
-              ))}
+              ) : upcomingAppointments.length === 0 ? (
+                <div className="py-6 text-center text-sm text-slate-400">
+                  Tidak ada jadwal janji temu.
+                </div>
+              ) : (
+                upcomingAppointments.map((appt, i) => {
+                  const petName = appt.pet?.name ?? `Pet #${appt.pet_id}`;
+                  const petSpecies = appt.pet?.species ?? '';
+                  const serviceName = appt.service?.name ?? appt.initial_complaint ?? '-';
+                  return (
+                    <div key={appt.id ?? i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded border border-slate-100 bg-slate-50 gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1 flex h-10 w-10 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold">
+                          {petName[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-900">{petName}</h4>
+                            {petSpecies && <span className="text-xs text-slate-500">({petSpecies})</span>}
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">{serviceName}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatScheduleDate(appt.schedule_date)} @ {appt.schedule_time} WIB
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center rounded border px-2.5 py-1 text-xs font-semibold ${getStatusColor(appt.status)} self-start sm:self-center`}>
+                        {appt.status}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -216,3 +324,4 @@ const OwnerDashboard = () => {
 };
 
 export default OwnerDashboard;
+

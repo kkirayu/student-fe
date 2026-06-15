@@ -1,55 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getPets, deletePet } from '../../../services/ownerService';
+
+const OWNER_ID = 1;
+
 
 const PetList = () => {
   const [petsData, setPetsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSpecies, setFilterSpecies] = useState('');
 
-  useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        const response = await fetch('https://dummyjson.com/users?limit=8');
-        const data = await response.json();
+  const fetchPets = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await getPets({ owner_id: OWNER_ID });
 
-        const petNames = ['Oren', 'Troton', 'Bebek', 'Mei-mei', 'Arifin', 'Kuro', 'Milo', 'Simba'];
-        const speciesOptions = ['Kucing', 'Kucing', 'Kucing', 'Anjing', 'Anjing', 'Kucing', 'Anjing', 'Kucing'];
-        const breedOptions = ['Persia', 'Chartreux', 'Himalaya', 'Bichon Frise', 'Cihuahua', 'Domestik', 'Golden Retriever', 'Anggora'];
-        const colorOptions = ['Oranye', 'Abu-abu', 'Putih', 'Putih', 'Hitam', 'Hitam', 'Coklat', 'Kuning'];
-
-        const mappedPets = data.users.map((user, index) => ({
-          id: user.id,
-          name: petNames[index] || user.firstName,
-          species: speciesOptions[index] || 'Kucing',
-          breed: breedOptions[index] || 'Mix',
-          gender: user.gender === 'male' ? 'Jantan' : 'Betina',
-          dob: user.birthDate,
-          color: colorOptions[index] || 'Campuran',
-          status: index % 4 === 0 ? 'Non-Aktif' : 'Aktif'
-        }));
-
-        setPetsData(mappedPets);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
+      // API returns: { success, data: { current_page, data: [...] } }
+      // Axios wraps response in res, so actual payload is res
+      let pets = [];
+      if (Array.isArray(res)) {
+        pets = res;
+      } else if (Array.isArray(res.data)) {
+        pets = res.data;
+      } else if (res.data && Array.isArray(res.data.data)) {
+        pets = res.data.data;  // paginated: { data: { data: [...] } }
+      } else if (Array.isArray(res.data?.data?.data)) {
+        pets = res.data.data.data;
       }
-    };
-
-    fetchPets();
-  }, []);
-
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus pet ${name}?`)) {
-      setPetsData(prev => prev.filter(pet => pet.id !== id));
+      setPetsData(pets);
+    } catch (err) {
+      console.error(err);
+      setError('Gagal memuat data pets. Pastikan server berjalan.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchPets();
+  }, []);
+
+  const handleDelete = async (id, name) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus pet ${name}?`)) {
+      try {
+        await deletePet(id);
+        setPetsData(prev => prev.filter(pet => pet.id !== id));
+      } catch (err) {
+        console.error(err);
+        alert('Gagal menghapus data pet. Silakan coba lagi.');
+      }
+    }
+  };
+
+  // Collect unique species from data for filter dropdown
+  const speciesOptions = [...new Set(petsData.map(p => p.species).filter(Boolean))];
+
   const filteredPets = petsData.filter(pet => {
-    const matchesSearch = pet.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          pet.breed.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      (pet.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (pet.breed ?? '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpecies = filterSpecies === '' || pet.species === filterSpecies;
     return matchesSearch && matchesSpecies;
   });
@@ -86,14 +99,15 @@ const PetList = () => {
             />
           </div>
 
-          <select 
+          <select
             value={filterSpecies}
             onChange={(e) => setFilterSpecies(e.target.value)}
             className="w-full rounded border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none focus:border-blue-600 sm:w-auto"
           >
             <option value="">Semua Spesies</option>
-            <option value="Kucing">Kucing</option>
-            <option value="Anjing">Anjing</option>
+            {speciesOptions.map(sp => (
+              <option key={sp} value={sp}>{sp}</option>
+            ))}
           </select>
         </div>
 
@@ -103,7 +117,7 @@ const PetList = () => {
               <tr className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                 <th className="px-6 py-4">Nama Pet</th>
                 <th className="px-6 py-4">Species</th>
-                <th className="px-6 py-4">Gender & Dob</th>
+                <th className="px-6 py-4">Gender &amp; Lahir</th>
                 <th className="px-6 py-4 text-center">Color</th>
                 <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
@@ -118,14 +132,31 @@ const PetList = () => {
                     </div>
                   </td>
                 </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="5" className="py-10 text-center">
+                    <div className="flex flex-col items-center gap-2 text-red-500">
+                      <AlertCircle className="h-8 w-8" />
+                      <span className="text-sm">{error}</span>
+                      <button
+                        onClick={fetchPets}
+                        className="mt-1 text-xs font-medium text-blue-600 underline hover:text-blue-800"
+                      >
+                        Coba Lagi
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ) : filteredPets.length > 0 ? (
                 filteredPets.map((pet) => (
                   <tr key={pet.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">{pet.name}</div>
-                      <div className={`text-[10px] font-bold uppercase ${pet.status === 'Aktif' ? 'text-emerald-500' : 'text-slate-400'}`}>
-                        {pet.status}
-                      </div>
+                      {pet.distinctive_traits && (
+                        <div className="text-[10px] text-slate-400 truncate max-w-[180px]" title={pet.distinctive_traits}>
+                          {pet.distinctive_traits}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-medium text-slate-700">{pet.breed}</span>
@@ -143,25 +174,25 @@ const PetList = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link 
+                        <Link
                           to={`/owner/pets/detail/${pet.id}`}
-                          className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors" 
+                          className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors"
                           title="Lihat Detail"
                         >
                           <Eye className="h-5 w-5" />
                         </Link>
 
-                        <Link 
+                        <Link
                           to={`/owner/pets/edit/${pet.id}`}
-                          className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 transition-colors" 
+                          className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
                           title="Edit Data"
                         >
                           <Edit className="h-5 w-5" />
                         </Link>
 
-                        <button 
+                        <button
                           onClick={() => handleDelete(pet.id, pet.name)}
-                          className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors" 
+                          className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
                           title="Hapus Data"
                         >
                           <Trash2 className="h-5 w-5" />
