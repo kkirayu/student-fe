@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, AlertCircle, Loader2, Search } from 'lucide-react';
+import api from '../../services/api';
 
 const AuditLog = () => {
   const [logs, setLogs] = useState([]);
@@ -10,34 +11,10 @@ const AuditLog = () => {
     const fetchLogs = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://dummyjson.com/users?limit=8');
-        const data = await response.json();
-        
-        const actions = [
-          'Menghapus katalog produk PRD-004',
-          'Mengubah tarif layanan USG Hewan',
-          'Menambahkan staf medis baru',
-          'Membatalkan janji temu secara sepihak',
-          'Mengubah status resep menjadi Selesai',
-          'Melakukan export laporan keuangan bulanan',
-          'Mengubah konfigurasi jam operasional klinik',
-          'Menyetujui pendaftaran walk-in owner'
-        ];
-
-        const roles = ['Admin', 'Admin', 'Admin', 'Resepsionis', 'Apoteker', 'Admin', 'Admin', 'Resepsionis'];
-
-        const mappedLogs = data.users.map((user, index) => ({
-          id: user.id,
-          user: `${user.firstName} ${user.lastName}`,
-          role: roles[index % roles.length],
-          action: actions[index % actions.length],
-          timestamp: `Hari ini, 0${8 - index}:12 WIB`,
-          severity: index % 3 === 0 ? 'Tinggi' : 'Normal'
-        }));
-
-        setLogs(mappedLogs);
+        const response = await api.get('/audit-logs');
+        setLogs(response.data.data);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to fetch audit logs:', error);
       } finally {
         setLoading(false);
       }
