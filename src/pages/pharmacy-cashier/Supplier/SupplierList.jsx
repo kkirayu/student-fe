@@ -1,50 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, X, Phone, MapPin, User, Building2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Ganti baris import yang lama dengan yang di bawah ini:
+import {
+  getSuppliers,
+  deleteSupplier
+} from '../../../services/supplierService';
+
+// Import assets jika masih diperlukan untuk fallback statis (opsional)
 import logoPertamina from '../../../assets/company/pertamina.jpeg';
 import logoKimiaFarma from '../../../assets/company/kimia_farma.jpeg';
 
 const SupplierManagement = () => {
-  // Dummy data supplier / distributor klinik
-  const [supplierData] = useState([
-    {
-      id: 1,
-      companyName: 'PT. Pertamina',
-      logo: logoPertamina, // Menggunakan variabel import
-      salesName: 'Budi Santoso',
-      whatsapp: '6282237943100',
-      address: 'Jl. Industri Cimareme No. 8, Bandung',
-      category: 'Obat & Vaksin',
-      suppliedProducts: ['Amoxicillin Sirup', 'Cefadroxil Kapsul', 'Vaksin Rabies']
-    },
-    {
-      id: 2,
-      companyName: 'PT. Kimia Farma TD',
-      logo: logoKimiaFarma, // Menggunakan variabel import untuk Kimia Farma yang ada di folder Anda
-      salesName: 'Siti Rahma',
-      whatsapp: '6289876543210',
-      address: 'Jl. Babakan Ciparay No. 11, Bandung',
-      category: 'Alat Medis & Vitamin',
-      suppliedProducts: ['Spuit 3cc', 'Infus Set Micro', 'Vitamin B Kompleks']
-    },
-    {
-      id: 3,
-      companyName: 'CV. Jaya Makmur Pet Supply',
-      logo: null, // Jika kosong, otomatis jatuh ke icon default (Building2)
-      salesName: 'Kevin Wijaya',
-      whatsapp: '628551234567',
-      address: 'Kawasan Pergudangan Bizhub Blok B-5, Tangerang',
-      category: 'Pakan & Aksesoris',
-      suppliedProducts: ['Royal Canin Kitten 2kg', 'Pro Plan Puppy 3kg', 'Kandang Kucing Size L']
-    }
-  ]);
-
-  // State untuk Pencarian dan Pop-up (Modal)
+  const [supplierData, setSupplierData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const loadSuppliers = async () => {
+  setLoading(true);
+  try {
+    const data = await getSuppliers();
+    // Karena service Anda sudah melakukan `return response.data.data`,
+    // variabel `data` di sini sudah langsung berbentuk Array []
+    setSupplierData(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error('Gagal mengambil data supplier:', error);
+    setSupplierData([]); // Fallback aman jika API error
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleDelete = async (id) => {
+  const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus supplier ini?');
+  if (!confirmDelete) return;
+
+  try {
+    await deleteSupplier(id); // 1. Menghapus di database lewat API
+    await loadSuppliers();    // 2. Memanggil ulang data terbaru dari API
+  } catch (error) {
+    console.error('Gagal menghapus supplier:', error);
+  }
+};
 
   const handleOpenModal = (supplier) => {
     setSelectedSupplier(supplier);
@@ -56,10 +59,10 @@ const SupplierManagement = () => {
     setSelectedSupplier(null);
   };
 
-  // Filter data berdasarkan nama PT atau nama Sales
+  // Filter data berdasarkan data yang datang dari API (snake_case)
   const filteredSuppliers = supplierData.filter((supplier) =>
-    supplier.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    supplier.salesName.toLowerCase().includes(searchTerm.toLowerCase())
+    supplier.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.sales_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -111,24 +114,26 @@ const SupplierManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredSuppliers.map((supplier) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-10 text-center text-slate-400">
+                    Memuat data supplier...
+                  </td>
+                </tr>
+              ) : filteredSuppliers.map((supplier) => (
                 <tr key={supplier.id} className="hover:bg-slate-50 transition-colors group">
                   {/* Nama PT */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border bg-slate-100 border-slate-200 text-slate-500 overflow-hidden">
-                        {supplier.logo ? (
-                          <img src={supplier.logo} alt={supplier.companyName} className="h-full w-full object-contain p-1" />
-                        ) : (
-                          <Building2 className="h-5 w-5" />
-                        )}
+                        <Building2 className="h-5 w-5" />
                       </div>
                       <div>
                         <button 
                           onClick={() => handleOpenModal(supplier)}
                           className="font-medium text-slate-900 hover:text-blue-600 hover:underline flex items-center gap-1 text-left"
                         >
-                          {supplier.companyName}
+                          {supplier.company_name}
                           <ExternalLink className="h-3 w-3 opacity-50" />
                         </button>
                         <div className="text-xs text-slate-500 mt-0.5">ID: VND-{String(supplier.id).padStart(3, '0')}</div>
@@ -140,53 +145,62 @@ const SupplierManagement = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-slate-700">
                       <User className="h-4 w-4 text-slate-400" />
-                      <span className="font-medium">{supplier.salesName}</span>
+                      <span className="font-medium">{supplier.sales_name}</span>
                     </div>
                   </td>
                   
-                  {/* Nomor WA dengan tombol langsung ke chat */}
+                  {/* Nomor WA */}
                   <td className="px-6 py-4">
                     <a 
-                      href={`https://wa.me/${supplier.whatsapp}`}
+                      href={`https://wa.me/${supplier.phone_number.replace(/[^0-9]/g, '')}`}
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-blue-600 hover:underline font-medium"
                       title="Hubungi via WhatsApp"
                     >
                       <Phone className="h-4 w-4 text-emerald-500 fill-emerald-500" />
-                      +{supplier.whatsapp}
+                      +{supplier.phone_number}
                     </a>
                   </td>
 
-                  {/* Alamat */}
+                  {/* Alamat (Menggunakan Fallback karena belum ada di DB Laravel Anda) */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-slate-600 max-w-xs truncate" title={supplier.address}>
+                    <div className="flex items-center gap-2 text-slate-600 max-w-xs truncate" title={supplier.address || "Alamat belum diatur"}>
                       <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                      <span>{supplier.address}</span>
+                      <span>{supplier.address || '-'}</span>
                     </div>
                   </td>
 
                   {/* Kategori */}
                   <td className="px-6 py-4 text-center">
                     <span className="inline-flex rounded-sm bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 border border-slate-200">
-                      {supplier.category}
+                      Supplier
                     </span>
                   </td>
 
                   {/* Aksi */}
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm transition-colors" title="Edit Supplier">
+                      <Link 
+                        to={`/admin/pharmacy-cashier/inventory/FormEditSupplier/${supplier.id}`}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm transition-colors" 
+                        title="Edit Supplier"
+                      >
                         <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors" title="Hapus Supplier">
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(supplier.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors"
+                        title="Hapus Supplier"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filteredSuppliers.length === 0 && (
+
+              {!loading && filteredSuppliers.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-6 py-10 text-center text-slate-400">
                     Data supplier tidak ditemukan.
@@ -207,7 +221,7 @@ const SupplierManagement = () => {
             <div className="flex items-center justify-between border-b border-slate-200 p-5">
               <div>
                 <h3 className="text-lg font-bold text-slate-800">Profil & Produk Supplier</h3>
-                <p className="text-sm font-medium text-slate-500 mt-1">{selectedSupplier.companyName}</p>
+                <p className="text-sm font-medium text-slate-500 mt-1">{selectedSupplier.company_name}</p>
               </div>
               <button onClick={handleCloseModal} className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                 <X className="h-5 w-5" />
@@ -216,11 +230,10 @@ const SupplierManagement = () => {
 
             {/* Modal Body */}
             <div className="p-5 space-y-4">
-              {/* Ringkasan Kontak (Ditambahkan Logo di Sebelah Kiri Teks Informasi) */}
               <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 flex items-start gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-sm border bg-white border-slate-200 text-slate-500 overflow-hidden">
                   {selectedSupplier.logo ? (
-                    <img src={selectedSupplier.logo} alt={selectedSupplier.companyName} className="h-full w-full object-contain p-1" />
+                    <img src={selectedSupplier.logo} alt={selectedSupplier.company_name} className="h-full w-full object-contain p-1" />
                   ) : (
                     <Building2 className="h-8 w-8" />
                   )}
@@ -228,24 +241,30 @@ const SupplierManagement = () => {
                 <div className="space-y-2 flex-1">
                   <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Informasi Kontak Pemesanan</div>
                   <div className="text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">Nama Sales:</span> {selectedSupplier.salesName}
+                    <span className="font-semibold text-slate-900">Nama Sales:</span> {selectedSupplier.sales_name}
                   </div>
                   <div className="text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">Alamat:</span> {selectedSupplier.address}
+                    <span className="font-semibold text-slate-900">Alamat:</span> {selectedSupplier.address || '-'}
                   </div>
                 </div>
               </div>
 
-              {/* Rincian Produk yang Sering Dipesan */}
+              {/* Rincian Produk */}
               <div>
                 <h4 className="mb-3 text-sm font-bold text-slate-700">Katalog Produk yang Disuplai:</h4>
                 <div className="divide-y divide-slate-100 border border-slate-200 rounded-sm">
-                  {selectedSupplier.suppliedProducts.map((product, index) => (
-                    <div key={index} className="p-3 bg-white text-sm text-slate-800 font-medium flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                      {product}
+                  {selectedSupplier.supplied_products && selectedSupplier.supplied_products.length > 0 ? (
+                    selectedSupplier.supplied_products.map((product, index) => (
+                      <div key={index} className="p-3 bg-white text-sm text-slate-800 font-medium flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                        {product}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-sm text-slate-500 text-center">
+                      Data produk supplier belum tersedia.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -256,7 +275,7 @@ const SupplierManagement = () => {
                 Tutup
               </button>
               <a 
-                href={`https://wa.me/${selectedSupplier.whatsapp}?text=Halo%20${selectedSupplier.salesName},%20saya%20ingin%20melakukan%20pemesanan%20ulang%20stok%20klinik.`}
+                href={`https://wa.me/${selectedSupplier.phone_number.replace(/[^0-9]/g, '')}?text=Halo%20${selectedSupplier.sales_name},%20saya%20ingin%20melakukan%20pemesanan%20ulang%20stok%20klinik.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5"
