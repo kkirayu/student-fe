@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getUsers, deleteUser } from '../../../services/adminService';
 
 const StaffList = () => {
   const [staffData, setStaffData] = useState([]);
@@ -12,23 +13,31 @@ const StaffList = () => {
     const fetchStaff = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://dummyjson.com/users?limit=12');
-        const data = await response.json();
+        const response = await getUsers();
+        let data = [];
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response && Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response?.data?.data && Array.isArray(response.data.data)) {
+          data = response.data.data;
+        }
 
-        const clinicRoles = ['Admin', 'Dokter', 'Resepsionis', 'Apoteker', 'Kasir'];
+        // Filter out owners to only show staff
+        const staffOnly = data.filter(user => user.role !== 'Owner');
 
-        const mappedStaff = data.users.map((user, index) => ({
+        const mappedStaff = staffOnly.map((user) => ({
           id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-          phone_number: user.phone,
-          role: clinicRoles[index % clinicRoles.length],
-          status: index % 5 === 0 ? 'Non-Aktif' : 'Aktif'
+          name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Tanpa Nama',
+          email: user.email || '-',
+          phone_number: user.phone_number || user.phone || '-',
+          role: user.role || 'Staff',
+          status: user.status || 'Aktif'
         }));
 
         setStaffData(mappedStaff);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch staff:', err);
       } finally {
         setLoading(false);
       }
@@ -44,11 +53,17 @@ const StaffList = () => {
     return matchesSearch && matchesRole;
   });
 
-  const handleDelete = (id, name) => {
+  const handleDelete = async (id, name) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus staf bernama ${name}?`)) {
-      const updatedData = staffData.filter(staff => staff.id !== id);
-      setStaffData(updatedData);
-      alert('Data staf berhasil dihapus dari tampilan.');
+      try {
+        await deleteUser(id);
+        const updatedData = staffData.filter(staff => staff.id !== id);
+        setStaffData(updatedData);
+        alert('Data staf berhasil dihapus.');
+      } catch (error) {
+        console.error('Failed to delete staff:', error);
+        alert('Gagal menghapus data staf. Pastikan server berjalan dan ID valid.');
+      }
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Tag } from 'lucide-react';
+import { getServiceById, createService, updateService } from '../../../services/adminService';
 
 const ServiceRatesForm = () => {
   const { id } = useParams();
@@ -20,32 +21,58 @@ const ServiceRatesForm = () => {
 
   useEffect(() => {
     if (isEditMode) {
-      setIsLoadingData(true);
-      setTimeout(() => {
-        setFormData({
-          name: 'Vaksinasi Kucing (Tricat)',
-          category: 'Vaksin',
-          price: '200000',
-          status: 'Tersedia',
-          description: 'Layanan vaksinasi dasar untuk mencegah infeksi virus Feline Panleukopenia, Feline Herpesvirus, dan Feline Calicivirus.'
-        });
-        setIsLoadingData(false);
-      }, 800);
+      const fetchDetail = async () => {
+        setIsLoadingData(true);
+        try {
+          const response = await getServiceById(id);
+          const data = response?.data || response;
+          setFormData({
+            name: data.name || '',
+            category: data.category || '',
+            price: data.price ? String(data.price) : '',
+            status: data.status || 'Tersedia',
+            description: data.description || ''
+          });
+        } catch (error) {
+          console.error('Failed to fetch service detail:', error);
+          alert('Gagal mengambil data layanan.');
+          navigate('/admin/services');
+        } finally {
+          setIsLoadingData(false);
+        }
+      };
+      fetchDetail();
     }
-  }, [isEditMode]);
+  }, [id, isEditMode, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const payload = {
+        ...formData,
+        price: Number(formData.price)
+      };
+
+      if (isEditMode) {
+        await updateService(id, payload);
+        alert('Layanan berhasil diperbarui!');
+      } else {
+        await createService(payload);
+        alert('Layanan baru berhasil ditambahkan!');
+      }
       navigate('/admin/services');
-    }, 1200);
+    } catch (error) {
+      console.error('Failed to save service:', error);
+      alert('Terjadi kesalahan saat menyimpan data layanan.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

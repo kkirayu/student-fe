@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Tag, Filter, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getServiceRates, deleteService } from '../../../services/adminService';
 
 const ServiceRatesList = () => {
   const [services, setServices] = useState([]);
@@ -12,30 +13,28 @@ const ServiceRatesList = () => {
     const fetchServices = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://dummyjson.com/products?limit=10');
-        const data = await response.json();
+        const response = await getServiceRates();
+        // Assuming API returns { success: true, data: [...] } or just an array
+        let data = [];
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response && Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response?.data?.data && Array.isArray(response.data.data)) {
+          data = response.data.data;
+        }
 
-        const serviceNames = [
-          'Konsultasi Dokter Umum', 'Vaksinasi Kucing (Tricat)', 'Rawat Inap (Per Hari)', 
-          'Grooming Kutu & Jamur', 'Operasi Steril Kucing Jantan', 'Titip Sehat (Pet Hotel)',
-          'USG Hewan', 'Pembersihan Karang Gigi', 'Cek Darah Lengkap', 'Vaksin Rabies'
-        ];
-        
-        const serviceCategories = [
-          'Medis', 'Vaksin', 'Fasilitas', 'Grooming', 'Bedah', 'Fasilitas', 'Medis', 'Medis', 'Laboratorium', 'Vaksin'
-        ];
-
-        const mappedServices = data.products.map((item, index) => ({
+        const mappedServices = data.map((item) => ({
           id: item.id,
-          name: serviceNames[index] || item.title,
-          category: serviceCategories[index] || 'Lainnya',
-          price: `Rp ${(item.price * 15000).toLocaleString('id-ID')}`,
-          status: index % 4 === 0 ? 'Penuh' : 'Tersedia'
+          name: item.name || item.title || 'Tanpa Nama',
+          category: item.category || 'Lainnya',
+          price: item.price ? `Rp ${Number(item.price).toLocaleString('id-ID')}` : 'Rp 0',
+          status: item.status || 'Tersedia'
         }));
 
         setServices(mappedServices);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to fetch services:', error);
       } finally {
         setLoading(false);
       }
@@ -50,9 +49,16 @@ const ServiceRatesList = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleDelete = (id, name) => {
+  const handleDelete = async (id, name) => {
     if (window.confirm(`Hapus layanan ${name} dari daftar tarif?`)) {
-      setServices(services.filter(s => s.id !== id));
+      try {
+        await deleteService(id);
+        setServices(services.filter(s => s.id !== id));
+        alert('Layanan berhasil dihapus.');
+      } catch (error) {
+        console.error('Failed to delete service:', error);
+        alert('Gagal menghapus layanan. Pastikan layanan ini tidak sedang digunakan.');
+      }
     }
   };
 

@@ -69,11 +69,13 @@ import LogTransaction from '../pages/pharmacy-cashier/Cashier/LogTransaction';
 import ReceptionistDashboard from '../pages/receptionist/Dashboard';
 import WalkInRegistration from '../pages/receptionist/WalkInRegistration';
 import QueueMonitor from '../pages/receptionist/QueueMonitor';
+import ApiDocs from '../pages/ApiDocs';
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/api" element={<ApiDocs />} />
         <Route path="/" element={<MainLayout />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/info-layanan" element={<InfoLayanan />} />

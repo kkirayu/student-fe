@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Trash2, Loader2, Phone, Mail } from 'lucide-react';
+import { getCustomers } from '../../services/adminService';
 
 const CustomerManagement = () => {
   const [customers, setCustomers] = useState([]);
@@ -10,20 +11,27 @@ const CustomerManagement = () => {
     const fetchCustomers = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://dummyjson.com/users?limit=10');
-        const data = await response.json();
-        const petNames = ['Milo', 'Luna', 'Kuro', 'Bella', 'Simba', 'Chloe', 'Max', 'Oreo', 'Coco', 'Rocky'];
-        const mapped = data.users.map((user, idx) => ({
+        const response = await getCustomers();
+        let data = [];
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response && Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response?.data?.data && Array.isArray(response.data.data)) {
+          data = response.data.data;
+        }
+
+        const mapped = data.map((user) => ({
           id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-          phone: user.phone,
-          pet: petNames[idx] || 'Milo',
-          status: idx % 3 === 0 ? 'Ditangguhkan' : 'Aktif'
+          name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Tanpa Nama',
+          email: user.email || '-',
+          phone: user.phone || '-',
+          pet: user.pets ? user.pets.map(p => p.name).join(', ') : 'Belum ada peliharaan',
+          status: user.status || 'Aktif'
         }));
         setCustomers(mapped);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to fetch customers:', error);
       } finally {
         setLoading(false);
       }
