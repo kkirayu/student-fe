@@ -1,68 +1,90 @@
-import React, { useState } from 'react';
-import { Search, Loader2, Pill, Clock, User, CheckCircle, FileText, AlertTriangle, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Loader2, Pill, Clock, User, CheckCircle, FileText, AlertTriangle, X, RefreshCw, AlertCircle, Package } from 'lucide-react';
+import { getPrescriptions, updatePrescriptionStatus } from '../../services/pharmacyService';
 
 const PrescriptionQueue = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState(null);
-  
-  // Dummy data for prescriptions
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 'RX-20260601-001',
-      time: '09:15 AM',
-      patientName: 'Milo',
-      ownerName: 'Emily Johnson',
-      doctor: 'drh. Bunga',
-      status: 'Menunggu',
-      items: [
-        { name: 'Omeprazole 10mg', qty: 5, dosage: '1/4 tablet 2x sehari', notes: 'Sesudah makan' },
-        { name: 'RC Gastrointestinal Wet', qty: 2, dosage: 'Sesuai kebutuhan', notes: 'Campurkan sedikit air hangat' }
-      ]
-    },
-    {
-      id: 'RX-20260601-002',
-      time: '09:45 AM',
-      patientName: 'Luna',
-      ownerName: 'Michael Williams',
-      doctor: 'drh. Krisna',
-      status: 'Selesai',
-      items: [
-        { name: 'Amoxicillin Drop 15ml', qty: 1, dosage: '0.5ml 2x sehari', notes: 'Habiskan' },
-        { name: 'Vitamax Syrup', qty: 1, dosage: '1ml 1x sehari', notes: 'Suplemen tambahan' }
-      ]
-    },
-    {
-      id: 'RX-20260601-003',
-      time: '10:30 AM',
-      patientName: 'Kuro',
-      ownerName: 'Sophia Brown',
-      doctor: 'drh. Satria',
-      status: 'Selesai',
-      items: [
-        { name: 'Bravecto Spot-On Cat', qty: 1, dosage: '1 tube', notes: 'Ditetskan di tengkuk, jangan dimandikan 3 hari' }
-      ]
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Fetch data resep dari backend
+  const fetchPrescriptions = async (search = '') => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getPrescriptions(search);
+      setPrescriptions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Prescription Error:', err);
+      setError(err.message || 'Gagal memuat data resep.');
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
-  const filteredPrescriptions = prescriptions.filter(p => 
-    p.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchPrescriptions();
+  }, []);
 
-  const handleProcessPrescription = () => {
+  // Debounce pencarian
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPrescriptions(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Proses resep: ubah status menjadi Ditebus
+  const handleProcessPrescription = async () => {
     if (!selectedPrescription) return;
-    
-    const updatedPrescriptions = prescriptions.map(p => {
-      if (p.id === selectedPrescription.id) {
-        if (p.status === 'Menunggu') return { ...p, status: 'Sedang Diraba' };
-        if (p.status === 'Sedang Diraba') return { ...p, status: 'Selesai' };
-      }
-      return p;
-    });
-    
-    setPrescriptions(updatedPrescriptions);
-    setSelectedPrescription(null); // Close modal
+
+    setIsProcessing(true);
+    try {
+      await updatePrescriptionStatus(selectedPrescription.id, 'Ditebus');
+      // Update state lokal
+      setPrescriptions(prev =>
+        prev.map(p =>
+          p.id === selectedPrescription.id
+            ? { ...p, status: 'Selesai', items: p.items.map(i => ({ ...i, status: 'Ditebus' })) }
+            : p
+        )
+      );
+      setSelectedPrescription(null);
+    } catch (err) {
+      alert(err.message || 'Gagal memproses resep.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Status badge styling
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending':
+        return 'bg-amber-100 text-amber-700 border border-amber-200';
+      case 'Sebagian Ditebus':
+        return 'bg-blue-100 text-blue-700 border border-blue-200';
+      case 'Selesai':
+        return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+      default:
+        return 'bg-slate-100 text-slate-600 border border-slate-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Pending':
+        return <AlertTriangle className="h-3 w-3" />;
+      case 'Sebagian Ditebus':
+        return <Loader2 className="h-3 w-3 animate-spin" />;
+      case 'Selesai':
+        return <CheckCircle className="h-3 w-3" />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -73,63 +95,100 @@ const PrescriptionQueue = () => {
           <h2 className="text-2xl font-bold text-slate-800">Antrean Resep Masuk</h2>
           <p className="text-sm text-slate-500">Kelola E-Resep yang masuk dari dokter untuk disiapkan.</p>
         </div>
-        
-        {/* Search */}
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <Search className="h-4 w-4" />
-          </span>
-          <input 
-            type="text" 
-            placeholder="Cari No. Resep, Pasien, Owner..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-md border border-slate-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-72 shadow-sm"
-          />
+
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="h-4 w-4" />
+            </span>
+            <input 
+              type="text" 
+              placeholder="Cari No. Resep, Pasien, Pemilik..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-md border border-slate-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-72 shadow-sm"
+            />
+          </div>
+          {/* Refresh */}
+          <button
+            onClick={() => fetchPrescriptions(searchTerm)}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 shadow-sm"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
-      {/* Tabel Data */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-bold">No. Resep / Waktu</th>
-                <th className="px-6 py-4 font-bold">Pasien & Pemilik</th>
-                <th className="px-6 py-4 font-bold">Dokter</th>
-                <th className="px-6 py-4 font-bold">Status Racik</th>
-                <th className="px-6 py-4 font-bold text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredPrescriptions.length > 0 ? (
-                filteredPrescriptions.map((prescription) => (
+      {/* Konten */}
+      {isLoading ? (
+        // Loading
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+          <span className="mt-4 text-sm font-medium text-slate-500">Memuat data resep...</span>
+        </div>
+      ) : error ? (
+        // Error
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center max-w-md w-full">
+            <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-red-800 mb-1">Gagal Memuat Data</h3>
+            <p className="text-sm text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => fetchPrescriptions(searchTerm)}
+              className="inline-flex items-center gap-2 rounded-sm bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition shadow-sm"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+      ) : prescriptions.length === 0 ? (
+        // Empty
+        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <Package className="h-12 w-12 mb-3" />
+            <p className="text-sm font-medium">
+              {searchTerm ? 'Tidak ada resep yang sesuai pencarian.' : 'Belum ada antrean resep masuk.'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        // Tabel Data
+        <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 font-bold">No. Resep / Waktu</th>
+                  <th className="px-6 py-4 font-bold">Pasien & Pemilik</th>
+                  <th className="px-6 py-4 font-bold">Dokter</th>
+                  <th className="px-6 py-4 font-bold">Status Racik</th>
+                  <th className="px-6 py-4 font-bold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {prescriptions.map((prescription) => (
                   <tr key={prescription.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-800">{prescription.id}</div>
+                      <div className="font-bold text-slate-800">{prescription.prescription_code}</div>
                       <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                        <Clock className="h-3 w-3" /> {prescription.time}
+                        <Clock className="h-3 w-3" /> {prescription.date}, {prescription.time}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-800">{prescription.patientName}</div>
+                      <div className="font-semibold text-slate-800">{prescription.patient_name}</div>
                       <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                        <User className="h-3 w-3" /> {prescription.ownerName}
+                        <User className="h-3 w-3" /> {prescription.owner_name}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-slate-700 font-medium">{prescription.doctor}</span>
+                      <span className="text-slate-700 font-medium">{prescription.doctor_name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
-                        prescription.status === 'Menunggu' ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                        : prescription.status === 'Sedang Diraba' ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                      }`}>
-                        {prescription.status === 'Menunggu' && <AlertTriangle className="h-3 w-3" />}
-                        {prescription.status === 'Sedang Diraba' && <Loader2 className="h-3 w-3 animate-spin" />}
-                        {prescription.status === 'Selesai' && <CheckCircle className="h-3 w-3" />}
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${getStatusStyle(prescription.status)}`}>
+                        {getStatusIcon(prescription.status)}
                         {prescription.status}
                       </span>
                     </td>
@@ -142,25 +201,19 @@ const PrescriptionQueue = () => {
                       </button>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="py-10 text-center text-slate-500">
-                    Tidak ada antrean resep yang ditemukan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* --- MODAL DETAIL RESEP --- */}
       {selectedPrescription && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedPrescription(null)}></div>
           
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="border-b border-slate-100 px-6 py-4 flex justify-between items-center bg-slate-50/50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 <Pill className="h-5 w-5 text-blue-600" /> Detail Rincian Obat
@@ -175,40 +228,53 @@ const PrescriptionQueue = () => {
               <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">No. Resep</p>
-                  <p className="font-bold text-slate-800">{selectedPrescription.id}</p>
+                  <p className="font-bold text-slate-800">{selectedPrescription.prescription_code}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Waktu Masuk</p>
-                  <p className="font-semibold text-slate-800">{selectedPrescription.time}</p>
+                  <p className="font-semibold text-slate-800">{selectedPrescription.date}, {selectedPrescription.time}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Pasien</p>
-                  <p className="font-bold text-slate-800">{selectedPrescription.patientName} <span className="text-xs font-normal text-slate-500">({selectedPrescription.ownerName})</span></p>
+                  <p className="font-bold text-slate-800">{selectedPrescription.patient_name} <span className="text-xs font-normal text-slate-500">({selectedPrescription.owner_name})</span></p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Dokter Peresep</p>
-                  <p className="font-semibold text-slate-800">{selectedPrescription.doctor}</p>
+                  <p className="font-semibold text-slate-800">{selectedPrescription.doctor_name}</p>
                 </div>
               </div>
 
               {/* Daftar Obat */}
               <h4 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Daftar Obat (E-Resep)</h4>
               <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
-                {selectedPrescription.items.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 p-3 border border-slate-200 rounded-lg bg-white shadow-sm hover:border-blue-200 transition-colors">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 flex-shrink-0">
-                      <Pill className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-bold text-slate-800">{item.name}</h5>
-                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Qty: {item.qty}</span>
+                {selectedPrescription.items && selectedPrescription.items.length > 0 ? (
+                  selectedPrescription.items.map((item, idx) => (
+                    <div key={item.id || idx} className="flex gap-4 p-3 border border-slate-200 rounded-lg bg-white shadow-sm hover:border-blue-200 transition-colors">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 flex-shrink-0">
+                        <Pill className="h-5 w-5" />
                       </div>
-                      <p className="text-xs font-semibold text-blue-600 mt-1">Dosis: {item.dosage}</p>
-                      <p className="text-xs text-slate-500 italic mt-0.5">Catatan: {item.notes}</p>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-bold text-slate-800">{item.product_name}</h5>
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Qty: {item.quantity}</span>
+                        </div>
+                        <p className="text-xs font-semibold text-blue-600 mt-1">Instruksi: {item.instructions}</p>
+                        <div className="mt-1.5">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            item.status === 'Ditebus' 
+                              ? 'bg-emerald-100 text-emerald-700' 
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {item.status === 'Ditebus' ? <CheckCircle className="h-2.5 w-2.5" /> : <AlertTriangle className="h-2.5 w-2.5" />}
+                            {item.status}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400 italic text-center py-4">Tidak ada item obat pada resep ini.</p>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -222,15 +288,16 @@ const PrescriptionQueue = () => {
                 {selectedPrescription.status !== 'Selesai' && (
                   <button 
                     onClick={handleProcessPrescription}
-                    className="flex items-center gap-2 rounded-md bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-md transition-all"
+                    disabled={isProcessing}
+                    className="flex items-center gap-2 rounded-md bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-md transition-all disabled:opacity-50"
                   >
-                    {selectedPrescription.status === 'Menunggu' ? (
+                    {isProcessing ? (
                       <>
-                        <Loader2 className="h-4 w-4" /> Mulai Raba Obat
+                        <Loader2 className="h-4 w-4 animate-spin" /> Memproses...
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4" /> Tandai Selesai Diraba
+                        <CheckCircle className="h-4 w-4" /> Tandai Selesai Ditebus
                       </>
                     )}
                   </button>

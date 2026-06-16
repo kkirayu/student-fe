@@ -35,3 +35,32 @@ export const deleteProduct = async (id) => {
     handleServiceError(error, 'Gagal menghapus produk.');
   }
 };
+
+/**
+ * Mengambil daftar resep (E-Prescription)
+ * @param {string} search - Kata kunci pencarian (opsional)
+ */
+export const getPrescriptions = async (search = '') => {
+  try {
+    const params = {};
+    if (search) params.search = search;
+    const response = await api.get('/pharmacy/prescriptions', { params });
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal mengambil data resep.');
+  }
+};
+
+/**
+ * Update status resep (Pending → Ditebus / Selesai)
+ * @param {number} medicalRecordId - ID medical record
+ * @param {string} status - Status baru ('Pending' atau 'Ditebus')
+ */
+export const updatePrescriptionStatus = async (medicalRecordId, status) => {
+  try {
+    const response = await api.patch(`/pharmacy/prescriptions/${medicalRecordId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal mengubah status resep.');
+  }
+};
