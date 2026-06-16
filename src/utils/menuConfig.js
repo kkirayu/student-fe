@@ -50,6 +50,7 @@ export const roleMenus = {
     { title: 'Antrean Resep', path: '/pharmacy/prescriptions', icon: ClipboardList },
     { title: 'Katalog Obat', path: '/pharmacy/inventory', icon: Pill },
     { title: 'Monitoring Stok', path: '/pharmacy/inventory/monitoring', icon: FileCheck },
+    { title: 'Mutasi Stok', path: '/pharmacy/stock-mutations', icon: Activity },
     { title: 'Restock Barang', path: '/pharmacy/restock', icon: Box },
     { title: 'Data Supplier', path: '/pharmacy/supplier', icon: Users },
   ],
