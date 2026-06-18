@@ -57,6 +57,7 @@ import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
 import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
 import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
 import PrescriptionQueue from '../pages/pharmacy-cashier/PrescriptionQueue';
+import StockMutations from '../pages/pharmacy-cashier/Inventory/StockMutations';
 
 import CashierDashboard from '../pages/pharmacy-cashier/Cashier/CashierDashboard';
 import BillingQueue from '../pages/pharmacy-cashier/Cashier/BillingQueue';
@@ -148,6 +149,7 @@ const AppRouter = () => {
           <Route path="inventory/monitoring" element={<StockMonitoring />} />
           <Route path="restock" element={<FormRestockBarang />} />
           <Route path="supplier" element={<SupplierList />} />
+          <Route path="stock-mutations" element={<StockMutations />} />
         </Route>
 
         <Route path="/cashier" element={<AdminLayout userRole="cashier" />}>
