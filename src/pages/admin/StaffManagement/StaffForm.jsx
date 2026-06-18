@@ -26,7 +26,7 @@ const StaffForm = () => {
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:8000/api/users/${id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${id}`);
         const result = await response.json();
         
         console.log("Hasil dari API:", result); // Cek isi data dari API
@@ -62,8 +62,8 @@ const StaffForm = () => {
 
     try {
       const url = isEditMode 
-        ? `http://localhost:8000/api/users/${id}` 
-        : `http://localhost:8000/api/users`;
+        ? `${import.meta.env.VITE_API_BASE_URL}/users/${id}` 
+        : `${import.meta.env.VITE_API_BASE_URL}/users`;
       
       const method = isEditMode ? 'PUT' : 'POST';
 
