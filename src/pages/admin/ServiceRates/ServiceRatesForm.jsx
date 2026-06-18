@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Tag } from 'lucide-react';
 import { getServiceById, createService, updateService } from '../../../services/adminService';
+import { showSuccess, showError } from '../../../utils/alertUtils';
 
 const ServiceRatesForm = () => {
   const { id } = useParams();
@@ -35,7 +36,7 @@ const ServiceRatesForm = () => {
           });
         } catch (error) {
           console.error('Failed to fetch service detail:', error);
-          alert('Gagal mengambil data layanan.');
+          await showError('Gagal', 'Gagal mengambil data layanan.');
           navigate('/admin/services');
         } finally {
           setIsLoadingData(false);
@@ -61,15 +62,15 @@ const ServiceRatesForm = () => {
 
       if (isEditMode) {
         await updateService(id, payload);
-        alert('Layanan berhasil diperbarui!');
+        await showSuccess('Berhasil!', 'Layanan berhasil diperbarui!');
       } else {
         await createService(payload);
-        alert('Layanan baru berhasil ditambahkan!');
+        await showSuccess('Berhasil!', 'Layanan baru berhasil ditambahkan!');
       }
       navigate('/admin/services');
     } catch (error) {
       console.error('Failed to save service:', error);
-      alert('Terjadi kesalahan saat menyimpan data layanan.');
+      showError('Gagal', 'Terjadi kesalahan saat menyimpan data layanan.');
     } finally {
       setIsSubmitting(false);
     }

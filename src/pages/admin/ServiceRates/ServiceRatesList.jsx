@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Tag, Filter, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getServiceRates, deleteService } from '../../../services/adminService';
+import { showConfirm, showSuccess, showError } from '../../../utils/alertUtils';
 
 const ServiceRatesList = () => {
   const [services, setServices] = useState([]);
@@ -50,14 +51,21 @@ const ServiceRatesList = () => {
   });
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Hapus layanan ${name} dari daftar tarif?`)) {
+    const isConfirmed = await showConfirm(
+      'Hapus Layanan?',
+      `Hapus layanan ${name} dari daftar tarif?`,
+      'Ya, Hapus',
+      true
+    );
+
+    if (isConfirmed) {
       try {
         await deleteService(id);
         setServices(services.filter(s => s.id !== id));
-        alert('Layanan berhasil dihapus.');
+        showSuccess('Berhasil!', 'Layanan berhasil dihapus.');
       } catch (error) {
         console.error('Failed to delete service:', error);
-        alert('Gagal menghapus layanan. Pastikan layanan ini tidak sedang digunakan.');
+        showError('Gagal', 'Gagal menghapus layanan. Pastikan layanan ini tidak sedang digunakan.');
       }
     }
   };

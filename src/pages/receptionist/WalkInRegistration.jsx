@@ -10,6 +10,7 @@ import {
   Info,
   ChevronRight
 } from 'lucide-react';
+import { showSuccess } from '../../utils/alertUtils';
 
 const WalkInRegistration = () => {
   const navigate = useNavigate();
@@ -30,10 +31,10 @@ const WalkInRegistration = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Form Submitted:', formData);
-    alert('Pendaftaran Berhasil!');
+    await showSuccess('Berhasil!', 'Pendaftaran Berhasil!');
     navigate('/receptionist');
   };
 

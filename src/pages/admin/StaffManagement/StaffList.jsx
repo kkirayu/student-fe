@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUsers, deleteUser } from '../../../services/adminService';
+import { showConfirm, showSuccess, showError } from '../../../utils/alertUtils';
 
 const StaffList = () => {
   const [staffData, setStaffData] = useState([]);
@@ -54,15 +55,22 @@ const StaffList = () => {
   });
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus staf bernama ${name}?`)) {
+    const isConfirmed = await showConfirm(
+      'Hapus Staf?',
+      `Apakah Anda yakin ingin menghapus staf bernama ${name}?`,
+      'Ya, Hapus',
+      true
+    );
+
+    if (isConfirmed) {
       try {
         await deleteUser(id);
         const updatedData = staffData.filter(staff => staff.id !== id);
         setStaffData(updatedData);
-        alert('Data staf berhasil dihapus.');
+        showSuccess('Berhasil!', 'Data staf berhasil dihapus.');
       } catch (error) {
         console.error('Failed to delete staff:', error);
-        alert('Gagal menghapus data staf. Pastikan server berjalan dan ID valid.');
+        showError('Gagal', 'Gagal menghapus data staf. Pastikan server berjalan dan ID valid.');
       }
     }
   };

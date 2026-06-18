@@ -13,6 +13,7 @@ import {
   DollarSign,
   ClipboardList
 } from 'lucide-react';
+import { showInfo } from '../../../utils/alertUtils';
 
 const ReportOverview = () => {
   const [reportStats, setReportStats] = useState({
@@ -266,7 +267,7 @@ const ReportOverview = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button 
-                          onClick={() => alert('Mengunduh spreadsheet dokumen laporan...')}
+                          onClick={() => showInfo('Unduh Laporan', 'Mengunduh spreadsheet dokumen laporan...')}
                           className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-colors inline-flex items-center gap-1 text-xs font-semibold"
                           title="Download Spreadsheet"
                         >

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../../services/api';
+import { showSuccess, showError, showWarning } from '../../utils/alertUtils';
 
 const OWNER_ID = 1;
 
@@ -67,7 +68,7 @@ const Billing = () => {
   // ── Proses pembayaran (update status lokal + call API jika ada) ──
   const handleProcessPayment = async () => {
     if (!selectedPaymentMethod) {
-      alert('Silakan pilih metode pembayaran!');
+      showWarning('Peringatan', 'Silakan pilih metode pembayaran!');
       return;
     }
 
@@ -89,10 +90,10 @@ const Billing = () => {
       );
 
       setIsModalOpen(false);
-      alert(`Sukses! Pembayaran ${selectedInvoice.id} telah dikonfirmasi.`);
+      await showSuccess('Berhasil!', `Sukses! Pembayaran ${selectedInvoice.id} telah dikonfirmasi.`);
     } catch (err) {
       console.error('Payment error:', err);
-      alert('Gagal memproses pembayaran. Silakan coba lagi.');
+      showError('Gagal', 'Gagal memproses pembayaran. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
     }

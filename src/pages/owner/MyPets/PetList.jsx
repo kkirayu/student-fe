@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getPets, deletePet } from '../../../services/ownerService';
+import { showConfirm, showError } from '../../../utils/alertUtils';
 
 const OWNER_ID = 1;
 
@@ -45,13 +46,19 @@ const PetList = () => {
   }, []);
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus pet ${name}?`)) {
+    const isConfirmed = await showConfirm(
+      'Hapus Pet?',
+      `Apakah Anda yakin ingin menghapus pet ${name}?`,
+      'Ya, Hapus',
+      true
+    );
+    if (isConfirmed) {
       try {
         await deletePet(id);
         setPetsData(prev => prev.filter(pet => pet.id !== id));
       } catch (err) {
         console.error(err);
-        alert('Gagal menghapus data pet. Silakan coba lagi.');
+        showError('Gagal', 'Gagal menghapus data pet. Silakan coba lagi.');
       }
     }
   };

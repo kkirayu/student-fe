@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { showSuccess } from '../utils/alertUtils';
 
 const Feedback = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,9 +20,9 @@ const Feedback = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Terima kasih atas umpan balik Anda!');
+    await showSuccess('Berhasil!', 'Terima kasih atas umpan balik Anda!');
     setFormData({ name: '', phone: '', type: 'Pujian', message: '' });
   };
 

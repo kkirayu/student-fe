@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { showSuccess, showError } from '../../../utils/alertUtils';
 
 const StaffForm = () => {
   const { id } = useParams();
@@ -81,13 +82,13 @@ const StaffForm = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert(isEditMode ? 'Data berhasil diperbarui!' : 'Staf berhasil ditambahkan!');
+        await showSuccess('Berhasil!', isEditMode ? 'Data berhasil diperbarui!' : 'Staf berhasil ditambahkan!');
         navigate('/admin/staff');
       } else {
-        alert(Object.values(result).flat().join('\n'));
+        showError('Gagal', Object.values(result).flat().join('\n'));
       }
     } catch (error) {
-      alert("Terjadi kesalahan koneksi ke server.");
+      showError('Kesalahan', 'Terjadi kesalahan koneksi ke server.');
     } finally {
       setSubmitting(false);
     }
