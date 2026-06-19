@@ -1,175 +1,346 @@
+// src/pages/doctor/MedicalRecord/EReceiptForm.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Pill, User, Plus, Trash2, FileText, Loader2, CheckCircle, Search } from 'lucide-react';
 
 const EReceiptForm = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const isEditMode = !!id;
+  // State data dari API
+  const [patients, setPatients] = useState([]);
+  const [availableMedicines, setAvailableMedicines] = useState([]);
+  
+  // State UI & Loading
+  const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  const [isLoadingMedicines, setIsLoadingMedicines] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', role: '', password: '', status: 'Aktif',
-  });
+  // State Formulir Utama
+  const [selectedPatient, setSelectedPatient] = useState('');
+  const [petName, setPetName] = useState('');
+  const [petType, setPetType] = useState('');
+  const [prescriptionNotes, setPrescriptionNotes] = useState('');
+  
+  const [prescribedItems, setPrescribedItems] = useState([
+    { medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }
+  ]);
 
   useEffect(() => {
-    if (isEditMode) {
-      setFormData({
-        name: 'Drh. Bunga', email: 'bunga@zetaconnect.com', phone: '081298765432', role: 'Dokter', password: '', status: 'Aktif',
-      });
-    }
-  }, [isEditMode]);
+    const fetchPatients = async () => {
+      try {
+        const response = await fetch('https://dummyjson.com/users?limit=10');
+        const data = await response.json();
+        
+        const petNames = ['Milo', 'Luna', 'Kuro', 'Bella', 'Simba', 'Chloe', 'Max', 'Oreo', 'Coco', 'Rocky'];
+        const petTypes = ['Kucing', 'Anjing', 'Kucing', 'Hamster', 'Anjing', 'Kelinci', 'Burung', 'Kucing', 'Musang', 'Anjing'];
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+        const mapped = data.users.map((user, idx) => ({
+          id: user.id,
+          ownerName: `${user.firstName} ${user.lastName}`,
+          petName: petNames[idx],
+          petType: petTypes[idx]
+        }));
+        setPatients(mapped);
+      } catch (error) {
+        console.error('Gagal mengambil data pasien:', error);
+      } finally {
+        setIsLoadingPatients(false);
+      }
+    };
+
+    const fetchMedicines = async () => {
+      try {
+        const response = await fetch('https://dummyjson.com/products/category/beauty?limit=15');
+        const data = await response.json();
+        
+        const medicalNames = [
+          'Amoxicillin 150mg Vet', 'Ivermectin Anti-Parasit', 'Ketoconazole Jamur Drop', 
+          'Enrofloxacin Antibiotik', 'Meloxicam Anti-Inflamasi', 'Vitamin B-Complex Vet', 
+          'Obat Cacing Pyrantel', 'Ear Drop Otopain', 'Nutri-Plus Gel Supplement',
+          'Shampoo Medicated Selsun', 'Prednisolone Anti-Alergi', 'Salep Mata Chloramphenicol'
+        ];
+
+        const mappedMedicines = data.products.map((item, idx) => ({
+          id: item.id,
+          name: medicalNames[idx] || item.title,
+          unit: idx % 2 === 0 ? 'Tablet' : 'Botol/Sirup',
+          stock: item.stock
+        }));
+        setAvailableMedicines(mappedMedicines);
+      } catch (error) {
+        console.error('Gagal mengambil data obat:', error);
+      } finally {
+        setIsLoadingMedicines(false);
+      }
+    };
+
+    fetchPatients();
+    fetchMedicines();
+  }, []);
+
+  const handlePatientChange = (patientId) => {
+    setSelectedPatient(patientId);
+    const patient = patients.find(p => p.id === parseInt(patientId));
+    if (patient) {
+      setPetName(patient.petName);
+      setPetType(patient.petType);
+    } else {
+      setPetName('');
+      setPetType('');
+    }
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...prescribedItems];
+    updatedItems[index][field] = value;
+    setPrescribedItems(updatedItems);
+  };
+
+  const addPrescriptionRow = () => {
+    setPrescribedItems([
+      ...prescribedItems,
+      { medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }
+    ]);
+  };
+
+  const removePrescriptionRow = (index) => {
+    if (prescribedItems.length > 1) {
+      const updatedItems = prescribedItems.filter((_, i) => i !== index);
+      setPrescribedItems(updatedItems);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Data disimpan:', formData);
-    navigate('/admin/staff');
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitSuccess(true);
+      
+      setTimeout(() => {
+        setSubmitSuccess(false);
+        setSelectedPatient('');
+        setPetName('');
+        setPetType('');
+        setPrescriptionNotes('');
+        setPrescribedItems([{ medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }]);
+      }, 3000);
+    }, 1500);
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
-      
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link 
-          to="/admin/staff" 
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            {isEditMode ? 'Edit Data Staf' : 'Tambah Staf Baru'}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {isEditMode ? 'Perbarui informasi pegawai klinik.' : 'Daftarkan akun pegawai baru beserta hak aksesnya.'}
-          </p>
-        </div>
+    <div className="mx-auto max-w-4xl flex flex-col gap-6">
+      {/* Header Halaman */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Pembuatan E-Resep</h2>
+        <p className="text-sm text-slate-500">Formulir digital pembuatan resep obat untuk pasien rawat jalan.</p>
       </div>
 
-      {/* Form Card */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <form onSubmit={handleSubmit}>
-          
-          {/* Area Input Utama */}
-          <div className="p-6 sm:p-8">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-              
-              {/* Nama Lengkap */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Nama Lengkap <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text" name="name" value={formData.name} onChange={handleChange}
-                  placeholder="Masukkan nama lengkap"
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                  required
-                />
-              </div>
+      {submitSuccess && (
+        <div className="flex items-center gap-3 rounded bg-emerald-50 p-4 text-emerald-800 border border-emerald-200 shadow-sm animate-fadeIn">
+          <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+          <div>
+            <p className="font-semibold">E-Resep Berhasil Dibuat!</p>
+            <p className="text-xs text-emerald-600">Data resep digital telah dikirimkan secara otomatis ke Modul Apotek.</p>
+          </div>
+        </div>
+      )}
 
-              {/* Email */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Alamat Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email" name="email" value={formData.email} onChange={handleChange}
-                  placeholder="email@zetaconnect.com"
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                  required
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* KARTU 1: INFORMASI PASIEN */}
+        <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <User className="h-5 w-5 text-blue-600" />
+            <h3 className="font-bold text-slate-800">Pilih Pasien & Pemilik</h3>
+          </div>
 
-              {/* Nomor HP */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Nomor WhatsApp/HP <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text" name="phone" value={formData.phone} onChange={handleChange}
-                  placeholder="08xxxxxxxxxx"
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                  required
-                />
-              </div>
-
-              {/* Role / Hak Akses */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Hak Akses (Role) <span className="text-red-500">*</span>
-                </label>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* Dropdown Owner */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">Nama Pemilik (Owner)</label>
+              {isLoadingPatients ? (
+                <div className="flex h-10 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xs text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-500" /> Memuat Owner...
+                </div>
+              ) : (
                 <select
-                  name="role" value={formData.role} onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                   required
+                  value={selectedPatient}
+                  onChange={(e) => handlePatientChange(e.target.value)}
+                  className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 >
-                  <option value="" disabled>Pilih Role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Dokter">Dokter</option>
-                  <option value="Resepsionis">Resepsionis</option>
-                  <option value="Apoteker">Apoteker / Kasir</option>
+                  <option value="">-- Pilih Pemilik --</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.ownerName}</option>
+                  ))}
                 </select>
-              </div>
+              )}
+            </div>
 
-              {/* Password */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Kata Sandi 
-                  {isEditMode ? (
-                    <span className="ml-1 text-xs font-normal text-slate-400">(Opsional)</span>
-                  ) : (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-                <input
-                  type="password" name="password" value={formData.password} onChange={handleChange}
-                  placeholder={isEditMode ? "Kosongkan jika tidak diubah" : "Masukkan kata sandi"}
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                  required={!isEditMode}
-                />
-              </div>
+            {/* Nama Hewan (Auto) */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">Nama Hewan</label>
+              <input
+                type="text"
+                disabled
+                placeholder="Terisi otomatis..."
+                value={petName}
+                className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+              />
+            </div>
 
-              {/* Status Aktif */}
-              <div>
-                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                  Status Akun <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="status" value={formData.status} onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                >
-                  <option value="Aktif">Aktif</option>
-                  <option value="Tidak Aktif">Tidak Aktif</option>
-                </select>
-              </div>
-
+            {/* Jenis Hewan (Auto) */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">Jenis Hewan</label>
+              <input
+                type="text"
+                disabled
+                placeholder="Terisi otomatis..."
+                value={petType}
+                className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+              />
             </div>
           </div>
+        </div>
 
-          {/* Area Footer / Tombol Aksi */}
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:px-8">
+        {/* KARTU 2: DETAIL REKOMENDASI OBAT */}
+        <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-blue-600" />
+              <h3 className="font-bold text-slate-800">Daftar Obat / Racikan</h3>
+            </div>
             <button
               type="button"
-              onClick={() => navigate('/admin/staff')}
-              className="rounded-md px-6 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900"
+              onClick={addPrescriptionRow}
+              className="flex items-center gap-1.5 rounded bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition"
             >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700"
-            >
-              <Save className="h-4 w-4" />
-              Simpan Data
+              <Plus className="h-4 w-4" /> Tambah Obat
             </button>
           </div>
-          
-        </form>
-      </div>
+
+          {isLoadingMedicines ? (
+            <div className="flex flex-col items-center justify-center py-10 text-blue-500">
+              <Loader2 className="h-7 w-7 animate-spin" />
+              <p className="mt-2 text-xs text-slate-500">Sinkronisasi katalog obat via API...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {prescribedItems.map((item, index) => (
+                <div 
+                  key={index} 
+                  className="relative grid grid-cols-1 gap-3 rounded border border-slate-100 bg-slate-50 p-4 pt-8 shadow-inner sm:grid-cols-12 sm:pt-4"
+                >
+                  {/* Tombol Hapus Pojok Kanan Atas */}
+                  <button
+                    type="button"
+                    disabled={prescribedItems.length === 1}
+                    onClick={() => removePrescriptionRow(index)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-rose-500 disabled:opacity-30 sm:static sm:col-span-1 sm:flex sm:items-center sm:justify-center sm:mt-6"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+
+                  {/* Dropdown Nama Obat */}
+                  <div className="flex flex-col gap-1 sm:col-span-4">
+                    <label className="text-xs font-semibold text-slate-600">Nama Obat</label>
+                    <select
+                      required
+                      value={item.medicineId}
+                      onChange={(e) => handleItemChange(index, 'medicineId', e.target.value)}
+                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                    >
+                      <option value="">-- Pilih Obat --</option>
+                      {availableMedicines.map(med => (
+                        <option key={med.id} value={med.id}>{med.name} ({med.unit})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Dosis (Contoh: 1/2, 1) */}
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-xs font-semibold text-slate-600">Takaran Dosis</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Misal: 1 tab / 5ml"
+                      value={item.dosage}
+                      onChange={(e) => handleItemChange(index, 'dosage', e.target.value)}
+                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Frekuensi (Contoh: 3x sehari) */}
+                  <div className="flex flex-col gap-1 sm:col-span-3">
+                    <label className="text-xs font-semibold text-slate-600">Frekuensi</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Misal: 3x sehari (Sesudah Makan)"
+                      value={item.frequency}
+                      onChange={(e) => handleItemChange(index, 'frequency', e.target.value)}
+                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Jumlah Kuantitas */}
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-xs font-semibold text-slate-600">Jumlah Qty</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* KARTU 3: CATATAN TAMBAHAN */}
+        <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <FileText className="h-5 w-5 text-blue-600" />
+            <h3 className="font-bold text-slate-800">Instruksi Khusus Dokter</h3>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <textarea
+              rows="3"
+              placeholder="Berikan instruksi tambahan jika diperlukan, misalnya: Simpan di dalam kulkas, habiskan antibiotik, dst."
+              value={prescriptionNotes}
+              onChange={(e) => setPrescriptionNotes(e.target.value)}
+              className="w-full rounded border border-slate-300 p-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            ></textarea>
+          </div>
+        </div>
+
+        {/* AKSI SUBMIT */}
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="rounded border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || isLoadingMedicines || !selectedPatient}
+            className="flex items-center gap-2 rounded bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan...
+              </>
+            ) : (
+              'Simpan & Kirim E-Resep'
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

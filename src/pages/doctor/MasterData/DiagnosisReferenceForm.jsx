@@ -26,7 +26,7 @@ const DiagnosisReferenceForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Data disimpan:', formData);
-    navigate('/admin/staff');
+    navigate('/doctor/diagnosis');
   };
 
   return (
@@ -35,7 +35,7 @@ const DiagnosisReferenceForm = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
-          to="/admin/staff" 
+          to="/doctor/diagnosis" 
           className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50"
         >
           <ArrowLeft className="h-5 w-5" />

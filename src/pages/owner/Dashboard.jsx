@@ -1,166 +1,327 @@
-import React from 'react';
-import { Users, DollarSign, UserPlus } from 'lucide-react';
-import { 
-  Dog, 
-  Cat, 
-  Calendar, 
-  Activity, 
-  TrendingUp, 
-  ArrowUpRight 
+import React, { useState, useEffect } from 'react';
+import {
+  Dog,
+  Calendar,
+  Activity,
+  Clock,
+  FileText,
+  AlertCircle,
+  CheckCircle2,
+  DollarSign,
+  Loader2
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import api from '../../services/api';
+
+const OWNER_ID = 1;
 
 const OwnerDashboard = () => {
+  const [pets, setPets] = useState([]);
+  const [petsLoading, setPetsLoading] = useState(true);
+  const [petsError, setPetsError] = useState(false);
+
+
+  // Fetch hewan peliharaan milik owner yang login
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        setPetsLoading(true);
+        setPetsError(false);
+        const res = await api.get('/pets', { params: { owner_id: OWNER_ID } });
+        // Response: { success, data: { data: [...], total, ... } }
+        const petList = res.data?.data?.data ?? res.data?.data ?? [];
+        setPets(petList);
+      } catch (err) {
+        console.error('Fetch pets error:', err);
+        setPetsError(true);
+      } finally {
+        setPetsLoading(false);
+      }
+    };
+
+    fetchPets();
+  }, []);
+
+  // Fetch janji temu milik owner (semua status) untuk ditampilkan di dashboard
+  // Diurutkan dari yang paling dekat (schedule_date + schedule_time ascending)
+  const [allAppointments, setAllAppointments] = useState([]);
+  const [allApptLoading, setAllApptLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAllAppointments = async () => {
+      try {
+        setAllApptLoading(true);
+        const res = await api.get('/appointments', {
+          params: { owner_id: OWNER_ID }
+        });
+        const list = res.data?.data?.data ?? res.data?.data ?? [];
+
+        // Urutkan ascending: schedule_date dulu, lalu schedule_time
+        const sorted = [...list].sort((a, b) => {
+          const dtA = new Date(`${a.schedule_date}T${a.schedule_time ?? '00:00'}`);
+          const dtB = new Date(`${b.schedule_date}T${b.schedule_time ?? '00:00'}`);
+          return dtA - dtB;
+        });
+
+        setAllAppointments(sorted);
+      } catch (err) {
+        console.error('Fetch all appointments error:', err);
+      } finally {
+        setAllApptLoading(false);
+      }
+    };
+
+    fetchAllAppointments();
+  }, []);
+
+  // Hitung appointment berstatus 'Disetujui' dari data yang sudah di-fetch
+  const confirmedAppointments = allAppointments.filter(a => a.status === 'Disetujui');
+
+  // Subtitle janji temu: tanggal appointment disetujui terdekat
+  const apptSubtitle = () => {
+    if (allApptLoading) return '...';
+    if (confirmedAppointments.length === 0) return 'Tidak ada jadwal aktif';
+    const nearest = confirmedAppointments[0]; // sudah diurutkan ascending
+    const date = nearest?.schedule_date
+      ? new Date(nearest.schedule_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '—';
+    return `Terdekat: ${date}`;
+  };
+
+  // Nama-nama hewan (maks 3 ditampilkan, sisanya "+N lagi")
+  const petNames = () => {
+    if (petsError) return 'Gagal memuat data';
+    if (petsLoading) return '...';
+    if (pets.length === 0) return 'Belum ada hewan';
+    const names = pets.map(p => p.name);
+    if (names.length <= 3) return names.join(', ');
+    return `${names.slice(0, 3).join(', ')} +${names.length - 3} lagi`;
+  };
+
   const stats = [
     {
-      title: 'Total Pet Terdaftar',
-      value: '10 Ekor',
-      change: '+12.5%',
-      icon: <Dog className="text-blue-600 h-6 w-6" />, 
+      title: 'Hewan Peliharaanku',
+      value: petsLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        : petsError
+          ? <span className="text-base text-red-500">Error</span>
+          : `${pets.length} Ekor`,
+      subtitle: petNames(),
+      icon: <Dog className="text-blue-600 h-6 w-6" />,
       bgIcon: 'bg-blue-100',
     },
     {
-      title: 'Kucing (Aktif)',
-      value: '8 Ekor',
-      change: '+5%',
-      icon: <Cat className="text-emerald-600 h-6 w-6" />,
+      title: 'Janji Temu Aktif',
+      value: allApptLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+        : `${confirmedAppointments.length} Jadwal`,
+      subtitle: apptSubtitle(),
+      icon: <Calendar className="text-emerald-600 h-6 w-6" />,
       bgIcon: 'bg-emerald-100',
     },
     {
-      title: 'Check-up Hari Ini',
-      value: '24 Janji',
-      change: '+18%',
-      icon: <Calendar className="text-orange-600 h-6 w-6" />,
+      title: 'Riwayat Rekam Medis',
+      value: '8 Catatan',
+      subtitle: 'Terakhir: 10 Mei 2026',
+      icon: <FileText className="text-orange-600 h-6 w-6" />,
       bgIcon: 'bg-orange-100',
     },
     {
-      title: 'Kesehatan Rata-rata',
-      value: '92%',
-      change: 'Stabil',
-      icon: <Activity className="text-purple-600 h-6 w-6" />,
-      bgIcon: 'bg-purple-100',
+      title: 'Tagihan Tertunda',
+      value: 'Rp 350.000',
+      subtitle: '1 Invoice Belum Lunas',
+      icon: <DollarSign className="text-rose-600 h-6 w-6" />,
+      bgIcon: 'bg-rose-100',
     },
   ];
 
-    const revenueData = [
-    { label: 'H-6', value: 1800000 },
-    { label: 'H-5', value: 2100000 },
-    { label: 'H-4', value: 1500000 },
-    { label: 'H-3', value: 2400000 },
-    { label: 'H-2', value: 3200000 },
-    { label: 'H-1', value: 4800000 },
-    { label: 'H-0', value: 3900000 },
+  // Ambil maks 3 jadwal terdekat untuk ditampilkan di dashboard
+  const upcomingAppointments = allAppointments.slice(0, 3);
+
+  // Helper format tanggal
+  const formatScheduleDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  };
+
+  // Helper warna badge status
+  const getStatusColor = (status) => {
+    const map = {
+      'Disetujui': 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      'Menunggu': 'text-amber-600 bg-amber-50 border-amber-200',
+      'Dalam Periksa': 'text-purple-600 bg-purple-50 border-purple-200',
+      'Selesai': 'text-blue-600 bg-blue-50 border-blue-200',
+      'Batal': 'text-red-500 bg-red-50 border-red-200',
+    };
+    return map[status] ?? 'text-slate-600 bg-slate-50 border-slate-200';
+  };
+
+  const healthReminders = [
+    {
+      petName: 'Luna',
+      title: 'Vaksinasi Rabies Tahunan',
+      dueDate: '15 Juni 2026',
+      type: 'Vaksinasi',
+      status: 'Penting',
+      statusColor: 'bg-rose-100 text-rose-800'
+    },
+    {
+      petName: 'Bruno',
+      title: 'Pemberian Obat Cacing Bulanan',
+      dueDate: '10 Mei 2026',
+      type: 'Pencegahan',
+      status: 'Mendekati',
+      statusColor: 'bg-amber-100 text-amber-800'
+    },
+    {
+      petName: 'Milo',
+      title: 'Check-up Telinga Pascainfeksi',
+      dueDate: '24 Mei 2026',
+      type: 'Kontrol',
+      status: 'Rutin',
+      statusColor: 'bg-blue-100 text-blue-800'
+    }
   ];
 
-  const maxRevenue = Math.max(...revenueData.map((d) => d.value));
-
- return (
+  return (
     <div className="space-y-6">
       {/* 1. Header Dashboard */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Ringkasan Klinik Hewan</h1>
-        <div className="text-sm font-medium text-slate-500">Update terakhir: 10 Mei 2026</div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Halo, Selamat Datang!</h1>
+          <p className="text-sm text-slate-500">Berikut adalah ringkasan kesehatan peliharaan Anda.</p>
+        </div>
+        <div className="text-sm font-medium text-slate-500">
+          Hari ini: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
       </div>
 
       {/* 2. Stat Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat, index) => (
           <div key={index} className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-            
-            {/* Bagian Ikon - Sekarang stat.icon sudah ada isinya */}
-            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${stat.bgIcon} mb-4`}>
-              {stat.icon}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-bold text-slate-500">{stat.title}</span>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${stat.bgIcon}`}>
+                {stat.icon}
+              </div>
             </div>
-            
-            {/* Bagian Teks Utama */}
-            <div className="mb-4">
-              <h4 className="text-2xl font-bold text-black sm:text-xl md:text-2xl">{stat.value}</h4>
-              <span className="text-sm font-medium text-slate-500">{stat.title}</span>
-            </div>
-            
-            {/* Bagian Persentase */}
-            <div className="mt-auto flex items-center gap-2">
-              <span className={`text-xs font-semibold ${stat.change.includes('+') ? 'text-emerald-500' : 'text-slate-400'}`}>
-                {stat.change}
-              </span>
-              <span className="text-xs text-slate-400">vs bulan lalu</span>
+            <div>
+              <h4 className="text-2xl font-bold text-slate-900 mb-1">{stat.value}</h4>
+              <p className="text-xs text-slate-400 font-medium">{stat.subtitle}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 3. Section Grafik & Laporan Utama */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        
-        {/* Grafik Pendapatan */}
-        <div className="col-span-1 rounded-sm border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-xl font-bold text-black">Statistik Pendapatan</h3>
-            <select className="rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm outline-none border-slate-300">
-              <option>7 Hari Terakhir</option>
-              <option>Bulan Ini</option>
-            </select>
+      {/* 3. Main Content Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+
+        {/* Jadwal Janji Temu Terdekat */}
+        <div className="col-span-1 rounded-sm border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8 flex flex-col justify-between">
+          <div>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Jadwal Janji Temu Terdekat</h3>
+              <Link to="/owner/booking/history" className="text-sm font-semibold text-blue-600 hover:underline">
+                Lihat Semua Riwayat
+              </Link>
+            </div>
+
+            <div className="space-y-4">
+              {allApptLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-slate-400">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Memuat jadwal...</span>
+                </div>
+              ) : upcomingAppointments.length === 0 ? (
+                <div className="py-6 text-center text-sm text-slate-400">
+                  Tidak ada jadwal janji temu.
+                </div>
+              ) : (
+                upcomingAppointments.map((appt, i) => {
+                  const petName = appt.pet?.name ?? `Pet #${appt.pet_id}`;
+                  const petSpecies = appt.pet?.species ?? '';
+                  const serviceName = appt.service?.name ?? appt.initial_complaint ?? '-';
+                  return (
+                    <div key={appt.id ?? i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded border border-slate-100 bg-slate-50 gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1 flex h-10 w-10 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold">
+                          {petName[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-900">{petName}</h4>
+                            {petSpecies && <span className="text-xs text-slate-500">({petSpecies})</span>}
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">{serviceName}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatScheduleDate(appt.schedule_date)} @ {appt.schedule_time} WIB
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center rounded border px-2.5 py-1 text-xs font-semibold ${getStatusColor(appt.status)} self-start sm:self-center`}>
+                        {appt.status}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
 
-          <div className="flex h-64 items-end justify-between gap-2 pt-10 sm:gap-4 relative">
-             <div className="absolute left-0 top-1/2 w-full border-t border-dashed border-slate-100"></div>
-             
-            {revenueData.map((item, i) => (
-              <div key={i} className="group relative w-full flex-1 flex flex-col items-center">
-                {/* Tooltip Angka Rupiah */}
-                <div className="invisible absolute bottom-full mb-2 flex flex-col items-center group-hover:visible z-10 transition-all duration-200">
-                  <div className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold text-white whitespace-nowrap shadow-lg">
-                    Rp {item.value.toLocaleString('id-ID')}
-                  </div>
-                  <div className="h-1 w-1 bg-slate-800 rotate-45 -mt-0.5"></div>
-                </div>
-
-                <div 
-                  className={`w-full max-w-[40px] rounded-t-sm transition-all duration-500 cursor-pointer
-                    ${item.value === maxRevenue ? 'bg-blue-600' : 'bg-blue-400 hover:bg-blue-500'}
-                  `} 
-                  style={{ height: `${(item.value / maxRevenue) * 100}%` }}
-                ></div>
-                <span className="mt-3 block text-center text-xs text-slate-400 sm:text-sm">{item.label}</span>
-              </div>
-            ))}
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            <Link
+              to="/owner/booking"
+              className="inline-flex w-full items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              <Calendar className="h-4 w-4" />
+              Buat Janji Temu Baru
+            </Link>
           </div>
         </div>
 
-        {/* Laporan Kunjungan Pasien */}
+        {/* Reminders & Edukasi */}
         <div className="col-span-1 rounded-sm border border-slate-200 bg-white p-6 shadow-sm lg:col-span-4">
-          <h3 className="mb-4 text-xl font-bold text-black">Jenis Pasien Terbanyak</h3>
-          <div className="space-y-5">
-            {[
-              { label: 'Kucing (Oren, Troton, Bebek)', value: 60, color: 'bg-blue-600' },
-              { label: 'Anjing (Mei-mei, Arifin)', value: 35, color: 'bg-emerald-500' },
-              { label: 'Lainnya', value: 5, color: 'bg-orange-400' },
-            ].map((item, i) => (
-              <div key={i}>
-                <div className="mb-1.5 flex justify-between text-sm font-medium">
-                  <span className="text-slate-700 text-xs sm:text-sm">{item.label}</span>
-                  <span className="text-black">{item.value}%</span>
-                </div>
-                <div className="h-2.5 w-full rounded-full bg-slate-100">
-                  <div className={`h-2.5 rounded-full ${item.color} transition-all duration-700`} style={{ width: `${item.value}%` }}></div>
+          <h3 className="mb-4 text-lg font-bold text-slate-900">Pengingat & Vaksinasi</h3>
+          <div className="space-y-4">
+            {healthReminders.map((reminder, i) => (
+              <div key={i} className="flex gap-3 p-3 rounded-md border border-slate-100 bg-slate-50">
+                <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500">{reminder.type}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${reminder.statusColor}`}>
+                      {reminder.status}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800 mt-1">{reminder.title}</h4>
+                  <p className="text-xs text-slate-600 mt-1">Hewan: <span className="font-semibold">{reminder.petName}</span></p>
+                  <p className="text-xs text-slate-400 mt-1">Jatuh Tempo: {reminder.dueDate}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Analisis Singkat menggunakan ikon TrendingUp dari Lucide */}
-          <div className="mt-10 p-4 bg-slate-50 rounded-sm border border-slate-200">
-             <div className="flex items-center gap-2 mb-2 text-slate-800">
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Insight</span>
-             </div>
-             <p className="text-[11px] text-slate-600 leading-relaxed italic">
-                "Populasi <b>Kucing</b> mendominasi 60% kunjungan. Tren menunjukkan kenaikan pada hari libur (H-1)."
-             </p>
+          <div className="mt-6 p-4 bg-blue-50 rounded-sm border border-blue-100">
+            <div className="flex items-center gap-2 mb-2 text-blue-900">
+              <CheckCircle2 className="h-4 w-4 text-blue-600" />
+              <span className="text-xs font-bold uppercase tracking-wider">Layanan Darurat</span>
+            </div>
+            <p className="text-xs text-blue-700 leading-relaxed">
+              Klinik beroperasi 24 Jam untuk kondisi darurat. Hubungi Call Center di <span className="font-bold text-blue-900">0812-999-888</span> untuk ambulans hewan.
+            </p>
           </div>
         </div>
+
       </div>
     </div>
   );
 };
 
 export default OwnerDashboard;
+
