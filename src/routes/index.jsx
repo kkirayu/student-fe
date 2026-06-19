@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import AdminLayout from '../layouts/AdminLayout';
@@ -45,6 +45,32 @@ import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReferenc
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
 import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
+import SOAPForm from '../pages/doctor/MedicalRecord/SOAPForm';
+import EReceiptForm from '../pages/doctor/MedicalRecord/EReceiptForm';
+import MedicalCertificate from '../pages/doctor/MedicalRecord/MedicalCertificate';
+import SurgeryReport from '../pages/doctor/MedicalRecord/SurgeryReport';
+import VaccinationBook from '../pages/doctor/MedicalRecord/VaccinationBook';
+
+import PharmacyDashboard from '../pages/pharmacy-cashier/Dashboard';
+import ProductCatalog from '../pages/pharmacy-cashier/Inventory/ProductCatalog';
+import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
+import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
+import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
+import PrescriptionQueue from '../pages/pharmacy-cashier/PrescriptionQueue';
+import StockMutations from '../pages/pharmacy-cashier/Inventory/StockMutations';
+
+import CashierDashboard from '../pages/pharmacy-cashier/Cashier/CashierDashboard';
+import BillingQueue from '../pages/pharmacy-cashier/Cashier/BillingQueue';
+import CheckoutPOS from '../pages/pharmacy-cashier/Cashier/CheckoutPOS';
+import InvoiceTemplate from '../pages/pharmacy-cashier/Cashier/InvoiceTemplate';
+import ShiftClosing from '../pages/pharmacy-cashier/Cashier/ShiftClosing';
+import NewTransaction from '../pages/pharmacy-cashier/Cashier/NewTransaction';
+import LogTransaction from '../pages/pharmacy-cashier/Cashier/LogTransaction';
+
+import ReceptionistDashboard from '../pages/receptionist/Dashboard';
+import WalkInRegistration from '../pages/receptionist/WalkInRegistration';
+import QueueMonitor from '../pages/receptionist/QueueMonitor';
+import ApiDocs from '../pages/ApiDocs';
 
 const AppRouter = () => {
   return (
