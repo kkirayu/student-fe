@@ -23,10 +23,12 @@ const AuditLog = () => {
     fetchLogs();
   }, []);
 
-  const filteredLogs = logs.filter(log =>
-    log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = logs.filter(log => {
+    const isNotOwner = !log.role || log.role.toLowerCase() !== 'owner';
+    const matchesSearch = log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          log.action.toLowerCase().includes(searchTerm.toLowerCase());
+    return isNotOwner && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">

@@ -22,7 +22,7 @@ const StaffForm = () => {
 
   useEffect(() => {
   if (isEditMode) {
-    console.log("Mencoba mengambil data untuk ID:", id); // Cek ID di console
+    console.log("Mencoba mengambil data untuk ID:", id); 
 
     const fetchDetail = async () => {
       setLoading(true);

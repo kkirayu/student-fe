@@ -231,21 +231,19 @@ const AppointmentForm = () => {
                                 </select>
                             </div>
 
-                            {/* Harga Layanan (read-only, muncul setelah layanan dipilih) */}
-                            {selectedService && (
-                                <div>
-                                    <label className="mb-2.5 block text-sm font-semibold text-slate-800">
-                                        Harga Layanan
-                                    </label>
-                                    <div className="flex items-center w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-blue-700 cursor-not-allowed select-none">
-                                        {formatRupiah(selectedService.price)}
-                                    </div>
-                                    <p className="mt-1 text-xs text-slate-400">Harga otomatis dari layanan yang dipilih. Tidak dapat diubah.</p>
+                            {/* Harga Layanan (read-only, selalu muncul) */}
+                            <div>
+                                <label className="mb-2.5 block text-sm font-semibold text-slate-800">
+                                    Harga Layanan
+                                </label>
+                                <div className="flex items-center w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-blue-700 cursor-not-allowed select-none">
+                                    {selectedService ? formatRupiah(selectedService.price) : '-'}
                                 </div>
-                            )}
+                                <p className="mt-1 text-xs text-slate-400">Harga otomatis dari layanan yang dipilih. Tidak dapat diubah.</p>
+                            </div>
 
                             {/* Booking Type */}
-                            <div>
+                            <div className="hidden">
                                 <label className="mb-2.5 block text-sm font-semibold text-slate-800">
                                     Tipe Booking <span className="text-red-500">*</span>
                                 </label>
