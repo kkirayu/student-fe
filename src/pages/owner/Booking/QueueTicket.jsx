@@ -100,7 +100,6 @@ const QueueTicket = () => {
         setTickets(data);
 
         if (newAppointment) {
-          setSelectedTicket(normalizeTicket(newAppointment));
           window.history.replaceState({}, '');
         }
       } catch (err) {
@@ -108,7 +107,6 @@ const QueueTicket = () => {
         setErrorMessage('Gagal memuat data tiket. Silakan refresh halaman.');
         if (newAppointment) {
           setTickets([normalizeTicket(newAppointment)]);
-          setSelectedTicket(normalizeTicket(newAppointment));
         }
       } finally {
         setIsLoading(false);
