@@ -22,13 +22,10 @@ import PetForm from '../pages/owner/MyPets/PetForm';
 import DiagnosisReferenceList from '../pages/doctor/MasterData/DiagnosisReference';
 import DiagnosisReferenceForm from '../pages/doctor/MasterData/DiagnosisReferenceForm';
 import LabResultUpload from '../pages/doctor/MedicalRecord/LabResultUpload';
-<<<<<<< HEAD
 import DoctorDashboard from '../pages/doctor/Dashboard';
 import PatientMedicalProfile from '../pages/doctor/MedicalRecord/PatientMedicalProfile';
-=======
 import OwnerDashboard from '../pages/owner/Dashboard';
 import MedicalHistory from '../pages/owner/MedicalHistory';
->>>>>>> bc803acf22130f82b1362d384f1dff8d573a71e5
 
 const AppRouter = () => {
   return (
