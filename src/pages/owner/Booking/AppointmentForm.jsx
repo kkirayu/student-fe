@@ -90,6 +90,15 @@ const AppointmentForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (formData.initial_complaint) {
+            const wordCount = formData.initial_complaint.trim().split(/\s+/).filter(word => word.length > 0).length;
+            if (wordCount < 10 || wordCount > 200) {
+                setErrorMessage('Keluhan awal minimal 10 kata dan maksimal 200 kata.');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         setErrorMessage('');
 
