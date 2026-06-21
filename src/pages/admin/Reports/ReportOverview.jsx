@@ -8,11 +8,12 @@ import {
   FileSpreadsheet, 
   ArrowUpRight, 
   Download, 
-  Calendar, 
+  Calendar,
   Loader2,
   DollarSign,
   ClipboardList
 } from 'lucide-react';
+import { getFinancialReport, getStockMutationReport } from '../../../services/adminService';
 import { showInfo } from '../../../utils/alertUtils';
 
 const ReportOverview = () => {
@@ -29,44 +30,77 @@ const ReportOverview = () => {
   useEffect(() => {
     const fetchReportData = async () => {
       try {
-        const response = await fetch('https://dummyjson.com/carts');
-        const data = await response.json();
+        setIsLoading(true);
+        // Date filter based on selected year
+        const startDate = `${selectedYear}-01-01`;
+        const endDate = `${selectedYear}-12-31`;
 
-        const revenue = data.carts.reduce((acc, cart) => acc + (cart.total * 15000), 0);
-        const transactions = data.total || data.carts.length;
-        const avg = transactions > 0 ? Math.round(revenue / transactions) : 0;
-        const items = data.carts.reduce((acc, cart) => acc + cart.totalProducts, 0);
+        const [financialRes, stockRes] = await Promise.all([
+          getFinancialReport(startDate, endDate),
+          getStockMutationReport(startDate, endDate)
+        ]);
+
+        const financialData = financialRes?.data || financialRes || {};
+        const stockData = stockRes?.data || stockRes || {};
+
+        const revenueData = financialData?.revenue_by_date || [];
+        const mutationData = stockData?.raw_mutations || [];
+
+        const totalRevenue = revenueData.reduce((acc, curr) => acc + Number(curr.total_revenue || 0), 0);
+        const totalTransactions = revenueData.reduce((acc, curr) => acc + Number(curr.total_transactions || 0), 0);
+        const averageBill = totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions) : 0;
+        
+        const itemCount = mutationData.reduce((acc, curr) => {
+          if (curr.mutation_type === 'Out') {
+            return acc + Number(curr.total_quantity || 0);
+          }
+          return acc;
+        }, 0);
 
         setReportStats({
-          totalRevenue: revenue,
-          totalTransactions: transactions,
-          averageBill: avg,
-          itemCount: items
+          totalRevenue,
+          totalTransactions,
+          averageBill,
+          itemCount
         });
 
-        const mappedReports = data.carts.slice(0, 5).map((cart, index) => {
-          const types = ['Laporan Keuangan Bulanan', 'Analisis Demografi Pasien', 'Ringkasan Mutasi Stok Apotek', 'Log Transaksi Kasir', 'Rekapitulasi Kunjungan Klinis'];
-          const paths = ['/admin/reports/financial', '/admin/reports/demographics', '/admin/reports/stock-mutation', '/admin/reports/transactions', '/admin/reports/demographics'];
-          return {
-            id: cart.id,
-            title: types[index % types.length],
-            category: index % 2 === 0 ? 'Finansial' : 'Operasional',
-            generatedAt: `23 Mei 2026 - 0${1 + index}:45 WIB`,
-            size: `${(cart.totalQuantity * 1.2).toFixed(1)} KB`,
-            path: paths[index % paths.length]
-          };
-        });
+        const mappedReports = [
+          {
+            id: 1,
+            title: 'Laporan Keuangan & Transaksi',
+            category: 'Finansial',
+            generatedAt: 'Real-time',
+            size: 'API',
+            path: '/admin/reports/financial'
+          },
+          {
+            id: 2,
+            title: 'Analisis Demografi Kunjungan',
+            category: 'Operasional',
+            generatedAt: 'Real-time',
+            size: 'API',
+            path: '/admin/reports/demographics'
+          },
+          {
+            id: 3,
+            title: 'Ringkasan Mutasi Stok Apotek',
+            category: 'Operasional',
+            generatedAt: 'Real-time',
+            size: 'API',
+            path: '/admin/reports/stock-mutation'
+          }
+        ];
 
         setRecentReports(mappedReports);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to fetch report data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchReportData();
-  }, []);
+  }, [selectedYear]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {

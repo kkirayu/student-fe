@@ -54,11 +54,16 @@ export const deleteService = async (id) => {
 
 // --- Reports (Laporan) ---
 export const getFinancialReport = async (startDate, endDate) => {
-  const response = await api.get('/reports/financial', { params: { startDate, endDate } });
+  const response = await api.get('/reports/financial', { params: { start_date: startDate, end_date: endDate } });
   return response.data;
 };
 
-export const getVisitDemographics = async () => {
-  const response = await api.get('/reports/demographics');
+export const getVisitDemographics = async (startDate, endDate) => {
+  const response = await api.get('/reports/demographics', { params: { start_date: startDate, end_date: endDate } });
+  return response.data;
+};
+
+export const getStockMutationReport = async (startDate, endDate) => {
+  const response = await api.get('/reports/stock-mutation', { params: { start_date: startDate, end_date: endDate } });
   return response.data;
 };
