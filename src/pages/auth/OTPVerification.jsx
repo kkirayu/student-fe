@@ -61,7 +61,7 @@ const OTPVerification = () => {
     }
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/verify-otp', {
+      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/verify-otp', {
         email: email,
         otp_code: otpCode
       });

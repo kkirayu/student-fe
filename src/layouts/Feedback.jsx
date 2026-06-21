@@ -28,11 +28,12 @@ const Feedback = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    
     try {
-      const token = localStorage.getItem('auth_token'); // Mengambil auth_token yang diset di Login
+      const token = localStorage.getItem('auth_token'); 
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      await axios.post('http://127.0.0.1:8000/api/feedbacks', formData, { headers });
+      await axios.post('https://zeta-connect-api.vercel.app/api/feedbacks', formData, { headers });
       
       setPopup({
         isOpen: true,

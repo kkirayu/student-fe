@@ -14,7 +14,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     phone_number: '',
-    role: 'Pemilik Hewan', 
+    role: 'Owner', 
     address: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/register', {
+      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -51,10 +51,9 @@ const Register = () => {
         address: formData.address
       });
       
-      const otpCode = response.data.otp_code; // For testing
+      const otpCode = response.data.otp_code; 
       console.log('OTP Code for testing:', otpCode);
 
-      // Redirect ke halaman OTP dan bawa data email
       navigate('/otp-verification', { state: { email: formData.email } });
     } catch (error) {
       console.error(error);
@@ -246,6 +245,40 @@ const Register = () => {
               <div className="pt-2 md:pt-4">
                 <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                   <i className="fa-solid fa-user-plus"></i> Daftar Sekarang
+                </button>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-500">Atau daftar dengan</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+                      const res = await axios.get(`${apiUrl}/auth/google`);
+                      if (res.data.url) {
+                        window.location.href = res.data.url;
+                      }
+                    } catch (e) {
+                      setPopup({
+                        isOpen: true,
+                        type: 'error',
+                        title: 'Gagal',
+                        message: 'Pendaftaran dengan Google sedang tidak tersedia.',
+                        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+                      });
+                    }
+                  }}
+                  className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm mb-4"
+                >
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                  Google
                 </button>
                 <p className="text-center text-sm text-slate-500 mt-6">
                   Sudah punya akun? <Link to="/login" className="text-blue-600 font-bold hover:underline">Masuk di sini</Link>

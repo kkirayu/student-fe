@@ -40,7 +40,6 @@ const InfoLayanan = () => {
   const todayString = daysMap[new Date().getDay()];
 
   const [selectedDay, setSelectedDay] = useState(todayString);
-  const [selectedSpecialty, setSelectedSpecialty] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState('');
 
   const [doctors, setDoctors] = useState([]);
@@ -65,7 +64,7 @@ const InfoLayanan = () => {
     const fetchTips = async () => {
       try {
         setLoadingTips(true);
-        const response = await axios.get('http://127.0.0.1:8000/api/pet-tips');
+        const response = await axios.get('https://zeta-connect-api.vercel.app/api/pet-tips');
         setTips(response.data);
       } catch (err) {
         console.error("Error fetching tips:", err);
@@ -78,7 +77,7 @@ const InfoLayanan = () => {
     const fetchDoctors = async () => {
       try {
         setLoadingDoctors(true);
-        const response = await axios.get('http://127.0.0.1:8000/api/doctors');
+        const response = await axios.get('https://zeta-connect-api.vercel.app/api/doctors');
         setDoctors(response.data);
       } catch (err) {
         console.error("Error fetching doctors:", err);
@@ -127,7 +126,6 @@ const InfoLayanan = () => {
 
   // Dummy data removed. Doctors are now fetched from API.
 
-  const specialties = ["Semua", ...new Set(doctors.map(doc => doc.spesialisasi))];
   const allDays = ["Semua", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
   const sessionToTime = {
@@ -141,9 +139,8 @@ const InfoLayanan = () => {
   const filteredDoctors = doctors.filter(doc => {
     const docDays = doc.schedules ? [...new Set(doc.schedules.map(s => s.hari_praktik))] : [];
     const matchDay = selectedDay === "Semua" || docDays.includes(selectedDay);
-    const matchSpecialty = selectedSpecialty === "Semua" || doc.spesialisasi === selectedSpecialty;
     const matchSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchDay && matchSpecialty && matchSearch;
+    return matchDay && matchSearch;
   });
 
   return (
@@ -189,7 +186,7 @@ const InfoLayanan = () => {
           </div>
 
           <form 
-            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
+            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center"
             onSubmit={(e) => e.preventDefault()}
           >
             {/* Cari Nama Dokter */}
@@ -231,27 +228,6 @@ const InfoLayanan = () => {
               </div>
             </div>
             
-            {/* Filter Spesialisasi */}
-            <div className="w-full">
-              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-stethoscope text-blue-600 mr-2"></i> Spesialisasi</span>
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <i className="fa-solid fa-stethoscope text-slate-400"></i>
-                </div>
-                <select 
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all text-sm font-medium appearance-none cursor-pointer"
-                  value={selectedSpecialty}
-                  onChange={(e) => setSelectedSpecialty(e.target.value)}
-                >
-                  {specialties.map(spec => (
-                    <option key={spec} value={spec}>{spec === "Semua" ? "Semua Spesialisasi" : spec}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                  <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                </div>
-              </div>
-            </div>
           </form>
 
           {/* Doctor Cards */}
@@ -300,7 +276,7 @@ const InfoLayanan = () => {
                 <h3 className="text-xl font-bold text-slate-800 mb-2">Tidak ada dokter tersedia</h3>
                 <p className="text-slate-500 max-w-md mx-auto">Maaf, tidak ada dokter dengan spesialisasi tersebut yang tersedia pada hari yang dipilih. Silakan ubah filter pencarian Anda.</p>
                 <button 
-                  onClick={() => { setSelectedDay("Semua"); setSelectedSpecialty("Semua"); setSearchQuery(""); }}
+                  onClick={() => { setSelectedDay("Semua"); setSearchQuery(""); }}
                   className="mt-6 px-6 py-2.5 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors inline-flex items-center gap-2"
                 >
                   <i className="fa-solid fa-rotate-right"></i> Reset Filter
