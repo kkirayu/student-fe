@@ -28,7 +28,15 @@ const AdminLayout = ({ userRole = 'admin' }) => {
     cashier: 'Kasir',
     receptionist: 'Resepsionis'
   };
-  const currentName = displayNames[userRole] || 'User';
+
+  const userStr = localStorage.getItem('user');
+  let userData = null;
+  try {
+    userData = userStr ? JSON.parse(userStr) : null;
+  } catch(e) {}
+
+  const currentName = userData?.name || displayNames[userRole] || 'User';
+  const displayRole = userData?.role || userRole;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
@@ -118,7 +126,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
             {/* Profil User */}
             <div className="flex items-center gap-4">
               <div className="hidden rounded bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-600 sm:block">
-                Role: {userRole}
+                Role: {displayRole}
               </div>
               <div className="relative">
                 <button 
@@ -127,7 +135,7 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                 >
                   <div className="hidden text-right lg:block">
                     <p className="text-sm font-bold leading-tight text-black">{currentName}</p>
-                    <p className="text-xs font-medium text-slate-500 capitalize">{userRole}</p>
+                    <p className="text-xs font-medium text-slate-500 capitalize">{displayRole}</p>
                   </div>
                   <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5 flex items-center justify-center">
                     <img src={`https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`} alt="User" className="h-full w-full rounded-full" />
