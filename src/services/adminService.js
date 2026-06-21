@@ -21,11 +21,6 @@ export const getAdminDashboardStats = async () => {
   return response.data;
 };
 
-export const updateClinicSettings = async (settingsData) => {
-  const response = await api.post('/clinic-settings', settingsData);
-  return response.data;
-};
-
 // --- Service Rates (Layanan & Tarif) ---
 export const getServiceRates = async () => {
   const response = await api.get('/services');
