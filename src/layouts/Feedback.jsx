@@ -1,7 +1,7 @@
-// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { showSuccess } from '../utils/alertUtils';
+import axios from 'axios';
+import Popup from '../components/Popup';
 
 const Feedback = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -11,6 +11,10 @@ const Feedback = () => {
     type: 'Pujian', 
     message: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,8 +26,35 @@ const Feedback = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await showSuccess('Berhasil!', 'Terima kasih atas umpan balik Anda!');
-    setFormData({ name: '', phone: '', type: 'Pujian', message: '' });
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const token = localStorage.getItem('auth_token'); 
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      await axios.post('https://zeta-connect-api.vercel.app/api/feedbacks', formData, { headers });
+      
+      setPopup({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil',
+        message: 'Terima kasih atas umpan balik Anda!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      setFormData({ name: '', phone: '', type: 'Pujian', message: '' });
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal',
+        message: 'Terjadi kesalahan saat mengirim umpan balik. Silakan coba lagi.',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -130,8 +161,20 @@ const Feedback = () => {
                 ></textarea>
               </div>
 
-              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                <i className="fa-regular fa-paper-plane"></i> Kirim Umpan Balik
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i> Mengirim...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-regular fa-paper-plane"></i> Kirim Umpan Balik
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -142,6 +185,15 @@ const Feedback = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
+
+      <Popup
+        isOpen={popup.isOpen}
+        type={popup.type}
+        title={popup.title}
+        message={popup.message}
+        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={popup.onConfirm}
+      />
     </div>
   );
 };

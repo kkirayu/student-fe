@@ -13,6 +13,18 @@ import dokter7 from '../assets/doctor_img/dokter7.webp';
 import dokter8 from '../assets/doctor_img/dokter8.webp';
 import dokter9 from '../assets/doctor_img/dokter9.webp';
 
+const imageMap = {
+  "/src/assets/doctor_img/dokter1.webp": dokter1,
+  "/src/assets/doctor_img/dokter2.webp": dokter2,
+  "/src/assets/doctor_img/dokter3.webp": dokter3,
+  "/src/assets/doctor_img/dokter4.webp": dokter4,
+  "/src/assets/doctor_img/dokter5.webp": dokter5,
+  "/src/assets/doctor_img/dokter6.webp": dokter6,
+  "/src/assets/doctor_img/dokter7.webp": dokter7,
+  "/src/assets/doctor_img/dokter8.webp": dokter8,
+  "/src/assets/doctor_img/dokter9.webp": dokter9,
+};
+
 const petTipsMetadata = [
   { category: "Kucing", icon: "fa-cat", color: "text-amber-600 bg-amber-50" },
   { category: "Anjing", icon: "fa-dog", color: "text-blue-600 bg-blue-50" },
@@ -28,12 +40,15 @@ const InfoLayanan = () => {
   const todayString = daysMap[new Date().getDay()];
 
   const [selectedDay, setSelectedDay] = useState(todayString);
-  const [selectedSpecialty, setSelectedSpecialty] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   const [tips, setTips] = useState([]);
   const [loadingTips, setLoadingTips] = useState(true);
   const [errorTips, setErrorTips] = useState(null);
+  const [selectedTip, setSelectedTip] = useState(null);
   const tipsContainerRef = useRef(null);
   const isHoveredTips = useRef(false);
 
@@ -49,7 +64,7 @@ const InfoLayanan = () => {
     const fetchTips = async () => {
       try {
         setLoadingTips(true);
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10');
+        const response = await axios.get('https://zeta-connect-api.vercel.app/api/pet-tips');
         setTips(response.data);
       } catch (err) {
         console.error("Error fetching tips:", err);
@@ -58,7 +73,21 @@ const InfoLayanan = () => {
         setLoadingTips(false);
       }
     };
+
+    const fetchDoctors = async () => {
+      try {
+        setLoadingDoctors(true);
+        const response = await axios.get('https://zeta-connect-api.vercel.app/api/doctors');
+        setDoctors(response.data);
+      } catch (err) {
+        console.error("Error fetching doctors:", err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+
     fetchTips();
+    fetchDoctors();
   }, []);
 
   useEffect(() => {
@@ -95,80 +124,23 @@ const InfoLayanan = () => {
     return () => clearInterval(interval);
   }, [tips]);
 
-  const doctors = [
-    {
-      name: "Drh. Ananda Pratama",
-      specialty: "Dokter Hewan Umum",
-      schedule: "Senin, Selasa, Rabu (08:00 - 15:00)",
-      days: ["Senin", "Selasa", "Rabu"],
-      image: dokter2
-    },
-    {
-      name: "Drh. Budi Santoso, M.Vet",
-      specialty: "Ahli Bedah & Ortopedi",
-      schedule: "Kamis, Jumat, Sabtu (10:00 - 18:00)",
-      days: ["Kamis", "Jumat", "Sabtu"],
-      image: dokter1
-    },
-    {
-      name: "Drh. Citra Lestari",
-      specialty: "Spesialis Penyakit Dalam",
-      schedule: "Senin, Rabu, Jumat (09:00 - 16:00)",
-      days: ["Senin", "Rabu", "Jumat"],
-      image: dokter9
-    },
-    {
-      name: "Drh. Dimas Anggara",
-      specialty: "Perawatan Gigi & Mulut",
-      schedule: "Selasa, Kamis, Sabtu (13:00 - 20:00)",
-      days: ["Selasa", "Kamis", "Sabtu"],
-      image: dokter3
-    },
-    {
-      name: "Drh. Elena Putri, M.Si",
-      specialty: "Dermatologi Veteriner",
-      schedule: "Rabu, Jumat, Minggu (08:00 - 14:00)",
-      days: ["Rabu", "Jumat", "Minggu"],
-      image: dokter8
-    },
-    {
-      name: "Drh. Faisal Rahman",
-      specialty: "Dokter Hewan Umum",
-      schedule: "Kamis, Jumat, Sabtu, Minggu (08:00 - 16:00)",
-      days: ["Kamis", "Jumat", "Sabtu", "Minggu"],
-      image: dokter5
-    },
-    {
-      name: "Drh. Gita Savitri",
-      specialty: "Spesialis Penyakit Dalam",
-      schedule: "Selasa, Kamis, Sabtu (10:00 - 17:00)",
-      days: ["Selasa", "Kamis", "Sabtu"],
-      image: dokter7
-    },
-    {
-      name: "Drh. Hendi Saputra, Sp.B.Vet",
-      specialty: "Ahli Bedah & Ortopedi",
-      schedule: "Senin, Selasa, Rabu (12:00 - 20:00)",
-      days: ["Senin", "Selasa", "Rabu"],
-      image: dokter4
-    },
-    {
-      name: "Drh. Indah Permatasari",
-      specialty: "Dokter Hewan Umum",
-      schedule: "Senin - Jumat (15:00 - 21:00)",
-      days: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"],
-      image: dokter6
-    }
-  ];
+  // Dummy data removed. Doctors are now fetched from API.
 
-  const specialties = ["Semua", ...new Set(doctors.map(doc => doc.specialty))];
   const allDays = ["Semua", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
+  const sessionToTime = {
+    "Sesi 1": "08.00 - 10.00",
+    "Sesi 2": "10.00 - 12.00",
+    "Sesi 3": "13.00 - 15.00",
+    "Sesi 4": "15.00 - 17.00",
+    "Sesi 5": "18.30 - 20.30"
+  };
+
   const filteredDoctors = doctors.filter(doc => {
-    const matchDay = selectedDay === "Semua" || doc.days.includes(selectedDay);
-    const matchSpecialty = selectedSpecialty === "Semua" || doc.specialty === selectedSpecialty;
+    const docDays = doc.schedules ? [...new Set(doc.schedules.map(s => s.hari_praktik))] : [];
+    const matchDay = selectedDay === "Semua" || docDays.includes(selectedDay);
     const matchSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchDay && matchSpecialty && matchSearch;
+    return matchDay && matchSearch;
   });
 
   return (
@@ -214,7 +186,7 @@ const InfoLayanan = () => {
           </div>
 
           <form 
-            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
+            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center"
             onSubmit={(e) => e.preventDefault()}
           >
             {/* Cari Nama Dokter */}
@@ -256,27 +228,6 @@ const InfoLayanan = () => {
               </div>
             </div>
             
-            {/* Filter Spesialisasi */}
-            <div className="w-full">
-              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-solid fa-stethoscope text-blue-600 mr-2"></i> Spesialisasi</span>
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <i className="fa-solid fa-stethoscope text-slate-400"></i>
-                </div>
-                <select 
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all text-sm font-medium appearance-none cursor-pointer"
-                  value={selectedSpecialty}
-                  onChange={(e) => setSelectedSpecialty(e.target.value)}
-                >
-                  {specialties.map(spec => (
-                    <option key={spec} value={spec}>{spec === "Semua" ? "Semua Spesialisasi" : spec}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                  <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                </div>
-              </div>
-            </div>
           </form>
 
           {/* Doctor Cards */}
@@ -284,15 +235,20 @@ const InfoLayanan = () => {
             <div className="flex items-center gap-3 mb-6">
               <h2 className="text-2xl font-bold text-slate-900">
                 {selectedDay === todayString ? "Dokter Tersedia Hari Ini" : 
-                 selectedDay === "Semua" ? "Semua Dokter" : 
-                 `Dokter Tersedia di Hari ${selectedDay}`}
+                  selectedDay === "Semua" ? "Semua Dokter" : 
+                  `Dokter Tersedia di Hari ${selectedDay}`}
               </h2>
               <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
                 {filteredDoctors.length} Dokter
               </span>
             </div>
 
-            {filteredDoctors.length > 0 ? (
+            {loadingDoctors ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <p className="text-slate-500 font-medium animate-pulse">Memuat data dokter...</p>
+              </div>
+            ) : filteredDoctors.length > 0 ? (
               <div 
                 className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory hide-scrollbar" 
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -301,22 +257,11 @@ const InfoLayanan = () => {
                   <div key={index} className="min-w-[85vw] sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-start bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col flex-shrink-0">
                     <div className="h-64 overflow-hidden relative p-2">
                       <div className="w-full h-full rounded-3xl overflow-hidden relative">
-                        <img src={doc.image} alt={doc.name} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 grayscale group-hover:grayscale-0" />
+                        <img src={imageMap[doc.image] || doc.image} alt={doc.name} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 grayscale group-hover:grayscale-0" />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent"></div>
                         <div className="absolute bottom-4 left-4 right-4 text-white">
-                          <span className="inline-block px-3 py-1 bg-blue-600/80 backdrop-blur-sm rounded-full text-xs font-semibold mb-2">{doc.specialty}</span>
+                          <span className="inline-block px-3 py-1 bg-blue-600/80 backdrop-blur-sm rounded-full text-xs font-semibold mb-2">{doc.spesialisasi}</span>
                           <h3 className="text-xl font-bold">{doc.name}</h3>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-grow flex flex-col justify-between">
-                      <div className="bg-slate-50 p-4 rounded-2xl flex items-start gap-3 text-sm text-slate-600 border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50/50 transition-colors">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i className="fa-regular fa-calendar-check"></i>
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-800 mb-1">Jadwal Praktek</p>
-                          <p className="leading-relaxed">{doc.schedule}</p>
                         </div>
                       </div>
                     </div>
@@ -331,7 +276,7 @@ const InfoLayanan = () => {
                 <h3 className="text-xl font-bold text-slate-800 mb-2">Tidak ada dokter tersedia</h3>
                 <p className="text-slate-500 max-w-md mx-auto">Maaf, tidak ada dokter dengan spesialisasi tersebut yang tersedia pada hari yang dipilih. Silakan ubah filter pencarian Anda.</p>
                 <button 
-                  onClick={() => { setSelectedDay("Semua"); setSelectedSpecialty("Semua"); }}
+                  onClick={() => { setSelectedDay("Semua"); setSearchQuery(""); }}
                   className="mt-6 px-6 py-2.5 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors inline-flex items-center gap-2"
                 >
                   <i className="fa-solid fa-rotate-right"></i> Reset Filter
@@ -352,12 +297,7 @@ const InfoLayanan = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 animate-duration-1000"></div>
                 <p className="text-slate-500 font-medium animate-pulse">Mengambil data artikel dari API...</p>
               </div>
-            ) : errorTips ? (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl max-w-xl mx-auto text-center">
-                <i className="fa-solid fa-triangle-exclamation text-2xl mb-2 text-red-500 block"></i>
-                <p className="font-semibold">{errorTips}</p>
-              </div>
-            ) : (
+            ) : tips.length > 0 ? (
               <div 
                 ref={tipsContainerRef}
                 onMouseEnter={() => isHoveredTips.current = true}
@@ -394,13 +334,23 @@ const InfoLayanan = () => {
                         <span className="flex items-center gap-1.5 font-medium">
                           <i className={`fa-solid ${meta.icon} text-blue-600`}></i> Zeta Pet Care Edu
                         </span>
-                        <span className="hover:text-blue-600 font-bold cursor-pointer transition-colors flex items-center gap-1">
+                        <span 
+                          onClick={() => setSelectedTip({...tip, meta})}
+                          className="hover:text-blue-600 font-bold cursor-pointer transition-colors flex items-center gap-1"
+                        >
                           Baca Selengkapnya <i className="fa-solid fa-arrow-right text-[10px]"></i>
                         </span>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white rounded-[2rem] border border-dashed border-slate-300">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fa-solid fa-book-medical text-3xl text-slate-300"></i>
+                </div>
+                <p className="text-slate-500 font-medium">Belum ada tips kesehatan tersedia.</p>
               </div>
             )}
           </div>
@@ -471,6 +421,42 @@ const InfoLayanan = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
+
+      {/* Tip Modal */}
+      {selectedTip && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedTip(null)}></div>
+          <div className="bg-white rounded-3xl w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-fade-in-up">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedTip.meta.color}`}>
+                  <i className={`fa-solid ${selectedTip.meta.icon} text-lg`}></i>
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{selectedTip.meta.category}</span>
+                  <h3 className="font-bold text-slate-800 leading-tight">Detail Tips</h3>
+                </div>
+              </div>
+              <button onClick={() => setSelectedTip(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <div className="p-6 md:p-8 overflow-y-auto hide-scrollbar">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4 capitalize">{selectedTip.title}</h2>
+              <div className="prose prose-slate prose-blue max-w-none">
+                <p className="text-slate-600 leading-relaxed text-justify whitespace-pre-line">
+                  {selectedTip.body}
+                </p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-50 bg-slate-50/50 flex justify-end">
+              <button onClick={() => setSelectedTip(null)} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors focus:outline-none">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,8 +7,6 @@ import anjingImg from '../assets/animals/dog.webp';
 import kelinciImg from '../assets/animals/rabbit.webp';
 import hamsterImg from '../assets/animals/hamster.webp';
 import burungImg from '../assets/animals/bird.webp';
-import homeBg from '../assets/home_bg.webp';
-import aboutUsBg from '../assets/about_us.webp';
 
 const MainLayouts = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -70,14 +68,13 @@ const MainLayouts = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600">
 
-      {/* Header & Navbar */}
-      <header>
-        <nav
-          className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-              ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
-              : 'bg-transparent py-5'
-            }`}
-        >
+      {/* Navbar */}
+      <nav
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
+            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3'
+            : 'bg-transparent py-5'
+          }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -125,15 +122,12 @@ const MainLayouts = () => {
           </div>
         )}
       </nav>
-      </header>
 
-      {/* Main Content */}
-      <main>
-        {/* Hero Section */}
-        <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
+      {/* Hero Section */}
+      <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
         <div className="absolute inset-0 z-0">
           <img
-            src={homeBg}
+            src="src/assets/home_bg.webp"
             alt="Veterinary Background"
             className="w-full h-full object-cover opacity-15"
           />
@@ -166,7 +160,7 @@ const MainLayouts = () => {
       <section id="about-us" className="relative py-32 bg-blue-50/50 overflow-hidden flex items-center min-h-[60vh]">
         <div className="absolute inset-0 z-0 bg-blue-50">
           <img
-            src={aboutUsBg}
+            src="src/assets/about_us.webp"
             alt="About Us Background"
             className="w-full h-full object-cover opacity-40 mix-blend-multiply"
           />
@@ -295,8 +289,6 @@ const MainLayouts = () => {
 
 
 
-      </main>
-
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -365,8 +357,8 @@ const MainLayouts = () => {
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
             <p>&copy; {new Date().getFullYear()} Zeta Pet Care. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/syarat-dan-ketentuan" className="hover:text-blue-500 transition-colors">Syarat &amp; Ketentuan</Link>
-              <Link to="/kebijakan-privasi" className="hover:text-blue-500 transition-colors">Kebijakan Privasi</Link>
+              <a href="#" className="hover:text-blue-500 transition-colors">Syarat & Ketentuan</a>
+              <a href="#" className="hover:text-blue-500 transition-colors">Kebijakan Privasi</a>
             </div>
           </div>
         </div>

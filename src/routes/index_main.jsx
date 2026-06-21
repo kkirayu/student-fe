@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import AdminLayout from '../layouts/AdminLayout';
@@ -11,7 +11,6 @@ import Register from '../pages/auth/Register';
 import Login from '../pages/auth/Login';
 import OTPVerification from '../pages/auth/OTPVerification';
 import ForgotPassword from '../pages/auth/ForgotPassword';
-import AuthCallback from '../pages/auth/AuthCallback';
 
 import AdminDashboard from '../pages/admin/Dashboard';
 import StaffList from '../pages/admin/StaffManagement/StaffList';
@@ -88,7 +87,6 @@ const AppRouter = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/otp-verification" element={<OTPVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route path="/admin" element={<AdminLayout userRole="admin" />}>
           <Route index element={<AdminDashboard />} />

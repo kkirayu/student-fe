@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { 
   Users, 
   Clock, 
@@ -15,105 +16,109 @@ const ReceptionistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
   const [approvedBooking, setApprovedBooking] = useState(null);
+  
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [bookingRequests, setBookingRequests] = useState([
-    {
-      id: 'REQ-089',
-      petName: 'Luna',
-      species: 'Anjing',
-      ownerName: 'Muhammad Danil',
-      service: 'Grooming Medis',
-      date: '18 Mei 2026',
-      time: '10:00 WIB',
-      status: 'Menunggu Konfirmasi'
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true);
+        const today = new Date().toISOString().split('T')[0];
+        const response = await axios.get(`http://127.0.0.1:8000/api/appointments?date=${today}`);
+        // Backend returns paginate(10) so array is at response.data.data.data
+        setAppointments(response.data.data.data || []);
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const handleAcceptBooking = async (req) => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/appointments/${req.rawId}`, { status: 'Disetujui' });
+      setAppointments(appointments.map(a => a.id === req.rawId ? { ...a, status: 'Disetujui' } : a));
+      setApprovedBooking(req);
+      setTimeout(() => {
+        setApprovedBooking(null);
+      }, 3000);
+    } catch (err) {
+      console.error(err);
     }
-  ]);
-
-  const handleAcceptBooking = (req) => {
-    setBookingRequests(bookingRequests.filter(r => r.id !== req.id));
-    setApprovedBooking(req);
-    // Auto-close modal after 3 seconds
-    setTimeout(() => {
-      setApprovedBooking(null);
-    }, 3000);
   };
 
-  const handleRejectBooking = (id) => {
-    setBookingRequests(bookingRequests.filter(req => req.id !== id));
+  const handleRejectBooking = async (id) => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/appointments/${id}`, { status: 'Batal' });
+      setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Batal' } : a));
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  const handleCallPatient = async (id) => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/appointments/${id}`, { status: 'Dalam Periksa' });
+      setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Dalam Periksa' } : a));
+    } catch (err) {
+      console.error("Error calling patient:", err);
+    }
+  };
+
+  const bookingRequests = appointments
+    .filter(a => a.status === 'Menunggu' && a.booking_type === 'Online')
+    .map(a => ({
+      rawId: a.id,
+      id: a.queue_number,
+      petName: a.pet?.name || '-',
+      species: a.pet?.species || '-',
+      ownerName: a.owner?.name || '-',
+      service: a.service?.name || '-',
+      date: a.schedule_date,
+      time: a.schedule_time?.slice(0,5) || '-',
+      status: 'Menunggu Konfirmasi'
+    }));
+
+  const queueData = appointments
+    .filter(a => !(a.status === 'Menunggu' && a.booking_type === 'Online') && a.status !== 'Batal')
+    .map(a => ({
+      rawId: a.id,
+      id: a.queue_number,
+      petName: a.pet?.name || '-',
+      species: a.pet?.species || '-',
+      ownerName: a.owner?.name || '-',
+      doctor: a.doctor?.name || '-',
+      status: (a.status === 'Dalam Periksa') ? 'Sedang Diperiksa' : a.status,
+      time: a.schedule_time?.slice(0,5) || '-',
+    }));
 
   const stats = [
     {
       title: 'Total Antrian Hari Ini',
-      value: '42',
+      value: queueData.length + bookingRequests.length,
       icon: <Users className="text-blue-600 h-6 w-6" />,
       bgIcon: 'bg-blue-100',
     },
     {
       title: 'Sedang Menunggu',
-      value: '12',
+      value: queueData.filter(q => q.status === 'Menunggu').length,
       icon: <Clock className="text-orange-600 h-6 w-6" />,
       bgIcon: 'bg-orange-100',
     },
     {
       title: 'Sedang Diperiksa',
-      value: '3',
+      value: queueData.filter(q => q.status === 'Sedang Diperiksa').length,
       icon: <Activity className="text-purple-600 h-6 w-6" />,
       bgIcon: 'bg-purple-100',
     },
     {
       title: 'Selesai',
-      value: '27',
+      value: queueData.filter(q => q.status === 'Selesai').length,
       icon: <CheckCircle className="text-emerald-600 h-6 w-6" />,
       bgIcon: 'bg-emerald-100',
-    },
-  ];
-
-  const queueData = [
-    {
-      id: 'Q-001',
-      petName: 'Milo',
-      species: 'Kucing',
-      ownerName: 'Budi Santoso',
-      doctor: 'Drh. Anisa',
-      status: 'Sedang Diperiksa',
-      time: '08:30',
-    },
-    {
-      id: 'Q-002',
-      petName: 'Bella',
-      species: 'Anjing',
-      ownerName: 'Siti Aminah',
-      doctor: 'Drh. Bima',
-      status: 'Selesai',
-      time: '08:45',
-    },
-    {
-      id: 'Q-003',
-      petName: 'Luna',
-      species: 'Kucing',
-      ownerName: 'Rina',
-      doctor: 'Drh. Anisa',
-      status: 'Menunggu',
-      time: '09:15',
-    },
-    {
-      id: 'Q-004',
-      petName: 'Rocky',
-      species: 'Anjing',
-      ownerName: 'Andi',
-      doctor: 'Drh. Cita',
-      status: 'Menunggu',
-      time: '09:30',
-    },
-    {
-      id: 'Q-005',
-      petName: 'Kiko',
-      species: 'Burung',
-      ownerName: 'Joko',
-      doctor: 'Drh. Bima',
-      status: 'Menunggu',
-      time: '09:40',
     },
   ];
 
@@ -133,6 +138,8 @@ const ReceptionistDashboard = () => {
         return 'bg-emerald-100 text-emerald-700';
       case 'Menunggu':
         return 'bg-orange-100 text-orange-700';
+      case 'Disetujui':
+        return 'bg-blue-100 text-blue-700';
       default:
         return 'bg-slate-100 text-slate-700';
     }
@@ -195,8 +202,8 @@ const ReceptionistDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {bookingRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-orange-50/30 transition-colors">
+                {bookingRequests.map((req, idx) => (
+                  <tr key={`${req.rawId}-${idx}`} className="hover:bg-orange-50/30 transition-colors">
                     <td className="px-6 py-4 font-bold text-slate-700">{req.id}</td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-800">{req.petName} <span className="text-xs font-normal text-slate-500">({req.species})</span></div>
@@ -216,7 +223,7 @@ const ReceptionistDashboard = () => {
                           Setujui
                         </button>
                         <button 
-                          onClick={() => handleRejectBooking(req.id)}
+                          onClick={() => handleRejectBooking(req.rawId)}
                           className="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded hover:bg-slate-50 transition-colors"
                         >
                           Tolak
@@ -256,6 +263,7 @@ const ReceptionistDashboard = () => {
                 >
                   <option value="Semua">Semua Status</option>
                   <option value="Menunggu">Menunggu</option>
+                  <option value="Disetujui">Disetujui</option>
                   <option value="Sedang Diperiksa">Sedang Diperiksa</option>
                   <option value="Selesai">Selesai</option>
                 </select>
@@ -295,8 +303,16 @@ const ReceptionistDashboard = () => {
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      {item.status === 'Disetujui' && (
+                        <button 
+                          onClick={() => handleCallPatient(item.rawId)}
+                          className="rounded bg-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition-colors"
+                        >
+                          Panggil
+                        </button>
+                      )}
+                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm py-1.5">
                         Detail
                       </button>
                     </td>

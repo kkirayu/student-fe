@@ -1,11 +1,14 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Popup from '../../components/Popup';
+import axios from 'axios';
+import ReCAPTCHA from "react-google-recaptcha";
 
 const Login = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [formData, setFormData] = useState({
     username: '',
@@ -19,10 +22,36 @@ const Login = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
-  const handleSubmit = (e) => {
+    const errorMsg = searchParams.get('error');
+    if (errorMsg === 'google_auth_not_owner') {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Akses Ditolak',
+        message: 'Maaf, Login dengan Google hanya diperuntukkan bagi Pemilik Hewan (Owner).',
+        onConfirm: () => {
+          setPopup((prev) => ({ ...prev, isOpen: false }));
+          navigate('/login', { replace: true });
+        }
+      });
+    } else if (errorMsg === 'google_auth_failed') {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Login Gagal',
+        message: 'Terjadi kesalahan saat memproses otentikasi Google.',
+        onConfirm: () => {
+          setPopup((prev) => ({ ...prev, isOpen: false }));
+          navigate('/login', { replace: true });
+        }
+      });
+    }
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [searchParams, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!captchaVerified) {
       setPopup({
@@ -34,8 +63,37 @@ const Login = () => {
       });
       return;
     }
-    console.log('Login attempt:', formData);
-    navigate('/otp-verification');
+
+    try {
+      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/login', {
+        username: formData.username,
+        password: formData.password
+      });
+
+      const { access_token, user } = response.data;
+      
+      localStorage.setItem('auth_token', access_token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      const role = user.role;
+      if (role === 'Admin') navigate('/admin');
+      else if (role === 'Pemilik Hewan' || role === 'Owner') navigate('/owner');
+      else if (role === 'Dokter') navigate('/doctor');
+      else if (role === 'Farmasi' || role === 'Apoteker') navigate('/pharmacy');
+      else if (role === 'Kasir') navigate('/cashier');
+      else if (role === 'Resepsionis') navigate('/receptionist');
+      else navigate('/');
+      
+    } catch (error) {
+      console.error(error);
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Login Gagal',
+        message: error.response?.data?.message || 'Terjadi kesalahan pada server.',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+    }
   };
 
   return (
@@ -120,25 +178,50 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={captchaVerified}
-                    onChange={(e) => setCaptchaVerified(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-600 focus:ring-2 cursor-pointer"
-                  />
-                  <span className="text-sm font-medium text-slate-700">I'm not a robot</span>
-                </label>
-                <div className="flex flex-col items-center">
-                  <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA logo" className="w-8 h-8 opacity-80" />
-                  <span className="text-[10px] text-slate-400 mt-1">reCAPTCHA</span>
-                </div>
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                  onChange={(val) => setCaptchaVerified(!!val)}
+                />
               </div>
 
               <div className="pt-2">
                 <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                   <i className="fa-solid fa-right-to-bracket"></i> Masuk
+                </button>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-500">Atau masuk dengan</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+                      const res = await axios.get(`${apiUrl}/auth/google`);
+                      if (res.data.url) {
+                        window.location.href = res.data.url;
+                      }
+                    } catch (e) {
+                      setPopup({
+                        isOpen: true,
+                        type: 'error',
+                        title: 'Gagal',
+                        message: 'Login dengan Google sedang tidak tersedia.',
+                        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+                      });
+                    }
+                  }}
+                  className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm mb-4"
+                >
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                  Google
                 </button>
                 
                 {/* Dummy Login Section untuk Presentasi */}

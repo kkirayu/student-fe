@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { 
   Volume2, 
   Clock, 
@@ -18,10 +19,29 @@ const QueueMonitor = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const monitorRef = useRef(null);
+  const [appointments, setAppointments] = useState([]);
+  const [lastCalledId, setLastCalledId] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchQueue = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await axios.get(`http://127.0.0.1:8000/api/appointments?date=${today}`);
+        const data = res.data.data.data || [];
+        setAppointments(data);
+      } catch (err) {
+        console.error("Error fetching queue", err);
+      }
+    };
+    
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -54,22 +74,71 @@ const QueueMonitor = () => {
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const currentCall = {
-    id: 'Q-005',
-    petName: 'Milo',
-    species: 'Kucing',
-    owner: 'Budi Santoso',
-    doctor: 'Drh. Anisa',
-    room: 'Ruang Periksa 1',
-    image: catImage
+  const getPetImage = (species) => {
+    switch (species?.toLowerCase()) {
+      case 'kucing': return catImage;
+      case 'anjing': return dogImage;
+      case 'burung': return birdImage;
+      default: return catImage;
+    }
   };
 
-  const nextQueue = [
-    { id: 'Q-006', petName: 'Bella', species: 'Anjing', doctor: 'Drh. Bima', image: dogImage },
-    { id: 'Q-007', petName: 'Luna', species: 'Kucing', doctor: 'Drh. Anisa', image: catImage },
-    { id: 'Q-008', petName: 'Rocky', species: 'Anjing', doctor: 'Drh. Cita', image: dogImage },
-    { id: 'Q-009', petName: 'Kiko', species: 'Burung', doctor: 'Drh. Bima', image: birdImage },
-  ];
+  // Filter valid queued appointments
+  const queueData = appointments.filter(a => 
+    a.status === 'Dalam Periksa' || 
+    a.status === 'Disetujui' || 
+    (a.status === 'Menunggu' && a.booking_type === 'Walk-in')
+  ).sort((a, b) => {
+    // Prioritize "Dalam Periksa"
+    if (a.status === 'Dalam Periksa' && b.status !== 'Dalam Periksa') return -1;
+    if (b.status === 'Dalam Periksa' && a.status !== 'Dalam Periksa') return 1;
+    // Then sort by schedule time
+    return a.schedule_time.localeCompare(b.schedule_time);
+  });
+
+  let currentCall = null;
+  let nextQueue = [];
+
+  if (queueData.length > 0) {
+    const first = queueData[0];
+    currentCall = {
+      id: first.queue_number,
+      petName: first.pet?.name || '-',
+      species: first.pet?.species || '-',
+      owner: first.owner?.name || '-',
+      doctor: first.doctor?.name || 'Dokter Umum',
+      image: getPetImage(first.pet?.species)
+    };
+    
+    nextQueue = queueData.slice(1).map(a => ({
+      id: a.queue_number,
+      petName: a.pet?.name || '-',
+      species: a.pet?.species || '-',
+      doctor: a.doctor?.name || 'Dokter Umum',
+      image: getPetImage(a.pet?.species)
+    }));
+  }
+
+  // Effect to trigger text-to-speech when currentCall changes
+  useEffect(() => {
+    if (currentCall && currentCall.id !== lastCalledId) {
+      setLastCalledId(currentCall.id);
+      
+      if ('speechSynthesis' in window) {
+        // Format queue number for clear pronunciation (e.g. "0 0 5")
+        const queueNumberSpoken = currentCall.id.split('-').pop().split('').join(' ');
+        const text = `Nomor antrean, ${queueNumberSpoken}, pasien atas nama ${currentCall.petName}, silakan menuju ruang pemeriksaan.`;
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.85; 
+        
+        // Cancel any ongoing speech before speaking
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+  }, [currentCall, lastCalledId]);
 
   return (
     <div 
@@ -166,56 +235,62 @@ const QueueMonitor = () => {
             {/* Call Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
               
-              <div className="mb-4">
-                <span className={`inline-block px-12 py-3 rounded-2xl text-6xl font-black tracking-widest border-2 shadow-md ${
-                  isFullscreen 
-                    ? 'bg-[#1F2937] text-blue-400 border-slate-800' 
-                    : 'bg-blue-50 text-blue-800 border-blue-100'
-                }`}>
-                  {currentCall.id}
-                </span>
-              </div>
+              {currentCall ? (
+                <>
+                  <div className="mb-4">
+                    <span className={`inline-block px-12 py-3 rounded-2xl text-6xl md:text-7xl lg:text-[5.5rem] font-black tracking-tight break-all border-2 shadow-md ${
+                      isFullscreen 
+                        ? 'bg-[#1F2937] text-blue-400 border-slate-800' 
+                        : 'bg-blue-50 text-blue-800 border-blue-100'
+                    }`}>
+                      {currentCall.id}
+                    </span>
+                  </div>
 
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <img 
-                  src={currentCall.image} 
-                  alt={currentCall.petName} 
-                  className={`rounded-full object-cover border-4 shadow-lg ${
-                    isFullscreen ? 'w-44 h-44 border-slate-800' : 'w-36 h-36 border-white'
-                  }`}
-                />
-                
-                <div>
-                  <h3 className={`font-black tracking-tight leading-none mb-2 ${
-                    isFullscreen ? 'text-6xl text-white' : 'text-5xl text-slate-800'
-                  }`}>
-                    {currentCall.petName}
-                  </h3>
-                  
-                  <span className={`inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase ${
+                  <div className="flex flex-col items-center gap-4 mb-6">
+                    <img 
+                      src={currentCall.image} 
+                      alt={currentCall.petName} 
+                      className={`rounded-full object-cover border-4 shadow-lg ${
+                        isFullscreen ? 'w-44 h-44 border-slate-800' : 'w-36 h-36 border-white'
+                      }`}
+                    />
+                    
+                    <div>
+                      <h3 className={`font-black tracking-tight leading-none mb-2 ${
+                        isFullscreen ? 'text-6xl text-white' : 'text-5xl text-slate-800'
+                      }`}>
+                        {currentCall.petName}
+                      </h3>
+                      
+                      <span className={`inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase ${
+                        isFullscreen 
+                          ? 'bg-[#1E293B] border-slate-800 text-slate-350' 
+                          : 'bg-slate-100 border-slate-200 text-slate-600'
+                      }`}>
+                        Pemilik: <span className="font-bold text-blue-500">{currentCall.owner}</span> | {currentCall.species}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Doctor Info */}
+                  <div className={`w-full max-w-lg rounded-2xl p-5 border shadow-inner flex flex-col items-center gap-2 mt-auto ${
                     isFullscreen 
-                      ? 'bg-[#1E293B] border-slate-800 text-slate-350' 
-                      : 'bg-slate-100 border-slate-200 text-slate-600'
+                      ? 'bg-[#1E293B]/50 border-slate-800' 
+                      : 'bg-slate-50 border-slate-100'
                   }`}>
-                    Pemilik: <span className="font-bold text-blue-500">{currentCall.owner}</span> | {currentCall.species}
-                  </span>
+                    <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Pemeriksaan Oleh</span>
+                    <div className="text-3xl font-extrabold text-teal-500 bg-teal-500/10 px-8 py-3 rounded-xl border border-teal-500/20 w-full text-center">
+                      {currentCall.doctor}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
+                  <Heart className="h-24 w-24 mb-4" />
+                  <p className="text-xl font-bold">Belum ada pasien</p>
                 </div>
-              </div>
-
-              {/* Target Room */}
-              <div className={`w-full max-w-lg rounded-2xl p-5 border shadow-inner flex flex-col items-center gap-2 mt-auto ${
-                isFullscreen 
-                  ? 'bg-[#1E293B]/50 border-slate-800' 
-                  : 'bg-slate-50 border-slate-100'
-              }`}>
-                <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Arah Ruangan</span>
-                <div className="text-3xl font-extrabold text-teal-500 bg-teal-500/10 px-8 py-3 rounded-xl border border-teal-500/20 w-full text-center">
-                  {currentCall.room}
-                </div>
-                <div className={`text-sm font-semibold mt-1 ${isFullscreen ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Dokter: <span className="text-blue-500">{currentCall.doctor}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
@@ -237,7 +312,7 @@ const QueueMonitor = () => {
             </div>
             
             <div className="p-4 flex-1 flex flex-col gap-3 justify-center">
-              {nextQueue.map((item, index) => (
+              {nextQueue.slice(0, 4).map((item, index) => (
                 <div 
                   key={index} 
                   className={`rounded-xl p-3 border flex items-center gap-4 transition-all duration-300 ${
@@ -247,10 +322,10 @@ const QueueMonitor = () => {
                   }`}
                 >
                   {/* Nomor Antrean */}
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg shadow-inner ${
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-xl font-black text-xs md:text-sm shadow-inner break-words ${
                     isFullscreen ? 'bg-[#111827] text-teal-400' : 'bg-white text-slate-850 border border-slate-200'
                   }`}>
-                    {item.id.split('-')[1]}
+                    {item.id.split('-').pop()}
                   </div>
                   
                   {/* Avatar Hewan */}
@@ -276,9 +351,16 @@ const QueueMonitor = () => {
                 </div>
               ))}
               
-              <div className="text-center pt-2 text-slate-450 font-medium text-[11px] flex justify-center items-center gap-1.5">
-                Ada 12 antrian lainnya di belakang <ArrowRight className="h-3 w-3" />
-              </div>
+              {nextQueue.length > 4 && (
+                <div className="text-center pt-2 text-slate-450 font-medium text-[11px] flex justify-center items-center gap-1.5">
+                  Ada {nextQueue.length - 4} antrian lainnya di belakang <ArrowRight className="h-3 w-3" />
+                </div>
+              )}
+              {nextQueue.length === 0 && (
+                <div className="text-center pt-4 text-slate-400 text-sm font-medium">
+                  Tidak ada antrean berikutnya.
+                </div>
+              )}
             </div>
           </div>
 

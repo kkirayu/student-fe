@@ -1,7 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Popup from '../../components/Popup';
+import axios from 'axios';
 
 const OTPVerification = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -9,6 +10,14 @@ const OTPVerification = () => {
   const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef([]);
+  const location = useLocation();
+  const email = location.state?.email;
+
+  useEffect(() => {
+    if (!email) {
+      navigate('/login');
+    }
+  }, [email, navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,7 +46,7 @@ const OTPVerification = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const otpCode = otp.join('');
     if (otpCode.length < 6) {
@@ -51,17 +60,32 @@ const OTPVerification = () => {
       return;
     }
 
-    console.log('OTP Verified:', otpCode);
-    setPopup({
-      isOpen: true,
-      type: 'success',
-      title: 'Verifikasi Berhasil!',
-      message: 'Kode OTP valid. Mengalihkan ke Dashboard Owner.',
-      onConfirm: () => {
-        setPopup((prev) => ({ ...prev, isOpen: false }));
-        navigate('/admin/OwnerDashboard');
-      }
-    });
+    try {
+      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/verify-otp', {
+        email: email,
+        otp_code: otpCode
+      });
+
+      setPopup({
+        isOpen: true,
+        type: 'success',
+        title: 'Verifikasi Berhasil!',
+        message: 'Akun Anda berhasil dibuat. Silakan masuk untuk melanjutkan.',
+        onConfirm: () => {
+          setPopup((prev) => ({ ...prev, isOpen: false }));
+          navigate('/login');
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Verifikasi Gagal',
+        message: error.response?.data?.message || 'Kode OTP tidak valid.',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+    }
   };
 
   return (
@@ -87,7 +111,7 @@ const OTPVerification = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <main className="grow pt-32 pb-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto">
           <div className="text-center mb-10">
             <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
@@ -97,7 +121,7 @@ const OTPVerification = () => {
             <p className="text-slate-600">Masukkan 6 digit kode OTP yang telah dikirim ke email atau nomor telepon Anda.</p>
           </div>
 
-          <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 relative overflow-hidden">
+          <div className="bg-white p-8 rounded-4xl shadow-xl border border-slate-100 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-32 h-32 bg-blue-50 rounded-br-full -z-10"></div>
 
             <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
