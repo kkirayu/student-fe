@@ -52,6 +52,20 @@ const ServiceRatesForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (String(formData.price).length > 15) {
+      showError('Validasi Gagal', 'Harga maksimal 15 digit.');
+      return;
+    }
+
+    if (formData.description) {
+      const wordCount = formData.description.trim().split(/\s+/).filter(word => word.length > 0).length;
+      if (wordCount < 10 || wordCount > 200) {
+        showError('Validasi Gagal', 'Deskripsi minimal 10 kata dan maksimal 200 kata.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     
     try {

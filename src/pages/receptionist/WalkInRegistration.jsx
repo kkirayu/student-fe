@@ -13,6 +13,7 @@ import {
   AlertCircle,
   X
 } from 'lucide-react';
+import { showSuccess, showError } from '../../utils/alertUtils';
 
 const WalkInRegistration = () => {
   const navigate = useNavigate();
@@ -54,7 +55,11 @@ const WalkInRegistration = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (['ownerName', 'petName'].includes(name)) {
+      setFormData(prev => ({ ...prev, [name]: value.replace(/[^a-zA-Z\s]/g, '') }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -117,6 +122,32 @@ const WalkInRegistration = () => {
     } finally {
         setIsSubmitting(false);
     }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.ownerName)) {
+      showError('Validasi Gagal', 'Nama pemilik hanya boleh berisi huruf!');
+      return;
+    }
+
+    if (!/^0\d{0,12}$/.test(formData.ownerPhone)) {
+      showError('Validasi Gagal', 'Nomor HP maksimal 13 digit angka dan harus dimulai dengan 0!');
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.petName)) {
+      showError('Validasi Gagal', 'Nama hewan hanya boleh berisi huruf!');
+      return;
+    }
+
+    if (formData.initial_complaint) {
+      const wordCount = formData.initial_complaint.trim().split(/\s+/).filter(word => word.length > 0).length;
+      if (wordCount < 10 || wordCount > 200) {
+        showError('Validasi Gagal', 'Keluhan awal minimal 10 kata dan maksimal 200 kata.');
+        return;
+      }
+    }
+    console.log('Form Submitted:', formData);
+    await showSuccess('Berhasil!', 'Pendaftaran Berhasil!');
+    navigate('/receptionist');
   };
 
   const handlePrint = () => {

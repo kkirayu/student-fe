@@ -52,11 +52,36 @@ const PetForm = () => {
   }, [id, isEditMode]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (['name', 'species', 'breed'].includes(name)) {
+      setFormData({ ...formData, [name]: value.replace(/[^a-zA-Z\s]/g, '') });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      setError('Nama hanya boleh berisi huruf.');
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(formData.species)) {
+      setError('Species hanya boleh berisi huruf.');
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(formData.breed)) {
+      setError('Breed hanya boleh berisi huruf.');
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.dob > today) {
+      setError('Tanggal lahir tidak boleh lebih besar dari hari ini.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     // TODO: ganti owner_id dengan ID dari auth context setelah fitur login selesai
@@ -185,7 +210,7 @@ const PetForm = () => {
                   Date of Birth <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="date" name="dob" value={formData.dob} onChange={handleChange}
+                  type="date" name="dob" value={formData.dob} onChange={handleChange} max={new Date().toISOString().split('T')[0]}
                   className="w-full rounded-md border border-slate-300 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                   required
                 />

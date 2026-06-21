@@ -30,6 +30,40 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.email.endsWith('@gmail.com')) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Email harus berformat @gmail.com!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Nama hanya boleh berisi huruf!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
+    if (!/^0\d{0,12}$/.test(formData.phone_number)) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Nomor HP maksimal 13 digit angka dan harus dimulai dengan 0!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setPopup({
         isOpen: true,
@@ -118,7 +152,10 @@ const Register = () => {
                       type="text" 
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => {
+                        const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        setFormData({...formData, name: lettersOnly});
+                      }}
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
                       placeholder="Masukkan nama lengkap Anda"
                     />
