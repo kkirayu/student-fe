@@ -9,6 +9,7 @@ const OTPVerification = () => {
   const navigate = useNavigate();
   const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
   const location = useLocation();
   const email = location.state?.email;
@@ -60,6 +61,7 @@ const OTPVerification = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/verify-otp', {
         email: email,
@@ -85,6 +87,8 @@ const OTPVerification = () => {
         message: error.response?.data?.message || 'Kode OTP tidak valid.',
         onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,10 +148,14 @@ const OTPVerification = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={otp.join('').length < 6}
+                  disabled={otp.join('').length < 6 || isLoading}
                   className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none"
                 >
-                  <i className="fa-solid fa-check-circle"></i> Verifikasi OTP
+                  {isLoading ? (
+                    <><i className="fa-solid fa-spinner animate-spin"></i> Memproses...</>
+                  ) : (
+                    <><i className="fa-solid fa-check-circle"></i> Verifikasi OTP</>
+                  )}
                 </button>
                 <p className="text-center text-sm text-slate-500 mt-6">
                   Belum menerima kode? <button type="button" className="text-blue-600 font-bold hover:underline">Kirim ulang</button>
