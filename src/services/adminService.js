@@ -67,3 +67,19 @@ export const getStockMutationReport = async (startDate, endDate) => {
   const response = await api.get('/reports/stock-mutation', { params: { start_date: startDate, end_date: endDate } });
   return response.data;
 };
+
+// --- Clinic Settings (Pengaturan Klinik) ---
+export const getClinicSettings = async () => {
+  const response = await api.get('/clinic-settings');
+  return response.data;
+};
+
+export const updateClinicSettings = async (formData) => {
+  // Use config to ensure content type is multipart/form-data
+  const response = await api.post('/clinic-settings', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};

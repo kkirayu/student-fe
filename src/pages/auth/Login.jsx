@@ -74,7 +74,7 @@ const Login = () => {
       });
 
       const { access_token, user } = response.data;
-      
+
       localStorage.setItem('auth_token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
 
@@ -86,7 +86,7 @@ const Login = () => {
       else if (role === 'Kasir') navigate('/cashier');
       else if (role === 'Resepsionis') navigate('/receptionist');
       else navigate('/');
-      
+
     } catch (error) {
       console.error(error);
       setPopup({
@@ -191,8 +191,8 @@ const Login = () => {
               </div>
 
               <div className="pt-2">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading || isGoogleLoading}
                   className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading || isGoogleLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
@@ -242,7 +242,7 @@ const Login = () => {
                     <><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" /> Google</>
                   )}
                 </button>
-                
+
                 {/* Dummy Login Section untuk Presentasi */}
                 <div className="mt-6 pt-6 border-t border-slate-200">
                   <p className="text-center text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Akses Cepat Demo</p>
