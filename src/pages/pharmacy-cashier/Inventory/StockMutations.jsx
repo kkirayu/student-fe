@@ -5,8 +5,8 @@ import {
   AlertCircle, Filter, FileText, X 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-// Asumsi service yang akan dibuat
-// import { getStockMutations, deleteMutation } from '../../../services/pharmacyService';
+// Import API service
+import { getStockMutations, deleteStockMutation } from '../../../services/stockmutation';
 
 const StockMutations = () => {
   const [mutationData, setMutationData] = useState([]);
@@ -18,31 +18,16 @@ const StockMutations = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMutation, setSelectedMutation] = useState(null);
 
-  // Fungsi untuk mengambil data (Mock data berdasarkan gambar yang Anda lampirkan)
+  // Fungsi untuk mengambil data
   const fetchMutations = async (search = '') => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulasi API call - Ganti dengan await getStockMutations(search) nantinya
-      const mockData = [
-        { id: 1, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: 1, mutation_type: "In", quantity: 100, date: "2026-06-15 17:46:54", created_at: "2026-06-15 17:46:54" },
-        { id: 2, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: 1, mutation_type: "In", quantity: 100, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 3, product_id: 2, product_name: "Paracetamol Syrup", supplier_id: 2, mutation_type: "In", quantity: 50, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 4, product_id: 3, product_name: "Vitamin C", supplier_id: 1, mutation_type: "In", quantity: 75, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 5, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: null, mutation_type: "Out", quantity: 5, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 6, product_id: 2, product_name: "Paracetamol Syrup", supplier_id: null, mutation_type: "Out", quantity: 3, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 7, product_id: 3, product_name: "Vitamin C", supplier_id: null, mutation_type: "Out", quantity: 2, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-      ];
-
-      // Filter sederhana untuk simulasi search
-      const filtered = mockData.filter(item => 
-        item.product_name.toLowerCase().includes(search.toLowerCase()) ||
-        item.mutation_type.toLowerCase().includes(search.toLowerCase())
-      );
-
-      setMutationData(filtered);
+      const data = await getStockMutations(search);
+      setMutationData(data || []);
     } catch (err) {
-      setError('Gagal memuat data mutasi stok.');
+      setError(err.message || 'Gagal memuat data mutasi stok.');
+      setMutationData([]);
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +146,7 @@ const StockMutations = () => {
                     </td>
                     <td className="px-6 py-4">
                       {item.supplier_id ? (
-                        <div className="text-slate-600 font-medium">Supplier #{item.supplier_id}</div>
+                        <div className="text-slate-600 font-medium">{item.supplier_name}</div>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
@@ -197,7 +182,19 @@ const StockMutations = () => {
                         <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm" title="Salin">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm" title="Hapus">
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm('Apakah Anda yakin ingin menghapus mutasi ini?')) {
+                              try {
+                                await deleteStockMutation(item.id);
+                                fetchMutations(searchTerm);
+                              } catch (err) {
+                                alert(err.message || 'Gagal menghapus data.');
+                              }
+                            }
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm" title="Hapus"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
