@@ -1,32 +1,118 @@
-import React, { useState } from 'react';
-import { Save, ArrowLeft, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Save, ArrowLeft, Search, Loader2 } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { doctorService } from '../../../services/doctorService';
 
-const SurgeryForm = () => {
-  // State disesuaikan dengan kolom tabel surgeries sesuai gambar
+const SurgeryReport = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Menangkap transferan data antrean operasi dari dashboard utama (jika ada)
+  const { activeSurgery } = location.state || {};
+
+  // State Data Master dari API
+  const [petOptions, setPetOptions] = useState([]);
+  
+  // State UI & Loading
+  const [isLoadingPets, setIsLoadingPets] = useState(!activeSurgery);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State disesuaikan 100% dengan struktur SurgeryResource
   const [formData, setFormData] = useState({
-    pet_id: '',
-    surgery_type: '',
+    pet_id: activeSurgery?.pet_id || '',
+    surgery_type: activeSurgery?.surgery_type || activeSurgery?.action_name || '',
     anesthesia_notes: '',
     post_op_instructions: ''
   });
 
-  const petOptions = [
-    { id: '1', name: 'Luna', species: 'Kucing' },
-    { id: '2', name: 'Bruno', species: 'Anjing' },
-    { id: '3', name: 'Milo', species: 'Kelinci' },
-    { id: '4', name: 'Choco', species: 'Hamster' }
-  ];
+  // Ambil daftar hewan riil dari API jika tidak dilempar dari dashboard
+  useEffect(() => {
+    if (activeSurgery) return;
 
-  // Handler perubahan input
+    const fetchPetsData = async () => {
+      try {
+        setIsLoadingPets(true);
+        const response = await doctorService.getPets();
+        const petsData = response?.data?.data || response?.data || response;
+        setPetOptions(Array.isArray(petsData) ? petsData : []);
+      } catch (error) {
+        console.error('Gagal memuat master data hewan:', error);
+      } finally {
+        setIsLoadingPets(false);
+      }
+    };
+
+    fetchPetsData();
+  }, [activeSurgery]);
+
+  // Mendapatkan info nama hewan untuk tampilan otomatis di kotak informasi
+  const getSelectedPetInfo = () => {
+    if (activeSurgery) {
+      return `${activeSurgery.pet_name || 'Pasien Aktif'} (${activeSurgery.pet_species || 'Hewan'})`;
+    }
+    
+    const selected = petOptions.find(p => p.id === parseInt(formData.pet_id));
+    if (selected) {
+      return `${selected.name} (${selected.species || 'N/A'})`;
+    }
+    
+    return "Silahkan pilih hewan di bawah";
+  };
+
+  // Handler perubahan input form
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  // Kirim data riil ke Backend Laravel
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Data Tindakan Bedah Disimpan:", formData);
+
+    if (!formData.pet_id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pasien Belum Dipilih',
+        text: 'Silakan tentukan pasien hewan yang dioperasi.',
+        confirmButtonColor: '#2563eb'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Payload diketatkan presisi mengikuti model & SurgeryResource backend
+    const payload = {
+      pet_id: parseInt(formData.pet_id),
+      doctor_id: 1, // Fallback ID Drh. Bunga / Dokter yang bertugas
+      surgery_type: formData.surgery_type,
+      anesthesia_notes: formData.anesthesia_notes,
+      post_op_instructions: formData.post_op_instructions
+    };
+
+    try {
+      const response = await doctorService.submitSurgeryReport(payload);
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Data Bedah Disimpan!',
+        text: response?.message || 'Laporan tindakan operasi berhasil didokumentasikan ke rekam medis.',
+        confirmButtonColor: '#ef4444'
+      });
+
+      navigate('/doctor');
+    } catch (error) {
+      console.error('Gagal menyimpan data bedah:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan Laporan',
+        text: error.response?.data?.message || 'Terjadi galat pada server. Periksa kembali kecocokan tipe data.',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -40,7 +126,7 @@ const SurgeryForm = () => {
         
         <Link 
           to="/doctor" 
-          className="inline-flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
+          className="inline-flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali
@@ -55,15 +141,13 @@ const SurgeryForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-md border border-slate-100">
             <div>
               <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Pasien (Otomatis)</label>
-              <p className="text-sm font-medium text-slate-800">
-                {formData.pet_id 
-                  ? petOptions.find(p => p.id === formData.pet_id)?.name + " (" + petOptions.find(p => p.id === formData.pet_id)?.species + ")"
-                  : "Silahkan pilih hewan di bawah"}
+              <p className="text-sm font-semibold text-slate-800">
+                {getSelectedPetInfo()}
               </p>
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Dokter Bedah</label>
-              <p className="text-sm font-medium text-slate-800">Drh. Bunga</p>
+              <p className="text-sm font-semibold text-slate-800">Drh. Bunga</p>
             </div>
           </div>
 
@@ -74,22 +158,35 @@ const SurgeryForm = () => {
                 Pilih Hewan <span className="text-xs text-slate-400 font-normal">(pet_id)</span>
               </label>
               <div className="relative">
-                <select
-                  name="pet_id"
-                  value={formData.pet_id}
-                  onChange={handleChange}
-                  className="w-full appearance-none rounded border border-slate-300 bg-white py-2 pl-4 pr-10 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                >
-                  <option value="">-- Pilih Hewan yang Dioperasi --</option>
-                  {petOptions.map(pet => (
-                    <option key={pet.id} value={pet.id}>
-                      {pet.name} ({pet.species})
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <Search className="h-4 w-4 text-slate-400" />
-                </span>
+                {activeSurgery ? (
+                  <div className="w-full rounded border border-emerald-200 bg-emerald-50 py-2 px-4 text-sm font-semibold text-emerald-800">
+                    {activeSurgery.pet_name} — Terkunci dari Antrean Operasi Dashboard
+                  </div>
+                ) : isLoadingPets ? (
+                  <div className="flex h-10 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xs text-slate-400">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-500" /> Memuat Master Data Pasien...
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      name="pet_id"
+                      required
+                      value={formData.pet_id}
+                      onChange={handleChange}
+                      className="w-full appearance-none rounded border border-slate-300 bg-white py-2 pl-4 pr-10 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                    >
+                      <option value="">-- Pilih Hewan yang Dioperasi --</option>
+                      {petOptions.map(pet => (
+                        <option key={pet.id} value={pet.id}>
+                          {pet.name} ({pet.species || 'N/A'}) {pet.owner ? `- Owner: ${pet.owner.name}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <Search className="h-4 w-4 text-slate-400" />
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -101,10 +198,11 @@ const SurgeryForm = () => {
               <input
                 type="text"
                 name="surgery_type"
-                placeholder="Contoh: Sterilisasi, Pengangkatan Tumor, dll"
+                required
+                placeholder="Contoh: Sterilisasi, Pengangkatan Tumor, Abses Drainage"
                 value={formData.surgery_type}
                 onChange={handleChange}
-                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
               />
             </div>
 
@@ -116,10 +214,11 @@ const SurgeryForm = () => {
               <textarea
                 rows="3"
                 name="anesthesia_notes"
-                placeholder="Detail jenis obat bius, dosis, dan reaksi pasien selama dibius..."
+                required
+                placeholder="Detail jenis obat bius, dosis premedikasi, dan reaksi vital pasien selama dibius..."
                 value={formData.anesthesia_notes}
                 onChange={handleChange}
-                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
               ></textarea>
             </div>
 
@@ -131,10 +230,11 @@ const SurgeryForm = () => {
               <textarea
                 rows="4"
                 name="post_op_instructions"
-                placeholder="Catatan perawatan, pantangan makan, atau cara membersihkan luka di rumah..."
+                required
+                placeholder="Catatan perawatan luka jahit, pantangan makan/aktivitas, atau instruksi pemakaian e-collar di rumah..."
                 value={formData.post_op_instructions}
                 onChange={handleChange}
-                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="w-full rounded border border-slate-300 bg-transparent py-2 px-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
               ></textarea>
             </div>
 
@@ -142,10 +242,20 @@ const SurgeryForm = () => {
             <div className="pt-4 border-t border-slate-100 flex justify-end">
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-10 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-all shadow-sm"
+                disabled={isSubmitting || (!formData.pet_id && !activeSurgery)}
+                className="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-10 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-all shadow-sm disabled:opacity-50"
               >
-                <Save className="h-4 w-4" />
-                Simpan Data Bedah
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Menyimpan Laporan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Simpan Data Bedah
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -155,4 +265,4 @@ const SurgeryForm = () => {
   );
 };
 
-export default SurgeryForm;
+export default SurgeryReport;

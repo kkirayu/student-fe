@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { showSuccess, showError } from '../../../utils/alertUtils';
+import api from '../../../services/api';
 
 const StaffForm = () => {
   const { id } = useParams();
@@ -27,8 +28,8 @@ const StaffForm = () => {
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${id}`);
-        const result = await response.json();
+        const response = await api.get(`/users/${id}`);
+        const result = response.data;
         
         console.log("Hasil dari API:", result); // Cek isi data dari API
 
@@ -62,26 +63,18 @@ const StaffForm = () => {
     setSubmitting(true);
 
     try {
-      const url = isEditMode 
-        ? `${import.meta.env.VITE_API_BASE_URL}/users/${id}` 
-        : `${import.meta.env.VITE_API_BASE_URL}/users`;
-      
-      const method = isEditMode ? 'PUT' : 'POST';
-
       const payload = { ...formData };
       if (isEditMode && !payload.password) {
         delete payload.password;
       }
 
-      const response = await fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const response = isEditMode 
+        ? await api.put(`/users/${id}`, payload)
+        : await api.post('/users', payload);
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (response.ok) {
+      if (result.success) {
         await showSuccess('Berhasil!', isEditMode ? 'Data berhasil diperbarui!' : 'Staf berhasil ditambahkan!');
         navigate('/admin/staff');
       } else {

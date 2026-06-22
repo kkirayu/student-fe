@@ -18,6 +18,7 @@ const ForgotPassword = () => {
   
   // Error state
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,8 +36,12 @@ const ForgotPassword = () => {
       setError('Format email tidak valid atau email tidak terdaftar.');
       return;
     }
-    // Simulate API call success
-    setStep(2);
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep(2);
+    }, 1000);
   };
 
   const handleCodeSubmit = (e) => {
@@ -47,7 +52,12 @@ const ForgotPassword = () => {
       setError('Kode reset tidak valid atau sudah kadaluarsa. (Hint: 123456)');
       return;
     }
-    setStep(3);
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep(3);
+    }, 1000);
   };
 
   const handlePasswordSubmit = (e) => {
@@ -61,17 +71,21 @@ const ForgotPassword = () => {
       setError('Konfirmasi kata sandi tidak cocok.');
       return;
     }
-    // Simulate API call success
-    setPopup({
-      isOpen: true,
-      type: 'success',
-      title: 'Sandi Diperbarui',
-      message: 'Kata sandi berhasil diatur ulang! Silakan masuk dengan kata sandi baru Anda.',
-      onConfirm: () => {
-        setPopup((prev) => ({ ...prev, isOpen: false }));
-        navigate('/login');
-      }
-    });
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setPopup({
+        isOpen: true,
+        type: 'success',
+        title: 'Sandi Diperbarui',
+        message: 'Kata sandi berhasil diatur ulang! Silakan masuk dengan kata sandi baru Anda.',
+        onConfirm: () => {
+          setPopup((prev) => ({ ...prev, isOpen: false }));
+          navigate('/login');
+        }
+      });
+    }, 1500);
   };
 
   return (
@@ -144,8 +158,16 @@ const ForgotPassword = () => {
                   </div>
                 </div>
                 <div className="pt-2">
-                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    Kirim Kode Reset
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isLoading ? (
+                      <><i className="fa-solid fa-spinner animate-spin"></i> Memproses...</>
+                    ) : (
+                      'Kirim Kode Reset'
+                    )}
                   </button>
                 </div>
               </form>
@@ -172,8 +194,16 @@ const ForgotPassword = () => {
                   </div>
                 </div>
                 <div className="pt-2">
-                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    Verifikasi Kode
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isLoading ? (
+                      <><i className="fa-solid fa-spinner animate-spin"></i> Memproses...</>
+                    ) : (
+                      'Verifikasi Kode'
+                    )}
                   </button>
                   <p className="text-center text-sm text-slate-500 mt-6">
                     <button type="button" onClick={() => setStep(1)} className="text-blue-600 font-bold hover:underline">Ganti Email</button>
@@ -224,8 +254,16 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="pt-2">
-                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    <i className="fa-solid fa-floppy-disk"></i> Simpan Sandi Baru
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isLoading ? (
+                      <><i className="fa-solid fa-spinner animate-spin"></i> Menyimpan...</>
+                    ) : (
+                      <><i className="fa-solid fa-floppy-disk"></i> Simpan Sandi Baru</>
+                    )}
                   </button>
                 </div>
               </form>

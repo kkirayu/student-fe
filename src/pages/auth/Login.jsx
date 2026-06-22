@@ -16,6 +16,8 @@ const Login = () => {
   });
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,6 +66,7 @@ const Login = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/login', {
         username: formData.username,
@@ -71,7 +74,7 @@ const Login = () => {
       });
 
       const { access_token, user } = response.data;
-      
+
       localStorage.setItem('auth_token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
 
@@ -83,7 +86,7 @@ const Login = () => {
       else if (role === 'Kasir') navigate('/cashier');
       else if (role === 'Resepsionis') navigate('/receptionist');
       else navigate('/');
-      
+
     } catch (error) {
       console.error(error);
       setPopup({
@@ -93,6 +96,8 @@ const Login = () => {
         message: error.response?.data?.message || 'Terjadi kesalahan pada server.',
         onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -186,8 +191,16 @@ const Login = () => {
               </div>
 
               <div className="pt-2">
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                  <i className="fa-solid fa-right-to-bracket"></i> Masuk
+                <button
+                  type="submit"
+                  disabled={isLoading || isGoogleLoading}
+                  className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading || isGoogleLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {isLoading ? (
+                    <><i className="fa-solid fa-spinner animate-spin"></i> Memproses...</>
+                  ) : (
+                    <><i className="fa-solid fa-right-to-bracket"></i> Masuk</>
+                  )}
                 </button>
 
                 <div className="relative my-6">
@@ -202,6 +215,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={async () => {
+                    setIsGoogleLoading(true);
                     try {
                       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
                       const res = await axios.get(`${apiUrl}/auth/google`);
@@ -209,6 +223,7 @@ const Login = () => {
                         window.location.href = res.data.url;
                       }
                     } catch (e) {
+                      setIsGoogleLoading(false);
                       setPopup({
                         isOpen: true,
                         type: 'error',
@@ -218,12 +233,16 @@ const Login = () => {
                       });
                     }
                   }}
-                  className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm mb-4"
+                  disabled={isLoading || isGoogleLoading}
+                  className={`w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-3 shadow-sm mb-4 ${isLoading || isGoogleLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                 >
-                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                  Google
+                  {isGoogleLoading ? (
+                    <><i className="fa-solid fa-spinner animate-spin text-slate-500"></i> Memproses...</>
+                  ) : (
+                    <><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" /> Google</>
+                  )}
                 </button>
-                
+
                 {/* Dummy Login Section untuk Presentasi */}
                 <div className="mt-6 pt-6 border-t border-slate-200">
                   <p className="text-center text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Akses Cepat Demo</p>
