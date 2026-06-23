@@ -27,6 +27,12 @@ export const createPet = async (petData) => {
 };
 
 export const updatePet = async (id, petData) => {
+  if (petData instanceof FormData) {
+    petData.append('_method', 'PUT');
+    // Axios must set the Content-Type automatically for FormData to include the boundary
+    const response = await api.post(`/pets/${id}`, petData);
+    return response.data;
+  }
   const response = await api.put(`/pets/${id}`, petData);
   return response.data;
 };

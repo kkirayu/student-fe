@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react';
 import { createPet, getPetById, updatePet } from '../../../services/ownerService';
 
 const PetForm = () => {
@@ -18,6 +18,8 @@ const PetForm = () => {
     distinctive_traits: '',
     allergies: '',
   });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -40,6 +42,9 @@ const PetForm = () => {
             distinctive_traits: pet.distinctive_traits ?? '',
             allergies: pet.allergies ?? '',
           });
+          if (pet.photo_url) {
+            setPhotoPreview(pet.photo_url);
+          }
         } catch (err) {
           console.error(err);
           setError('Gagal memuat data pet.');
@@ -57,6 +62,22 @@ const PetForm = () => {
       setFormData({ ...formData, [name]: value.replace(/[^a-zA-Z\s]/g, '') });
     } else {
       setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Ukuran foto maksimal 2MB');
+        return;
+      }
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -84,19 +105,46 @@ const PetForm = () => {
 
     setIsLoading(true);
     setError(null);
-    // TODO: ganti owner_id dengan ID dari auth context setelah fitur login selesai
-    const payload = { owner_id: 1, ...formData };
+    // Mengambil owner_id dari data user yang login di localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const ownerId = storedUser.id || 1;
+
+    // Construct FormData for multipart/form-data upload
+    const payload = new FormData();
+    payload.append('owner_id', ownerId);
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== '') {
+        payload.append(key, formData[key]);
+      }
+    });
+    if (photoFile) {
+      payload.append('photo', photoFile);
+    }
+
     try {
       if (isEditMode) {
         await updatePet(id, payload);
       } else {
         await createPet(payload);
       }
+      
+      // Hapus cache agar PetList mengambil data baru
+      sessionStorage.removeItem('cached_pets');
+      
       navigate('/owner/pets');
     } catch (err) {
       console.error(err);
-      const msg = err?.response?.data?.message ?? 'Terjadi kesalahan. Silakan coba lagi.';
-      setError(msg);
+      let errorMsg = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (err.response && err.response.data) {
+        if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        } else if (typeof err.response.data === 'object') {
+          // Flatten validation errors
+          const errors = Object.values(err.response.data).flat();
+          if (errors.length > 0) errorMsg = errors.join(', ');
+        }
+      }
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -147,6 +195,41 @@ const PetForm = () => {
 
           {/* Area Input Utama */}
           <div className="p-6 sm:p-8">
+            <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              {/* Photo Preview & Upload */}
+              <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-slate-100 bg-slate-50 shadow-sm">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Pet Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                    <Upload className="mb-2 h-8 w-8" />
+                    <span className="text-xs font-medium">Upload Foto</span>
+                  </div>
+                )}
+                
+                {/* Remove Photo Button */}
+                {photoPreview && (
+                  <button
+                    type="button"
+                    onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100"
+                  >
+                    <X className="h-8 w-8 text-white" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col justify-center sm:h-32">
+                <p className="text-sm font-semibold text-slate-800">Foto Profil Pets</p>
+                <p className="mt-1 text-xs text-slate-500">Maks. 2MB (JPEG, PNG, JPG).</p>
+                <input
+                  type="file"
+                  accept="image/jpeg, image/png, image/jpg"
+                  onChange={handleFileChange}
+                  className="mt-3 block w-full text-sm text-slate-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
 
               {/* Nama Pet */}
