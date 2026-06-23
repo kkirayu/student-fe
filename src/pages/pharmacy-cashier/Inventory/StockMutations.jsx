@@ -71,7 +71,7 @@ const StockMutations = () => {
             Export Laporan
           </button>
           <Link 
-            to="/pharmacy/add-mutation" 
+            to="/pharmacy/restock" 
             className="inline-flex items-center justify-center gap-2 rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 shadow-sm"
           >
             <Plus className="h-4 w-4" />

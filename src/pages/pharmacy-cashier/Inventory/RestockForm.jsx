@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PackagePlus, Save, X, Calendar, DollarSign, Hash, AlertCircle, Truck } from 'lucide-react';
+import { createRestock } from '../../../services/restockService';
 
 const FormRestockBarang = () => {
   // State sederhana untuk simulasi kalkulasi form
@@ -18,6 +19,48 @@ const FormRestockBarang = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (!formData.barangId || !formData.jumlah || !formData.tanggalMasuk) {
+      alert('Mohon lengkapi data barang, jumlah, dan tanggal masuk!');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const select = document.querySelector('select[name="barangId"]');
+      const productName = select.options[select.selectedIndex]?.text || 'Unknown Product';
+
+      const payload = {
+        product_id: parseInt(formData.barangId.replace(/\D/g, '')) || 1,
+        product_name: productName,
+        supplier_id: formData.supplier ? parseInt(formData.supplier.replace(/\D/g, '')) : null,
+        mutation_type: 'In',
+        quantity: parseInt(formData.jumlah),
+        date: formData.tanggalMasuk,
+      };
+
+      await createRestock(payload);
+      alert('Data restock berhasil disimpan!');
+      
+      // Reset form
+      setFormData({
+        supplier: '',
+        tanggalMasuk: '',
+        barangId: '',
+        jumlah: 0,
+        hargaBeli: 0,
+        expiredDate: '',
+        catatan: ''
+      });
+    } catch (error) {
+      alert(error.message || 'Terjadi kesalahan saat menyimpan data restock.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -221,10 +264,12 @@ const FormRestockBarang = () => {
           </button>
           <button 
             type="button" 
-            className="flex items-center gap-2 rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            onClick={handleSave}
+            disabled={isLoading}
+            className={`flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
             <Save className="h-4 w-4" />
-            Simpan & Update Modal
+            {isLoading ? 'Menyimpan...' : 'Simpan & Update Modal'}
           </button>
         </div>
         
