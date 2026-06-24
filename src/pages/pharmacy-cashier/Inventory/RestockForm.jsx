@@ -8,9 +8,16 @@ import {
 } from 'lucide-react';
 
 const FormRestockBarang = () => {
+  // Fungsi pembantu untuk mendapatkan format waktu lokal (YYYY-MM-DDTHH:mm)
+  const getLocalDatetimeString = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  };
+
   const [formData, setFormData] = useState({
     supplier: '',
-    tanggalMasuk: new Date().toISOString().split('T')[0], // Default hari ini
+    tanggalMasuk: getLocalDatetimeString(), // Default waktu lokal saat ini
     barangId: '',
     jumlah: '',
     hargaBeli: '',
@@ -33,7 +40,7 @@ const FormRestockBarang = () => {
   }, [formData.jumlah, formData.hargaBeli]);
 
   // Validasi Form Wajib
-  const isFormValid = formData.supplier && formData.barangId && Number(formData.jumlah) > 0 && Number(formData.hargaBeli) > 0 && formData.expiredDate;
+  const isFormValid = formData.supplier && formData.barangId && Number(formData.jumlah) > 0 && Number(formData.hargaBeli) > 0;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,7 +69,7 @@ const FormRestockBarang = () => {
   }, []);
 
   const suppliers = useMemo(() => {
-    return suppliersList.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.name || curr.nama_supplier || curr.nama }), {});
+    return suppliersList.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.company_name || curr.name || curr.nama_supplier || curr.nama }), {});
   }, [suppliersList]);
 
   const products = useMemo(() => {
@@ -82,12 +89,13 @@ const FormRestockBarang = () => {
       const payload = {
         supplier_id: formData.supplier,
         product_id: formData.barangId,
+        product_name: products[formData.barangId], // Ditambahkan karena backend validator mewajibkan product_name
         quantity: parseInt(formData.jumlah),
         buy_price: parseInt(formData.hargaBeli),
-        expired_date: formData.expiredDate,
+        expired_date: formData.expiredDate || null,
         mutation_type: 'In',
         notes: formData.catatan,
-        date: formData.tanggalMasuk
+        date: formData.tanggalMasuk ? formData.tanggalMasuk.replace('T', ' ') + ':00' : null
       };
       
       await createStockMutation(payload);
@@ -95,7 +103,7 @@ const FormRestockBarang = () => {
       triggerToast('success', 'Barang berhasil direstock');
       setFormData({
         supplier: '',
-        tanggalMasuk: new Date().toISOString().split('T')[0],
+        tanggalMasuk: getLocalDatetimeString(),
         barangId: '',
         jumlah: '',
         hargaBeli: '',
@@ -195,7 +203,7 @@ const FormRestockBarang = () => {
                         <Calendar className="h-4 w-4 text-slate-400" />
                       </div>
                       <input
-                        type="date" name="tanggalMasuk" value={formData.tanggalMasuk} onChange={handleChange}
+                        type="datetime-local" name="tanggalMasuk" value={formData.tanggalMasuk} onChange={handleChange}
                         className="block w-full rounded-lg border border-slate-300 pl-10 px-3 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-400 transition-colors"
                       />
                     </div>
@@ -271,15 +279,15 @@ const FormRestockBarang = () => {
 
                   <div className="sm:col-span-2">
                     <label className="mb-2 flex items-center text-sm font-medium text-slate-700">
-                      Expired Date <span className="ml-1 text-red-500">*</span>
+                      Expired Date <span className="ml-1 text-slate-400 font-normal text-xs">(Opsional)</span>
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <AlertCircle className="h-4 w-4 text-orange-500" />
                       </div>
                       <input
-                        type="date" name="expiredDate" value={formData.expiredDate} onChange={handleChange} required
-                        className="block w-full rounded-lg border border-orange-300 bg-orange-50/30 pl-10 px-3 py-2.5 text-sm text-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        type="date" name="expiredDate" value={formData.expiredDate} onChange={handleChange}
+                        className="block w-full rounded-lg border border-slate-300 pl-10 px-3 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-400 transition-colors"
                         title="Tanggal ini digunakan untuk sistem notifikasi."
                       />
                     </div>

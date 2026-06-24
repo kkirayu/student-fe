@@ -15,6 +15,7 @@ const StockMutations = () => {
 
   // State untuk Detail Mutasi
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState('detail'); // 'detail' | 'edit'
   const [selectedMutation, setSelectedMutation] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -257,7 +258,15 @@ const StockMutations = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
                 {mutationData.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                  <tr 
+                    key={item.id} 
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedMutation(item);
+                      setModalType('detail');
+                      setIsModalOpen(true);
+                    }}
+                  >
                     <td className="px-6 py-4 font-mono text-xs text-slate-900">{item.id}</td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-slate-900">{item.product_name}</div>
@@ -292,13 +301,15 @@ const StockMutations = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button 
-                          onClick={() => { 
+                          onClick={(e) => { 
+                            e.stopPropagation();
                             setSelectedMutation(item); 
                             setEditFormData({
                               mutation_type: item.mutation_type,
                               quantity: item.quantity,
                               date: item.date ? item.date.replace(' ', 'T').substring(0, 16) : ''
                             });
+                            setModalType('edit');
                             setIsModalOpen(true); 
                           }}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm" 
@@ -306,11 +317,11 @@ const StockMutations = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm" title="Salin">
+                        <button onClick={(e) => e.stopPropagation()} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm" title="Salin">
                           <Copy className="h-4 w-4" />
                         </button>
                         <button 
-                          onClick={() => handleDelete(item.id)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm" title="Hapus"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -325,12 +336,14 @@ const StockMutations = () => {
         )}
       </div>
 
-      {/* Modal Detail Mutasi */}
+      {/* Modal Detail / Ubah Mutasi */}
       {isModalOpen && selectedMutation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-md bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-5">
-              <h3 className="text-lg font-bold text-slate-800">Ubah Mutasi Stok</h3>
+              <h3 className="text-lg font-bold text-slate-800">
+                {modalType === 'edit' ? 'Ubah Mutasi Stok' : 'Detail Mutasi Stok'}
+              </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700">
                 <X className="h-5 w-5" />
               </button>
@@ -341,26 +354,45 @@ const StockMutations = () => {
                   <div className="text-slate-500 text-xs font-bold uppercase">Produk</div>
                   <div className="text-slate-800 font-bold">{selectedMutation.product_name}</div>
                 </div>
-                <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
-                  <div className="text-slate-500 text-xs font-bold uppercase mb-1">Tipe Mutasi</div>
-                  <select 
-                    value={editFormData.mutation_type || ''} 
-                    onChange={(e) => setEditFormData({...editFormData, mutation_type: e.target.value})}
-                    className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="In">Barang Masuk (In)</option>
-                    <option value="Out">Barang Keluar (Out)</option>
-                  </select>
-                </div>
-                <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
-                  <div className="text-slate-500 text-xs font-bold uppercase mb-1">Jumlah</div>
-                  <input 
-                    type="number" 
-                    value={editFormData.quantity || ''} 
-                    onChange={(e) => setEditFormData({...editFormData, quantity: e.target.value})}
-                    className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
+                
+                {modalType === 'edit' ? (
+                  <>
+                    <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
+                      <div className="text-slate-500 text-xs font-bold uppercase mb-1">Tipe Mutasi</div>
+                      <select 
+                        value={editFormData.mutation_type || ''} 
+                        onChange={(e) => setEditFormData({...editFormData, mutation_type: e.target.value})}
+                        className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                      >
+                        <option value="In">Barang Masuk (In)</option>
+                        <option value="Out">Barang Keluar (Out)</option>
+                      </select>
+                    </div>
+                    <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
+                      <div className="text-slate-500 text-xs font-bold uppercase mb-1">Jumlah</div>
+                      <input 
+                        type="number" 
+                        value={editFormData.quantity || ''} 
+                        onChange={(e) => setEditFormData({...editFormData, quantity: e.target.value})}
+                        className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
+                      <div className="text-slate-500 text-xs font-bold uppercase">Tipe Mutasi</div>
+                      <div className={`font-bold ${selectedMutation.mutation_type === 'In' ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {selectedMutation.mutation_type === 'In' ? 'Barang Masuk' : 'Barang Keluar'}
+                      </div>
+                    </div>
+                    <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
+                      <div className="text-slate-500 text-xs font-bold uppercase">Jumlah</div>
+                      <div className="text-slate-800 font-bold">{selectedMutation.quantity} Pcs</div>
+                    </div>
+                  </>
+                )}
+                
                 <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
                   <div className="text-slate-500 text-xs font-bold uppercase">ID Mutasi</div>
                   <div className="text-slate-800 font-mono">MUT-{selectedMutation.id}</div>
@@ -369,28 +401,36 @@ const StockMutations = () => {
               
               <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
                 <div className="text-slate-500 text-xs font-bold uppercase mb-1">Tanggal Mutasi</div>
-                <input 
-                  type="datetime-local" 
-                  value={editFormData.date || ''} 
-                  onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
-                  className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
-                />
+                {modalType === 'edit' ? (
+                  <input 
+                    type="datetime-local" 
+                    value={editFormData.date || ''} 
+                    onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                    className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                  />
+                ) : (
+                  <div className="text-slate-800 font-bold">{formatDate(selectedMutation.date)}</div>
+                )}
               </div>
             </div>
+            
             <div className="flex justify-end gap-2 border-t border-slate-200 p-4">
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="rounded-sm bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
               >
-                Batal
+                {modalType === 'edit' ? 'Batal' : 'Tutup'}
               </button>
-              <button 
-                onClick={handleUpdate}
-                disabled={isSaving}
-                className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-              </button>
+              
+              {modalType === 'edit' && (
+                <button 
+                  onClick={handleUpdate}
+                  disabled={isSaving}
+                  className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              )}
             </div>
           </div>
         </div>
