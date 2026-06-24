@@ -5,8 +5,7 @@ import {
   AlertCircle, Filter, FileText, X ,Package, Truck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-// Asumsi service yang akan dibuat
-// import { getStockMutations, deleteMutation } from '../../../services/pharmacyService';
+import { getStockMutations, deleteStockMutation, updateStockMutation } from '../../../services/pharmacyService';
 
 const StockMutations = () => {
   const [mutationData, setMutationData] = useState([]);
@@ -17,34 +16,50 @@ const StockMutations = () => {
   // State untuk Detail Mutasi
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMutation, setSelectedMutation] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Fungsi untuk mengambil data (Mock data berdasarkan gambar yang Anda lampirkan)
+  const handleUpdate = async () => {
+    if (!selectedMutation) return;
+    setIsSaving(true);
+    try {
+      // Menyesuaikan payload untuk backend, date perlu di format ulang ke format database bila perlu
+      const payload = {
+        ...editFormData,
+        date: editFormData.date ? editFormData.date.replace('T', ' ') + ':00' : null
+      };
+      await updateStockMutation(selectedMutation.id, payload);
+      setIsModalOpen(false);
+      fetchMutations(searchTerm);
+    } catch (err) {
+      alert(err.message || "Gagal memperbarui mutasi");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const fetchMutations = async (search = '') => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulasi API call - Ganti dengan await getStockMutations(search) nantinya
-      const mockData = [
-        { id: 1, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: 1, mutation_type: "In", quantity: 100, date: "2026-06-15 17:46:54", created_at: "2026-06-15 17:46:54" },
-        { id: 2, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: 1, mutation_type: "In", quantity: 100, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 3, product_id: 2, product_name: "Paracetamol Syrup", supplier_id: 2, mutation_type: "In", quantity: 50, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 4, product_id: 3, product_name: "Vitamin C", supplier_id: 1, mutation_type: "In", quantity: 75, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 5, product_id: 1, product_name: "Amoxicillin 500mg", supplier_id: null, mutation_type: "Out", quantity: 5, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 6, product_id: 2, product_name: "Paracetamol Syrup", supplier_id: null, mutation_type: "Out", quantity: 3, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-        { id: 7, product_id: 3, product_name: "Vitamin C", supplier_id: null, mutation_type: "Out", quantity: 2, date: "2026-06-15 17:49:30", created_at: "2026-06-15 17:49:30" },
-      ];
-
-      // Filter sederhana untuk simulasi search
-      const filtered = mockData.filter(item => 
-        item.product_name.toLowerCase().includes(search.toLowerCase()) ||
-        item.mutation_type.toLowerCase().includes(search.toLowerCase())
-      );
-
-      setMutationData(filtered);
+      const data = await getStockMutations(search);
+      // Asumsi API mengembalikan data list di dalam properti tertentu atau langsung berupa array
+      setMutationData(Array.isArray(data) ? data : (data?.data || []));
     } catch (err) {
-      setError('Gagal memuat data mutasi stok.');
+      setError(err.message || 'Gagal memuat data mutasi stok.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus riwayat mutasi ini?")) {
+      try {
+        await deleteStockMutation(id);
+        fetchMutations(searchTerm);
+      } catch (err) {
+        alert(err.message || "Gagal menghapus mutasi");
+      }
     }
   };
 
@@ -277,7 +292,15 @@ const StockMutations = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button 
-                          onClick={() => { setSelectedMutation(item); setIsModalOpen(true); }}
+                          onClick={() => { 
+                            setSelectedMutation(item); 
+                            setEditFormData({
+                              mutation_type: item.mutation_type,
+                              quantity: item.quantity,
+                              date: item.date ? item.date.replace(' ', 'T').substring(0, 16) : ''
+                            });
+                            setIsModalOpen(true); 
+                          }}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm" 
                           title="Ubah"
                         >
@@ -286,7 +309,10 @@ const StockMutations = () => {
                         <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm" title="Salin">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm" title="Hapus">
+                        <button 
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm" title="Hapus"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -304,7 +330,7 @@ const StockMutations = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-md bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-5">
-              <h3 className="text-lg font-bold text-slate-800">Detail Mutasi Stok</h3>
+              <h3 className="text-lg font-bold text-slate-800">Ubah Mutasi Stok</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700">
                 <X className="h-5 w-5" />
               </button>
@@ -316,14 +342,24 @@ const StockMutations = () => {
                   <div className="text-slate-800 font-bold">{selectedMutation.product_name}</div>
                 </div>
                 <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
-                  <div className="text-slate-500 text-xs font-bold uppercase">Tipe Mutasi</div>
-                  <div className={`font-bold ${selectedMutation.mutation_type === 'In' ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {selectedMutation.mutation_type === 'In' ? 'Barang Masuk' : 'Barang Keluar'}
-                  </div>
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-1">Tipe Mutasi</div>
+                  <select 
+                    value={editFormData.mutation_type || ''} 
+                    onChange={(e) => setEditFormData({...editFormData, mutation_type: e.target.value})}
+                    className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="In">Barang Masuk (In)</option>
+                    <option value="Out">Barang Keluar (Out)</option>
+                  </select>
                 </div>
                 <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
-                  <div className="text-slate-500 text-xs font-bold uppercase">Jumlah</div>
-                  <div className="text-slate-800 font-bold">{selectedMutation.quantity} Pcs</div>
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-1">Jumlah</div>
+                  <input 
+                    type="number" 
+                    value={editFormData.quantity || ''} 
+                    onChange={(e) => setEditFormData({...editFormData, quantity: e.target.value})}
+                    className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                  />
                 </div>
                 <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
                   <div className="text-slate-500 text-xs font-bold uppercase">ID Mutasi</div>
@@ -332,18 +368,28 @@ const StockMutations = () => {
               </div>
               
               <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
-                <div className="text-slate-500 text-xs font-bold uppercase">Keterangan Log</div>
-                <div className="text-slate-600 text-sm mt-1">
-                  Mutasi dilakukan pada {selectedMutation.date} oleh system administrator.
-                </div>
+                <div className="text-slate-500 text-xs font-bold uppercase mb-1">Tanggal Mutasi</div>
+                <input 
+                  type="datetime-local" 
+                  value={editFormData.date || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                  className="block w-full rounded-sm border-slate-300 px-3 py-1.5 text-sm border focus:border-blue-500 focus:outline-none"
+                />
               </div>
             </div>
-            <div className="flex justify-end border-t border-slate-200 p-4">
+            <div className="flex justify-end gap-2 border-t border-slate-200 p-4">
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="rounded-sm bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
               >
-                Tutup
+                Batal
+              </button>
+              <button 
+                onClick={handleUpdate}
+                disabled={isSaving}
+                className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
               </button>
             </div>
           </div>
