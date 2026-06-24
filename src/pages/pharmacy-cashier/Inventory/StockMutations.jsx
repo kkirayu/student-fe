@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Plus, Edit, Trash2, Copy, ArrowUpRight, 
   ArrowDownLeft, RefreshCw, Loader2, Calendar, 
-  AlertCircle, Filter, FileText, X 
+  AlertCircle, Filter, FileText, X ,Package, Truck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 // Asumsi service yang akan dibuat
@@ -72,6 +72,56 @@ const StockMutations = () => {
     });
   };
 
+  const cardStats = useMemo(() => {
+
+  const totalMutation = mutationData.length;
+
+  const totalIn = mutationData.filter(
+    item => item.mutation_type === "In"
+  ).length;
+
+  const totalOut = mutationData.filter(
+    item => item.mutation_type === "Out"
+  ).length;
+
+  const supplierCount = new Set(
+    mutationData
+      .filter(item => item.supplier_id)
+      .map(item => item.supplier_id)
+  ).size;
+
+  return [
+    {
+      title: "Total Mutasi",
+      value: totalMutation,
+      icon: <Package className="h-6 w-6 text-blue-600" />,
+      bgIcon: "bg-blue-100",
+    },
+    {
+      title: "Barang Masuk",
+      value: totalIn,
+      icon: <ArrowUpRight className="h-6 w-6 text-emerald-600" />,
+      bgIcon: "bg-emerald-100",
+    },
+    {
+      title: "Barang Keluar",
+      value: totalOut,
+      icon: <ArrowDownLeft className="h-6 w-6 text-red-600" />,
+      bgIcon: "bg-red-100",
+    },
+    {
+      title: "Mutasi Hari Ini",
+      value: mutationData.filter(item => {
+        const today = new Date().toDateString();
+        return new Date(item.date).toDateString() === today;
+      }).length,
+      icon: <Calendar className="h-6 w-6 text-purple-600" />,
+      bgIcon: "bg-purple-100",
+    }
+  ];
+
+}, [mutationData]);
+
   return (
     <div className="space-y-6">
       {/* 1. Header */}
@@ -93,6 +143,45 @@ const StockMutations = () => {
             Mutasi Baru
           </Link>
         </div>
+      </div>
+
+      {/* Card Stats */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {cardStats.map((stat, index) => (
+          <div
+            key={index}
+            className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+          >
+            {/* Top Accent */}
+            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600" />
+
+            <div className="flex items-center justify-between p-6">
+              {/* Left */}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-500">
+                  {stat.title}
+                </p>
+
+                <h2 className="mt-3 text-5xl font-bold tracking-tight text-slate-800">
+                  {stat.value}
+                </h2>
+
+                <div className="mt-4 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+                  Ringkasan Data
+                </div>
+              </div>
+
+              {/* Right Icon */}
+              <div
+                className={`flex h-20 w-20 items-center justify-center rounded-2xl ${stat.bgIcon} transition-transform duration-300 group-hover:scale-110`}
+              >
+                {React.cloneElement(stat.icon, {
+                  className: stat.icon.props.className.replace("h-6 w-6", "h-9 w-9"),
+                })}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* 2. Main Table Area */}
