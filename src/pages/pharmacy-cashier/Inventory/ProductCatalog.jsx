@@ -8,6 +8,13 @@ const ProductCatalog = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [modalType, setModalType] = useState('detail'); // 'detail' or 'edit'
+  const [editFormData, setEditFormData] = useState({
+    name: '', category: '', description: '', base_price: 0, selling_price: 0, min_stock: 0, exp_date: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -16,12 +23,14 @@ const ProductCatalog = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Fungsi untuk mengambil data produk dari backend
-  const fetchProducts = async (search = '') => {
+  const fetchProducts = async (search = '', page = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getProducts(search);
-      setProductData(Array.isArray(data) ? data : []);
+      const responseData = await getProducts(search, page);
+      setProductData(Array.isArray(responseData.data) ? responseData.data : []);
+      setCurrentPage(responseData.current_page || 1);
+      setLastPage(responseData.last_page || 1);
     } catch (err) {
       console.error('Product Catalog Error:', err);
       setError(err.message || 'Gagal memuat data katalog produk.');
@@ -30,26 +39,51 @@ const ProductCatalog = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   // Debounce pencarian
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchProducts(searchTerm);
+      fetchProducts(searchTerm, 1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const handleOpenModal = (product) => {
+  const handleOpenModal = (product, type = 'detail') => {
     setSelectedProduct(product);
+    setModalType(type);
+    if (type === 'edit') {
+      setEditFormData({
+        name: product.name,
+        category: product.category,
+        description: product.description || '',
+        base_price: product.base_price || 0,
+        selling_price: product.selling_price || 0,
+        min_stock: product.min_stock || 0,
+        exp_date: product.exp_date ? product.exp_date.split(' ')[0] : '' // Asumsikan format YYYY-MM-DD
+      });
+    }
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
+    setModalType('detail');
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedProduct) return;
+    setIsSaving(true);
+    try {
+      // Import updateProduct dari pharmacyService
+      const { updateProduct } = await import('../../../services/pharmacyService');
+      await updateProduct(selectedProduct.id, editFormData);
+      setIsModalOpen(false);
+      fetchProducts(searchTerm, currentPage);
+    } catch (err) {
+      alert(err.message || 'Gagal memperbarui produk.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Fungsi hapus produk
@@ -154,7 +188,7 @@ const ProductCatalog = () => {
           {productData.map((product) => (
             <div 
               key={product.id} 
-              onClick={() => handleOpenModal(product)}
+              onClick={() => handleOpenModal(product, 'detail')}
               className="group flex flex-col bg-white border border-slate-200 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
               <div className="relative aspect-square bg-slate-50 border-b border-slate-100 flex items-center justify-center text-slate-400 p-6">
@@ -205,7 +239,7 @@ const ProductCatalog = () => {
                   
                   <div className="flex items-center gap-1.5">
                     <button 
-                      onClick={(e) => { e.stopPropagation(); }} 
+                      onClick={(e) => { e.stopPropagation(); handleOpenModal(product, 'edit'); }} 
                       className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm transition-colors" 
                       title="Edit Produk"
                     >
@@ -226,6 +260,29 @@ const ProductCatalog = () => {
           ))}
         </div>
       )}
+      
+      {/* Pagination Controls */}
+      {lastPage > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <button 
+            onClick={() => fetchProducts(searchTerm, currentPage - 1)}
+            disabled={currentPage === 1 || isLoading}
+            className="px-4 py-2 rounded-sm border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-slate-600 font-medium px-4">
+            Halaman {currentPage} dari {lastPage}
+          </span>
+          <button 
+            onClick={() => fetchProducts(searchTerm, currentPage + 1)}
+            disabled={currentPage === lastPage || isLoading}
+            className="px-4 py-2 rounded-sm border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* MODAL DETAIL PRODUK */}
       {isModalOpen && selectedProduct && (
@@ -235,8 +292,12 @@ const ProductCatalog = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 p-5">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Detail Produk</h3>
-                <p className="text-sm font-medium text-slate-500 mt-1">{selectedProduct.name}</p>
+                <h3 className="text-lg font-bold text-slate-800">
+                  {modalType === 'edit' ? 'Ubah Produk' : 'Detail Produk'}
+                </h3>
+                <p className="text-sm font-medium text-slate-500 mt-1">
+                  {modalType === 'edit' ? 'Edit data produk' : selectedProduct.name}
+                </p>
               </div>
               <button onClick={handleCloseModal} className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                 <X className="h-5 w-5" />
@@ -244,91 +305,193 @@ const ProductCatalog = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 space-y-4">
-              {/* Info Kategori & Status */}
-              <div className="flex items-center justify-between">
-                <span className="inline-flex rounded-sm bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
-                  {selectedProduct.category}
-                </span>
-                <span className={`inline-flex rounded-sm px-2.5 py-1 text-xs font-medium border ${
-                  selectedProduct.stock_status === 'Tersedia' 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                    : selectedProduct.stock_status === 'Habis'
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : 'bg-orange-50 text-orange-700 border-orange-200'
-                }`}>
-                  {selectedProduct.stock_status}
-                </span>
-              </div>
-
-              {/* Penjelasan Singkat */}
-              <div>
-                <h4 className="text-xs font-bold uppercase text-slate-400 mb-1.5">Penjelasan Singkat</h4>
-                {selectedProduct.description ? (
-                  <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-3 border border-slate-200 rounded-sm">
-                    {selectedProduct.description}
-                  </p>
-                ) : (
-                  <p className="text-sm text-slate-400 italic bg-slate-50 p-3 border border-dashed border-slate-200 rounded-sm">
-                    Belum ada deskripsi untuk produk ini.
-                  </p>
-                )}
-              </div>
-
-              {/* Harga */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-sm border border-slate-200 p-3">
-                  <div className="text-xs font-bold uppercase text-slate-400">Harga Beli</div>
-                  <div className="mt-1 text-sm font-bold text-slate-800">{formatRupiah(selectedProduct.base_price)}</div>
-                </div>
-                <div className="rounded-sm border border-slate-200 p-3">
-                  <div className="text-xs font-bold uppercase text-slate-400">Harga Jual</div>
-                  <div className="mt-1 text-sm font-bold text-emerald-700">{formatRupiah(selectedProduct.selling_price)}</div>
-                </div>
-              </div>
-
-              {/* Stok */}
-              <div className="rounded-sm border border-slate-200 p-3">
-                <div className="flex items-center justify-between">
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              {modalType === 'edit' ? (
+                // FORM EDIT
+                <div className="space-y-4">
                   <div>
-                    <div className="text-xs font-bold uppercase text-slate-400">Stok Saat Ini</div>
-                    <div className={`mt-1 text-xl font-bold ${selectedProduct.current_stock <= selectedProduct.min_stock ? 'text-red-600' : 'text-slate-900'}`}>
-                      {selectedProduct.current_stock} Pcs
-                    </div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Produk</label>
+                    <input 
+                      type="text"
+                      className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                    />
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold uppercase text-slate-400">Minimum Stok</div>
-                    <div className="mt-1 text-xl font-bold text-slate-500">{selectedProduct.min_stock} Pcs</div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Kategori</label>
+                    <select 
+                      className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                      value={editFormData.category}
+                      onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
+                    >
+                      <option value="Obat">Obat</option>
+                      <option value="Vaksin">Vaksin</option>
+                      <option value="Makanan">Makanan</option>
+                      <option value="Aksesoris">Aksesoris</option>
+                    </select>
                   </div>
-                </div>
-                {selectedProduct.current_stock <= selectedProduct.min_stock && (
-                  <div className="mt-3 rounded-sm border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700 font-medium">
-                    ⚠️ Stok di bawah batas minimum! Segera lakukan restock.
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Deskripsi</label>
+                    <textarea 
+                      className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                      rows="3"
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                    />
                   </div>
-                )}
-              </div>
-
-              {/* Kedaluwarsa */}
-              <div className={`rounded-sm border p-3 ${selectedProduct.is_expired ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-slate-400" />
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">Tanggal Kedaluwarsa</div>
-                      <div className="mt-0.5 text-sm font-bold text-slate-800">{formatDate(selectedProduct.exp_date)}</div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Harga Beli</label>
+                      <input 
+                        type="number" min="0"
+                        className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                        value={editFormData.base_price}
+                        onChange={(e) => setEditFormData({...editFormData, base_price: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Harga Jual</label>
+                      <input 
+                        type="number" min="0"
+                        className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                        value={editFormData.selling_price}
+                        onChange={(e) => setEditFormData({...editFormData, selling_price: Number(e.target.value)})}
+                      />
                     </div>
                   </div>
-                  <span className={`text-xs font-medium ${selectedProduct.is_expired ? 'text-red-600' : 'text-emerald-600'}`}>
-                    {selectedProduct.is_expired ? 'Sudah Expired' : 'Masih Aman'}
-                  </span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Minimal Stok</label>
+                      <input 
+                        type="number" min="0"
+                        className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                        value={editFormData.min_stock}
+                        onChange={(e) => setEditFormData({...editFormData, min_stock: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tgl Kadaluarsa</label>
+                      <input 
+                        type="date"
+                        className="w-full rounded-sm border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
+                        value={editFormData.exp_date}
+                        onChange={(e) => setEditFormData({...editFormData, exp_date: e.target.value})}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // DETAIL VIEW
+                <div className="space-y-4">
+                  {/* Info Kategori & Status */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex rounded-sm bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
+                      {selectedProduct.category}
+                    </span>
+                    <span className={`inline-flex rounded-sm px-2.5 py-1 text-xs font-medium border ${
+                      selectedProduct.stock_status === 'Tersedia' 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : selectedProduct.stock_status === 'Habis'
+                        ? 'bg-red-50 text-red-700 border-red-200'
+                        : 'bg-orange-50 text-orange-700 border-orange-200'
+                    }`}>
+                      {selectedProduct.stock_status}
+                    </span>
+                  </div>
+
+                  {/* Penjelasan Singkat */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase text-slate-400 mb-1.5">Penjelasan Singkat</h4>
+                    {selectedProduct.description ? (
+                      <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-3 border border-slate-200 rounded-sm">
+                        {selectedProduct.description}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic bg-slate-50 p-3 border border-dashed border-slate-200 rounded-sm">
+                        Belum ada deskripsi untuk produk ini.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Harga */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-sm border border-slate-200 p-3">
+                      <div className="text-xs font-bold uppercase text-slate-400">Harga Beli</div>
+                      <div className="mt-1 text-sm font-bold text-slate-800">{formatRupiah(selectedProduct.base_price)}</div>
+                    </div>
+                    <div className="rounded-sm border border-slate-200 p-3">
+                      <div className="text-xs font-bold uppercase text-slate-400">Harga Jual</div>
+                      <div className="mt-1 text-sm font-bold text-emerald-700">{formatRupiah(selectedProduct.selling_price)}</div>
+                    </div>
+                  </div>
+
+                  {/* Stok */}
+                  <div className="rounded-sm border border-slate-200 p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold uppercase text-slate-400">Stok Saat Ini</div>
+                        <div className={`mt-1 text-xl font-bold ${selectedProduct.current_stock <= selectedProduct.min_stock ? 'text-red-600' : 'text-slate-900'}`}>
+                          {selectedProduct.current_stock} Pcs
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-bold uppercase text-slate-400">Minimum Stok</div>
+                        <div className="mt-1 text-xl font-bold text-slate-500">{selectedProduct.min_stock} Pcs</div>
+                      </div>
+                    </div>
+                    {selectedProduct.current_stock <= selectedProduct.min_stock && (
+                      <div className="mt-3 rounded-sm border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700 font-medium">
+                        ⚠️ Stok di bawah batas minimum! Segera lakukan restock.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Kedaluwarsa */}
+                  <div className={`rounded-sm border p-3 ${selectedProduct.is_expired ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-bold uppercase text-slate-400">Tanggal Kedaluwarsa</div>
+                          <div className="mt-0.5 text-sm font-bold text-slate-800">{formatDate(selectedProduct.exp_date)}</div>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium ${selectedProduct.is_expired ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {selectedProduct.is_expired ? 'Sudah Expired' : 'Masih Aman'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Modal Footer for Edit Mode */}
+            {modalType === 'edit' && (
+              <div className="border-t border-slate-200 p-5 flex justify-end gap-3 bg-slate-50 rounded-b-md">
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 rounded-sm border border-slate-300 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  disabled={isSaving}
+                  className="px-4 py-2 rounded-sm bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            )}
 
             {/* Modal Footer */}
-            <div className="flex justify-end gap-3 rounded-b-md border-t border-slate-200 bg-slate-50 p-4">
-              <button onClick={handleCloseModal} className="rounded-sm bg-white border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Tutup</button>
-            </div>
+            {modalType === 'detail' && (
+              <div className="flex justify-end gap-3 rounded-b-md border-t border-slate-200 bg-slate-50 p-4">
+                <button onClick={handleCloseModal} className="rounded-sm bg-white border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Tutup</button>
+              </div>
+            )}
 
           </div>
         </div>

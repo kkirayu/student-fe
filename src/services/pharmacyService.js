@@ -12,12 +12,12 @@ const handleServiceError = (error, defaultMessage) => {
  * Mengambil semua produk untuk halaman Stock Monitoring
  * @param {string} search - Kata kunci pencarian (opsional)
  */
-export const getProducts = async (search = '') => {
+export const getProducts = async (search = '', page = 1) => {
   try {
-    const params = {};
+    const params = { page };
     if (search) params.search = search;
-    const response = await api.get('/pharmacy/products', { params });
-    return response.data;
+    const response = await api.get('/products', { params });
+    return response.data.data || response.data;
   } catch (error) {
     handleServiceError(error, 'Gagal mengambil data produk.');
   }
@@ -29,10 +29,24 @@ export const getProducts = async (search = '') => {
  */
 export const deleteProduct = async (id) => {
   try {
-    const response = await api.delete(`/pharmacy/products/${id}`);
+    const response = await api.delete(`/products/${id}`);
     return response.data;
   } catch (error) {
     handleServiceError(error, 'Gagal menghapus produk.');
+  }
+};
+
+/**
+ * Memperbarui produk berdasarkan ID
+ * @param {number} id - ID produk
+ * @param {Object} data - Data produk yang diperbarui
+ */
+export const updateProduct = async (id, data) => {
+  try {
+    const response = await api.put(`/products/${id}`, data);
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal memperbarui produk.');
   }
 };
 

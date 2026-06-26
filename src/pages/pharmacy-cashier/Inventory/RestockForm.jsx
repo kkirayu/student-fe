@@ -60,7 +60,7 @@ const FormRestockBarang = () => {
           getProducts()
         ]);
         setSuppliersList(suppliersData || []);
-        setProductsList(Array.isArray(productsData) ? productsData : (productsData?.data || []));
+        setProductsList(productsData?.data || []);
       } catch (err) {
         triggerToast('error', 'Gagal memuat data supplier/produk');
       }
