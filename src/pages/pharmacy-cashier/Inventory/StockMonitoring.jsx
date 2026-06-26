@@ -12,8 +12,9 @@ const StockMonitoring = () => {
   // State untuk Pop-up (Modal)
   const [modalType, setModalType] = useState('detail'); // 'detail' or 'edit'
   const [editFormData, setEditFormData] = useState({
-    name: '', category: '', description: '', base_price: 0, selling_price: 0, min_stock: 0, exp_date: ''
+    name: '', category: '', description: '', base_price: 0, selling_price: 0, min_stock: 0, exp_date: '', image: null
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -59,8 +60,10 @@ const StockMonitoring = () => {
         base_price: product.base_price || 0,
         selling_price: product.selling_price || 0,
         min_stock: product.min_stock || 0,
-        exp_date: product.exp_date ? product.exp_date.split(' ')[0] : ''
+        exp_date: product.exp_date ? product.exp_date.split(' ')[0] : '',
+        image: null
       });
+      setImagePreview(product.image_url || null);
     }
     setIsModalOpen(true);
   };
@@ -76,7 +79,18 @@ const StockMonitoring = () => {
     setIsSaving(true);
     try {
       const { updateProduct } = await import('../../../services/pharmacyService');
-      await updateProduct(selectedProduct.id, editFormData);
+      
+      let payload = editFormData;
+      if (editFormData.image) {
+        payload = new FormData();
+        Object.keys(editFormData).forEach(key => {
+          if (editFormData[key] !== null && editFormData[key] !== undefined) {
+            payload.append(key, editFormData[key]);
+          }
+        });
+      }
+
+      await updateProduct(selectedProduct.id, payload);
       setIsModalOpen(false);
       fetchProducts(searchTerm);
     } catch (err) {
@@ -203,11 +217,19 @@ const StockMonitoring = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
                 {productData.map((product) => (
-                  <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
+                  <tr 
+                    key={product.id} 
+                    className="hover:bg-slate-50 transition-colors group cursor-pointer"
+                    onClick={() => handleOpenModal(product, 'detail')}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border bg-slate-100 border-slate-200 text-slate-400">
-                          <Package className="h-5 w-5" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border bg-slate-100 border-slate-200 text-slate-400 overflow-hidden">
+                          {product.image_url ? (
+                            <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <Package className="h-5 w-5" />
+                          )}
                         </div>
                         <div>
                           <div className="font-medium text-slate-900">{product.name}</div>
@@ -231,13 +253,10 @@ const StockMonitoring = () => {
                     
                     {/* Kolom Exp Date */}
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => handleOpenModal(product, 'detail')}
-                        className={`inline-flex items-center gap-1.5 font-semibold hover:underline focus:outline-none ${product.is_expired ? 'text-red-600' : 'text-slate-600 hover:text-blue-600'}`}
-                      >
+                      <div className={`inline-flex items-center gap-1.5 font-semibold ${product.is_expired ? 'text-red-600' : 'text-slate-600'}`}>
                         {formatDate(product.exp_date)}
                         {product.exp_date && <AlertCircle className="h-4 w-4 opacity-70" />}
-                      </button>
+                      </div>
                     </td>
 
                     <td className="px-6 py-4 text-center">
@@ -254,12 +273,12 @@ const StockMonitoring = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                          onClick={() => handleOpenModal(product, 'edit')}
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(product, 'edit'); }}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-sm transition-colors" title="Edit Produk">
                           <Edit className="h-4 w-4" />
                         </button>
                         <button 
-                          onClick={() => setDeleteConfirm(product)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(product); }}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors" 
                           title="Hapus Produk"
                         >
@@ -300,6 +319,40 @@ const StockMonitoring = () => {
               {modalType === 'edit' ? (
                 // FORM EDIT
                 <div className="space-y-4">
+                  {/* Foto Upload */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Foto Produk (Maks 1MB)</label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-20 w-20 shrink-0 bg-slate-100 border border-slate-300 border-dashed rounded-md flex items-center justify-center overflow-hidden">
+                        {imagePreview ? (
+                          <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <Package className="h-8 w-8 text-slate-300" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              if (file.size > 1024 * 1024) {
+                                alert('Ukuran gambar tidak boleh melebihi 1MB');
+                                e.target.value = '';
+                                return;
+                              }
+                              setEditFormData({...editFormData, image: file});
+                              setImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Format didukung: JPG, PNG, WEBP.</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Produk</label>
                     <input 
@@ -440,6 +493,51 @@ const StockMonitoring = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Rincian Batch Stok */}
+                  <div className="mt-6 border-t border-slate-200 pt-4">
+                    <h4 className="mb-3 text-sm font-bold text-slate-700">Rincian Batch Stok</h4>
+                    {selectedProduct.product_batches && selectedProduct.product_batches.length > 0 ? (
+                      <div className="overflow-x-auto rounded-sm border border-slate-200 shadow-sm">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                          <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+                            <tr>
+                              <th className="px-4 py-3 font-semibold border-b border-slate-200">No. Batch</th>
+                              <th className="px-4 py-3 font-semibold text-center border-b border-slate-200">Stok Sisa</th>
+                              <th className="px-4 py-3 font-semibold border-b border-slate-200">Kedaluwarsa</th>
+                              <th className="px-4 py-3 font-semibold border-b border-slate-200">Catatan</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                            {selectedProduct.product_batches.map((batch) => {
+                              const isBatchExpired = batch.exp_date && new Date(batch.exp_date) < new Date();
+                              return (
+                                <tr key={batch.id} className={`hover:bg-slate-50 transition-colors ${isBatchExpired ? 'bg-red-50/40' : ''}`}>
+                                  <td className="px-4 py-3 font-medium text-slate-800">{batch.batch_number}</td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">
+                                      {batch.stock}
+                                    </span>
+                                  </td>
+                                  <td className={`px-4 py-3 font-medium ${isBatchExpired ? 'text-red-600' : 'text-slate-600'}`}>
+                                    {formatDate(batch.exp_date)}
+                                  </td>
+                                  <td className="px-4 py-3 text-slate-500 text-xs whitespace-normal break-words max-w-xs">
+                                    {batch.notes || '-'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="rounded-sm border border-slate-200 border-dashed bg-slate-50 p-6 text-center">
+                        <p className="text-sm font-medium text-slate-500">Belum ada riwayat batch untuk produk ini.</p>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               )}
             </div>

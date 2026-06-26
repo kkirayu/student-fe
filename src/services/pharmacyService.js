@@ -43,7 +43,15 @@ export const deleteProduct = async (id) => {
  */
 export const updateProduct = async (id, data) => {
   try {
-    const response = await api.put(`/products/${id}`, data);
+    let response;
+    if (data instanceof FormData) {
+      data.append('_method', 'PUT');
+      response = await api.post(`/products/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } else {
+      response = await api.put(`/products/${id}`, data);
+    }
     return response.data;
   } catch (error) {
     handleServiceError(error, 'Gagal memperbarui produk.');

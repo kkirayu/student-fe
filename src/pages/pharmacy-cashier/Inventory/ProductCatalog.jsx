@@ -12,8 +12,9 @@ const ProductCatalog = () => {
   const [lastPage, setLastPage] = useState(1);
   const [modalType, setModalType] = useState('detail'); // 'detail' or 'edit'
   const [editFormData, setEditFormData] = useState({
-    name: '', category: '', description: '', base_price: 0, selling_price: 0, min_stock: 0, exp_date: ''
+    name: '', category: '', description: '', base_price: 0, selling_price: 0, min_stock: 0, exp_date: '', image: null
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -58,8 +59,10 @@ const ProductCatalog = () => {
         base_price: product.base_price || 0,
         selling_price: product.selling_price || 0,
         min_stock: product.min_stock || 0,
-        exp_date: product.exp_date ? product.exp_date.split(' ')[0] : '' // Asumsikan format YYYY-MM-DD
+        exp_date: product.exp_date ? product.exp_date.split(' ')[0] : '',
+        image: null
       });
+      setImagePreview(product.image_url || null);
     }
     setIsModalOpen(true);
   };
@@ -76,7 +79,18 @@ const ProductCatalog = () => {
     try {
       // Import updateProduct dari pharmacyService
       const { updateProduct } = await import('../../../services/pharmacyService');
-      await updateProduct(selectedProduct.id, editFormData);
+      
+      let payload = editFormData;
+      if (editFormData.image) {
+        payload = new FormData();
+        Object.keys(editFormData).forEach(key => {
+          if (editFormData[key] !== null && editFormData[key] !== undefined) {
+            payload.append(key, editFormData[key]);
+          }
+        });
+      }
+
+      await updateProduct(selectedProduct.id, payload);
       setIsModalOpen(false);
       fetchProducts(searchTerm, currentPage);
     } catch (err) {
@@ -191,10 +205,14 @@ const ProductCatalog = () => {
               onClick={() => handleOpenModal(product, 'detail')}
               className="group flex flex-col bg-white border border-slate-200 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
-              <div className="relative aspect-square bg-slate-50 border-b border-slate-100 flex items-center justify-center text-slate-400 p-6">
-                <Package className="h-16 w-16 stroke-[1.5]" />
+              <div className="relative aspect-square bg-slate-50 border-b border-slate-100 flex items-center justify-center text-slate-400 p-0 overflow-hidden">
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                ) : (
+                  <Package className="h-16 w-16 stroke-[1.5]" />
+                )}
                 
-                <span className="absolute top-2 left-2 inline-flex rounded-sm bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
+                <span className="absolute top-2 left-2 inline-flex rounded-sm bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200 uppercase tracking-wider shadow-sm">
                   {product.category}
                 </span>
 
@@ -309,6 +327,40 @@ const ProductCatalog = () => {
               {modalType === 'edit' ? (
                 // FORM EDIT
                 <div className="space-y-4">
+                  {/* Foto Upload */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Foto Produk (Maks 1MB)</label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-20 w-20 shrink-0 bg-slate-100 border border-slate-300 border-dashed rounded-md flex items-center justify-center overflow-hidden">
+                        {imagePreview ? (
+                          <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <Package className="h-8 w-8 text-slate-300" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              if (file.size > 1024 * 1024) {
+                                alert('Ukuran gambar tidak boleh melebihi 1MB');
+                                e.target.value = '';
+                                return;
+                              }
+                              setEditFormData({...editFormData, image: file});
+                              setImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Format didukung: JPG, PNG, WEBP.</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Produk</label>
                     <input 
@@ -384,6 +436,12 @@ const ProductCatalog = () => {
               ) : (
                 // DETAIL VIEW
                 <div className="space-y-4">
+                  {selectedProduct.image_url && (
+                    <div className="w-full aspect-video rounded-sm overflow-hidden bg-slate-100 border border-slate-200">
+                      <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-full h-full object-contain" />
+                    </div>
+                  )}
+
                   {/* Info Kategori & Status */}
                   <div className="flex items-center justify-between">
                     <span className="inline-flex rounded-sm bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">

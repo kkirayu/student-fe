@@ -348,7 +348,7 @@ const StockMutations = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="p-3 border border-slate-100 bg-slate-50 rounded-sm">
                   <div className="text-slate-500 text-xs font-bold uppercase">Produk</div>
@@ -412,6 +412,38 @@ const StockMutations = () => {
                   <div className="text-slate-800 font-bold">{formatDate(selectedMutation.date)}</div>
                 )}
               </div>
+
+              {/* Rincian Batch Terkait */}
+              {modalType === 'detail' && selectedMutation.product_batch && (
+                <div className="mt-6 border-t border-slate-200 pt-4">
+                  <h4 className="mb-3 text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-slate-500" />
+                    Rincian Batch Terkait
+                  </h4>
+                  <div className="rounded-sm border border-slate-200 shadow-sm overflow-hidden">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                      <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold border-b border-slate-200">No. Batch</th>
+                          <th className="px-4 py-3 font-semibold border-b border-slate-200">Kedaluwarsa</th>
+                          <th className="px-4 py-3 font-semibold border-b border-slate-200 w-full">Catatan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white">
+                        <tr>
+                          <td className="px-4 py-3 font-medium text-slate-800">{selectedMutation.product_batch.batch_number}</td>
+                          <td className={`px-4 py-3 font-medium ${selectedMutation.product_batch.exp_date && new Date(selectedMutation.product_batch.exp_date) < new Date() ? 'text-red-600' : 'text-slate-600'}`}>
+                            {formatDate(selectedMutation.product_batch.exp_date)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 text-xs whitespace-normal break-words">
+                            {selectedMutation.product_batch.notes || '-'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex justify-end gap-2 border-t border-slate-200 p-4">
