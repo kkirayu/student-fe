@@ -31,6 +31,7 @@ const FormRestockBarang = () => {
 
   const [suppliersList, setSuppliersList] = useState([]);
   const [productsList, setProductsList] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   // Kalkulasi Modal
   const totalHarga = useMemo(() => {
@@ -55,14 +56,39 @@ const FormRestockBarang = () => {
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
-        const [suppliersData, productsData] = await Promise.all([
-          getSuppliers(),
-          getProducts()
-        ]);
+        setIsLoadingProducts(true);
+        const suppliersData = await getSuppliers();
         setSuppliersList(suppliersData || []);
-        setProductsList(productsData?.data || []);
+
+        let allProducts = [];
+        let currentPage = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const productsData = await getProducts('', currentPage);
+          const newProducts = productsData?.data || [];
+          
+          if (newProducts.length > 0) {
+            allProducts = [...allProducts, ...newProducts];
+            
+            // Cek apakah ada halaman selanjutnya (berdasarkan respons last_page backend)
+            if (productsData?.last_page && currentPage >= productsData.last_page) {
+              hasMore = false;
+            } else if (newProducts.length === 0) {
+              hasMore = false;
+            } else {
+              currentPage++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+        
+        setProductsList(allProducts);
       } catch (err) {
         triggerToast('error', 'Gagal memuat data supplier/produk');
+      } finally {
+        setIsLoadingProducts(false);
       }
     };
     fetchMasterData();
@@ -241,10 +267,10 @@ const FormRestockBarang = () => {
                   <div className="sm:col-span-2 lg:col-span-4">
                     <label className="mb-2 block text-sm font-medium text-slate-700">Pilih Barang / Obat <span className="text-red-500">*</span></label>
                     <select
-                      name="barangId" value={formData.barangId} onChange={handleChange}
+                      name="barangId" value={formData.barangId} onChange={handleChange} disabled={isLoadingProducts}
                       className={`block w-full rounded-lg border px-3 py-2.5 text-sm text-slate-700 focus:ring-1 transition-colors ${!formData.barangId ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-400'}`}
                     >
-                      <option value="">-- Cari atau pilih barang --</option>
+                      <option value="">{isLoadingProducts ? '-- Memuat data barang... --' : '-- Cari atau pilih barang --'}</option>
                       {Object.entries(products).map(([key, val]) => (
                         <option key={key} value={key}>{val}</option>
                       ))}
