@@ -6,6 +6,9 @@ import {
   AlertCircle, Truck, ChevronRight, CheckCircle2, 
   Loader2, AlertTriangle, Info
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { PackagePlus, Save, X, Calendar, DollarSign, Hash, AlertCircle, Truck } from 'lucide-react';
+import { createRestock } from '../../../services/restockService';
 
 const FormRestockBarang = () => {
   // Fungsi pembantu untuk mendapatkan format waktu lokal (YYYY-MM-DDTHH:mm)

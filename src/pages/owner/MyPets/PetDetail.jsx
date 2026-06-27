@@ -69,7 +69,11 @@ const PetDetail = () => {
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-200">
               <div className="aspect-square rounded-[2rem] overflow-hidden mb-6 bg-slate-100 flex items-center justify-center">
-                <span className="text-7xl">🐾</span>
+                {pet.photo_url ? (
+                  <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-7xl">🐾</span>
+                )}
               </div>
               <div className="text-center px-2 pb-4">
                 <h2 className="text-3xl font-black text-slate-800 mb-1">{pet.name}</h2>

@@ -152,7 +152,7 @@ const StockMutations = () => {
             Export Laporan
           </button>
           <Link 
-            to="/pharmacy/add-mutation" 
+            to="/pharmacy/restock" 
             className="inline-flex items-center justify-center gap-2 rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 shadow-sm"
           >
             <Plus className="h-4 w-4" />
@@ -274,7 +274,7 @@ const StockMutations = () => {
                     </td>
                     <td className="px-6 py-4">
                       {item.supplier_id ? (
-                        <div className="text-slate-600 font-medium">Supplier #{item.supplier_id}</div>
+                        <div className="text-slate-600 font-medium">{item.supplier_name}</div>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
