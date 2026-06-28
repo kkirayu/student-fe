@@ -21,6 +21,16 @@ export const getPetById = async (id) => {
   return response.data;
 };
 
+export const getPetMedicalHistory = async (id) => {
+  try {
+    const response = await api.get(`/pets/${id}/medical-records`);
+    return response.data;
+  } catch (error) {
+    console.warn("Could not fetch medical records:", error);
+    return { data: [] }; // Fallback if endpoint doesn't exist
+  }
+};
+
 export const createPet = async (petData) => {
   const response = await api.post('/pets', petData);
   return response.data;
