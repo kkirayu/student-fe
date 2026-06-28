@@ -311,7 +311,7 @@ const Register = () => {
                   onClick={async () => {
                     setIsGoogleLoading(true);
                     try {
-                      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+                      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api';
                       const res = await axios.get(`${apiUrl}/auth/google`);
                       if (res.data.url) {
                         window.location.href = res.data.url;

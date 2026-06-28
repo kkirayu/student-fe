@@ -14,7 +14,7 @@ const AuthCallback = () => {
       
       const fetchUser = async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api';
           const response = await axios.get(`${apiUrl}/user`, {
             headers: { Authorization: `Bearer ${token}` }
           });
