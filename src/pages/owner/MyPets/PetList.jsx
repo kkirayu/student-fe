@@ -185,7 +185,7 @@ const PetList = () => {
                       <div className="flex items-center gap-1">
                         <span>{pet.gender}</span>
                         <span className="text-slate-300">|</span>
-                        <span>{pet.dob}</span>
+                        <span>{pet.dob ? pet.dob.split('T')[0] : '-'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center text-slate-600">
