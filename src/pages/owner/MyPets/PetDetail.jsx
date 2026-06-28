@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { getPetById } from '../../../services/ownerService';
+import { Loader2, AlertCircle, Activity, FileText, Pill, X, Eye } from 'lucide-react';
+import { getPetById, getPetMedicalHistory } from '../../../services/ownerService';
 
 const PetDetail = () => {
   const navigate = useNavigate();
@@ -9,15 +9,26 @@ const PetDetail = () => {
   const [pet, setPet] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [medicalHistory, setMedicalHistory] = useState([]);
+  const [selectedHistory, setSelectedHistory] = useState(null);
 
   useEffect(() => {
     const fetchPet = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getPetById(id);
-        // Support both direct object and { data: {...} } wrapper
-        setPet(data.data ?? data);
+        const [petData, historyData] = await Promise.all([
+          getPetById(id),
+          getPetMedicalHistory(id)
+        ]);
+        const petObj = petData.data ?? petData;
+        setPet(petObj);
+        
+        let historyArray = historyData?.data?.data || historyData?.data || historyData || [];
+        if (!Array.isArray(historyArray) || historyArray.length === 0) {
+           historyArray = petObj.medical_history || [];
+        }
+        setMedicalHistory(historyArray);
       } catch (err) {
         console.error(err);
         setError('Gagal memuat detail pet. Silakan coba lagi.');
@@ -131,18 +142,23 @@ const PetDetail = () => {
               </h3>
 
               <div className="space-y-4">
-                {pet.medical_history && pet.medical_history.length > 0 ? (
-                  pet.medical_history.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                {medicalHistory && medicalHistory.length > 0 ? (
+                  medicalHistory.map((item, index) => (
+                    <div key={index} onClick={() => setSelectedHistory(item)} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
                       <div className="flex gap-4 items-center">
                         <div className="bg-white px-3 py-1 rounded-xl text-center shadow-sm border border-slate-200">
-                          <p className="text-[10px] font-black text-blue-600 leading-none py-1 uppercase">{item.date}</p>
+                          <p className="text-[10px] font-black text-blue-600 leading-none py-1 uppercase">{item.date || item.appointment_date}</p>
                         </div>
-                        <p className="text-sm font-bold text-slate-700">{item.note}</p>
+                        <p className="text-sm font-bold text-slate-700">{item.note || item.diagnosis || (item.soap && item.soap.assessment) || 'Pemeriksaan Rutin'}</p>
                       </div>
-                      <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-wider">
-                        {item.status}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-wider">
+                          {item.status || 'Selesai'}
+                        </span>
+                        <button className="text-blue-500 hover:text-blue-700 p-1 bg-white rounded shadow-sm">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -157,6 +173,78 @@ const PetDetail = () => {
           </div>
         </div>
       </div>
+      
+      {/* --- MODAL DETAIL RIWAYAT MEDIS --- */}
+      {selectedHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedHistory(null)}></div>
+
+          <div className="relative w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="border-b border-slate-100 px-6 py-4 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" /> Detail Rekam Medis
+              </h3>
+              <button onClick={() => setSelectedHistory(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-800">{selectedHistory.date || selectedHistory.appointment_date}</p>
+                  <p className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
+                    <Activity className="h-3 w-3" /> Ditangani oleh: {selectedHistory.vet || selectedHistory.doctor_name || '-'}
+                  </p>
+                </div>
+                <div className="rounded bg-red-50 px-3 py-1.5 border border-red-100 text-right">
+                  <p className="text-[10px] uppercase font-bold text-red-500 tracking-wider mb-0.5">Diagnosa Utama</p>
+                  <span className="text-xs font-bold text-red-700">{selectedHistory.diagnosis || (selectedHistory.soap && selectedHistory.soap.assessment) || '-'}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                  <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Subjective (Keluhan)</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed">{selectedHistory.subjective || (selectedHistory.soap && selectedHistory.soap.subjective) || '-'}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                  <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Objective (Pemeriksaan)</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed">{selectedHistory.objective || (selectedHistory.soap && selectedHistory.soap.objective) || '-'}</p>
+                </div>
+                <div className="sm:col-span-2 rounded-lg bg-blue-50/50 p-4 border border-blue-100">
+                  <h4 className="text-[10px] uppercase font-bold text-blue-600 tracking-wider mb-2">Plan (Tindakan & Edukasi)</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed">{selectedHistory.plan || (selectedHistory.soap && selectedHistory.soap.plan) || '-'}</p>
+                </div>
+              </div>
+
+              {selectedHistory.prescriptions && selectedHistory.prescriptions.length > 0 && (
+                <div className="pt-2">
+                  <h4 className="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                    <Pill className="h-4 w-4 text-emerald-600" /> Resep Obat Diberikan
+                  </h4>
+                  <div className="grid gap-2">
+                    {selectedHistory.prescriptions.map((med, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{med.name || med.medicine_name}</p>
+                            <p className="text-xs font-medium text-slate-500 mt-0.5">{med.instructions || med.notes}</p>
+                          </div>
+                        </div>
+                        <span className="rounded bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
+                          Qty: {med.qty || med.quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
