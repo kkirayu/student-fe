@@ -40,8 +40,8 @@ const WalkInRegistration = () => {
     const fetchData = async () => {
       try {
         const [resSvc, resDoc] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/services'),
-          axios.get('http://127.0.0.1:8000/api/doctors')
+          axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/services`),
+          axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/doctors`)
         ]);
         setServices(resSvc.data.data.data || []);
         // Backend returns doctors array directly or wrapped, handle accordingly
@@ -77,7 +77,7 @@ const WalkInRegistration = () => {
             status: "Aktif",
             address: formData.ownerAddress || "Alamat tidak diisi"
         };
-        const userRes = await axios.post('http://127.0.0.1:8000/api/users', userPayload);
+        const userRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/users`, userPayload);
         const ownerId = userRes.data.data.id;
 
         // 2. Create Pet
@@ -87,7 +87,7 @@ const WalkInRegistration = () => {
             species: formData.species,
             gender: "Jantan" // default
         };
-        const petRes = await axios.post('http://127.0.0.1:8000/api/pets', petPayload);
+        const petRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/pets`, petPayload);
         const petId = petRes.data.data.id;
 
         // 3. Create Appointment
@@ -102,7 +102,7 @@ const WalkInRegistration = () => {
             initial_complaint: formData.initial_complaint,
             status: "Disetujui"
         };
-        const aptRes = await axios.post('http://127.0.0.1:8000/api/appointments', appointmentPayload);
+        const aptRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments`, appointmentPayload);
         const appointment = aptRes.data.data;
 
         setPrintData({
