@@ -165,10 +165,6 @@ const PetDetail = () => {
                   <p className="text-sm text-slate-400 text-center py-4">Belum ada riwayat medis.</p>
                 )}
               </div>
-
-              <button className="w-full mt-6 py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs hover:border-blue-300 hover:text-blue-500 transition-all uppercase tracking-widest">
-                + Tambah Catatan Medis
-              </button>
             </div>
           </div>
         </div>
