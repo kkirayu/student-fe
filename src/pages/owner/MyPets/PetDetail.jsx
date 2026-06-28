@@ -23,10 +23,10 @@ const PetDetail = () => {
         ]);
         const petObj = petData.data ?? petData;
         setPet(petObj);
-        
+
         let historyArray = historyData?.data?.data || historyData?.data || historyData || [];
         if (!Array.isArray(historyArray) || historyArray.length === 0) {
-           historyArray = petObj.medical_history || [];
+          historyArray = petObj.medical_history || [];
         }
         setMedicalHistory(historyArray);
       } catch (err) {
@@ -147,9 +147,9 @@ const PetDetail = () => {
                     <div key={index} onClick={() => setSelectedHistory(item)} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
                       <div className="flex gap-4 items-center">
                         <div className="bg-white px-3 py-1 rounded-xl text-center shadow-sm border border-slate-200">
-                          <p className="text-[10px] font-black text-blue-600 leading-none py-1 uppercase">{item.date || item.appointment_date}</p>
+                          <p className="text-[10px] font-black text-blue-600 leading-none py-1 uppercase">{item.created_at ? item.created_at.split('T')[0] : (item.date || item.appointment_date)}</p>
                         </div>
-                        <p className="text-sm font-bold text-slate-700">{item.note || item.diagnosis || (item.soap && item.soap.assessment) || 'Pemeriksaan Rutin'}</p>
+                        <p className="text-sm font-bold text-slate-700">{(item.diagnosis && item.diagnosis.disease_name) || item.subjective || item.note || 'Pemeriksaan Rutin'}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-wider">
@@ -173,7 +173,7 @@ const PetDetail = () => {
           </div>
         </div>
       </div>
-      
+
       {/* --- MODAL DETAIL RIWAYAT MEDIS --- */}
       {selectedHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -192,14 +192,14 @@ const PetDetail = () => {
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
               <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                 <div>
-                  <p className="text-sm font-bold text-slate-800">{selectedHistory.date || selectedHistory.appointment_date}</p>
+                  <p className="text-sm font-bold text-slate-800">{selectedHistory.created_at ? selectedHistory.created_at.split('T')[0] : (selectedHistory.date || selectedHistory.appointment_date)}</p>
                   <p className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
-                    <Activity className="h-3 w-3" /> Ditangani oleh: {selectedHistory.vet || selectedHistory.doctor_name || '-'}
+                    <Activity className="h-3 w-3" /> Ditangani oleh: {selectedHistory.doctor?.name || selectedHistory.vet || selectedHistory.doctor_name || '-'}
                   </p>
                 </div>
                 <div className="rounded bg-red-50 px-3 py-1.5 border border-red-100 text-right">
                   <p className="text-[10px] uppercase font-bold text-red-500 tracking-wider mb-0.5">Diagnosa Utama</p>
-                  <span className="text-xs font-bold text-red-700">{selectedHistory.diagnosis || (selectedHistory.soap && selectedHistory.soap.assessment) || '-'}</span>
+                  <span className="text-xs font-bold text-red-700">{(selectedHistory.diagnosis && selectedHistory.diagnosis.disease_name) || (selectedHistory.soap && selectedHistory.soap.assessment) || '-'}</span>
                 </div>
               </div>
 

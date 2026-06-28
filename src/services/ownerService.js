@@ -23,7 +23,7 @@ export const getPetById = async (id) => {
 
 export const getPetMedicalHistory = async (id) => {
   try {
-    const response = await api.get(`/pets/${id}/medical-records`);
+    const response = await api.get('/medical-records', { params: { pet_id: id } });
     return response.data;
   } catch (error) {
     console.warn("Could not fetch medical records:", error);
