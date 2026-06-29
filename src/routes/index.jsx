@@ -71,6 +71,7 @@ import LogTransaction from '../pages/pharmacy-cashier/Cashier/LogTransaction';
 import ReceptionistDashboard from '../pages/receptionist/Dashboard';
 import WalkInRegistration from '../pages/receptionist/WalkInRegistration';
 import QueueMonitor from '../pages/receptionist/QueueMonitor';
+import ReceptionistHistory from '../pages/receptionist/History';
 import ApiDocs from '../pages/ApiDocs';
 
 const AppRouter = () => {
@@ -168,6 +169,7 @@ const AppRouter = () => {
           <Route index element={<ReceptionistDashboard />} />
           <Route path="walk-in-registration" element={<WalkInRegistration />} />
           <Route path="queue-monitor" element={<QueueMonitor />} />
+          <Route path="history" element={<ReceptionistHistory />} />
         </Route>
 
         <Route path="*" element={

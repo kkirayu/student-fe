@@ -20,7 +20,8 @@ const QueueMonitor = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const monitorRef = useRef(null);
   const [appointments, setAppointments] = useState([]);
-  const [lastCalledId, setLastCalledId] = useState(null);
+  const [currentCallIndex, setCurrentCallIndex] = useState(0);
+  const [announcedIds, setAnnouncedIds] = useState(new Set());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -31,7 +32,9 @@ const QueueMonitor = () => {
     const fetchQueue = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const res = await axios.get(`http://127.0.0.1:8000/api/appointments?date=${today}`);
+        const token = localStorage.getItem('auth_token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/appointments?date=${today}`, config);
         const data = res.data.data.data || [];
         setAppointments(data);
       } catch (err) {
@@ -83,62 +86,96 @@ const QueueMonitor = () => {
     }
   };
 
-  // Filter valid queued appointments
-  const queueData = appointments.filter(a => 
-    a.status === 'Dalam Periksa' || 
-    a.status === 'Disetujui' || 
-    (a.status === 'Menunggu' && a.booking_type === 'Walk-in')
-  ).sort((a, b) => {
-    // Prioritize "Dalam Periksa"
-    if (a.status === 'Dalam Periksa' && b.status !== 'Dalam Periksa') return -1;
-    if (b.status === 'Dalam Periksa' && a.status !== 'Dalam Periksa') return 1;
-    // Then sort by schedule time
-    return a.schedule_time.localeCompare(b.schedule_time);
-  });
+  // Effect for Carousel Rotation
+  useEffect(() => {
+    const activeCount = appointments.filter(a => a.status === 'Dalam Periksa').length;
+    if (activeCount <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentCallIndex((prevIndex) => (prevIndex + 1) % activeCount);
+    }, 6000); // Rotate every 6 seconds
+    return () => clearInterval(interval);
+  }, [appointments]);
 
-  let currentCall = null;
-  let nextQueue = [];
+  // Find current call: only 'Dalam Periksa', sorted by updated_at ascending (oldest called first)
+  const activeCalls = appointments
+    .filter(a => a.status === 'Dalam Periksa')
+    .sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
 
-  if (queueData.length > 0) {
-    const first = queueData[0];
-    currentCall = {
-      id: first.queue_number,
-      petName: first.pet?.name || '-',
-      species: first.pet?.species || '-',
-      owner: first.owner?.name || '-',
-      doctor: first.doctor?.name || 'Dokter Umum',
-      image: getPetImage(first.pet?.species)
-    };
+  // 15-Minute Preparation Logic
+  let isPreparationMode = false;
+  let preparationSessionTime = '';
+
+  if (activeCalls.length > 0) {
+    const sessionTimeStr = activeCalls[0].schedule_time;
+    const [hourStr] = sessionTimeStr.split(':');
+    const sessionHour = parseInt(hourStr, 10);
     
-    nextQueue = queueData.slice(1).map(a => ({
-      id: a.queue_number,
-      petName: a.pet?.name || '-',
-      species: a.pet?.species || '-',
-      doctor: a.doctor?.name || 'Dokter Umum',
-      image: getPetImage(a.pet?.species)
-    }));
+    const currentH = currentTime.getHours();
+    const currentM = currentTime.getMinutes();
+    
+    if ((currentH === sessionHour && currentM >= 45) || currentH > sessionHour) {
+      isPreparationMode = true;
+      preparationSessionTime = `${(sessionHour + 1).toString().padStart(2, '0')}:00`;
+    }
   }
 
-  // Effect to trigger text-to-speech when currentCall changes
+  // Find next queue: 'Disetujui' or ('Menunggu' && 'Walk-in')
+  const waitingQueue = appointments
+    .filter(a => a.status === 'Disetujui' || (a.status === 'Menunggu' && a.booking_type === 'Walk-in'))
+    .sort((a, b) => a.schedule_time.localeCompare(b.schedule_time));
+
+  let currentCall = null;
+  let nextQueue = waitingQueue.map(a => ({
+    id: a.queue_number,
+    petName: a.pet?.name || '-',
+    species: a.pet?.species || '-',
+    doctor: a.doctor?.name || 'Dokter Umum',
+    image: getPetImage(a.pet?.species)
+  }));
+
+  if (!isPreparationMode && activeCalls.length > 0) {
+    const validIndex = currentCallIndex < activeCalls.length ? currentCallIndex : 0;
+    const active = activeCalls[validIndex];
+    currentCall = {
+      id: active.queue_number,
+      petName: active.pet?.name || '-',
+      species: active.pet?.species || '-',
+      owner: active.owner?.name || '-',
+      doctor: active.doctor?.name || 'Dokter Umum',
+      image: getPetImage(active.pet?.species),
+      totalCalls: activeCalls.length,
+      currentIndex: validIndex + 1
+    };
+  }
+
+  // Effect to trigger text-to-speech for all newly called patients
   useEffect(() => {
-    if (currentCall && currentCall.id !== lastCalledId) {
-      setLastCalledId(currentCall.id);
+    if (activeCalls.length > 0 && 'speechSynthesis' in window) {
+      const newIds = new Set(announcedIds);
+      let hasNew = false;
       
-      if ('speechSynthesis' in window) {
-        // Format queue number for clear pronunciation (e.g. "0 0 5")
-        const queueNumberSpoken = currentCall.id.split('-').pop().split('').join(' ');
-        const text = `Nomor antrean, ${queueNumberSpoken}, pasien atas nama ${currentCall.petName}, silakan menuju ruang pemeriksaan.`;
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.rate = 0.85; 
-        
-        // Cancel any ongoing speech before speaking
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
+      activeCalls.forEach(call => {
+        if (!newIds.has(call.queue_number)) {
+          const queueNumberSpoken = call.queue_number.split('-').pop().split('').join(' ');
+          const docName = call.doctor?.name?.replace('Drh. ', '') || 'umum';
+          const text = `Nomor antrean, ${queueNumberSpoken}, pasien atas nama ${call.pet?.name || 'Hewan'}, silakan menuju ruang pemeriksaan dokter ${docName}.`;
+          
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'id-ID';
+          utterance.rate = 0.85; 
+          
+          window.speechSynthesis.speak(utterance);
+          
+          newIds.add(call.queue_number);
+          hasNew = true;
+        }
+      });
+
+      if (hasNew) {
+        setAnnouncedIds(newIds);
       }
     }
-  }, [currentCall, lastCalledId]);
+  }, [activeCalls, announcedIds]);
 
   return (
     <div 
@@ -233,11 +270,24 @@ const QueueMonitor = () => {
             </div>
 
             {/* Call Content */}
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative">
               
-              {currentCall ? (
+              {isPreparationMode ? (
+                <div className="flex flex-col items-center justify-center h-full text-slate-800">
+                  <div className="bg-blue-100 text-blue-600 p-4 rounded-full mb-6">
+                    <Clock className="h-16 w-16 animate-pulse" />
+                  </div>
+                  <h3 className="text-3xl font-black mb-2 text-slate-800">Persiapan Sesi Berikutnya</h3>
+                  <p className="text-xl font-medium text-slate-500">
+                    Sesi Jam <span className="font-bold text-blue-600">{preparationSessionTime}</span> akan segera dipanggil.
+                  </p>
+                </div>
+              ) : currentCall ? (
                 <>
-                  <div className="mb-4">
+                  <div className="absolute top-6 right-6 bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-sm font-bold border border-slate-200">
+                    {currentCall.currentIndex} dari {currentCall.totalCalls} Panggilan
+                  </div>
+                  <div className="mb-4 mt-8">
                     <span className={`inline-block px-12 py-3 rounded-2xl text-6xl md:text-7xl lg:text-[5.5rem] font-black tracking-tight break-all border-2 shadow-md ${
                       isFullscreen 
                         ? 'bg-[#1F2937] text-blue-400 border-slate-800' 

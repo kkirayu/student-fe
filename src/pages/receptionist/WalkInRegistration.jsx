@@ -34,16 +34,23 @@ const WalkInRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [printData, setPrintData] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-
+  const [availableSessions, setAvailableSessions] = useState([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState(null);
+  const [ownerPets, setOwnerPets] = useState([]);
+  const [selectedPetId, setSelectedPetId] = useState('');
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [resSvc, resDoc] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/services'),
-          axios.get('http://127.0.0.1:8000/api/doctors')
+          axios.get('https://zeta-connect-api.vercel.app/api/services'),
+          axios.get('https://zeta-connect-api.vercel.app/api/doctors')
         ]);
         setServices(resSvc.data.data.data || []);
-        // Backend returns doctors array directly or wrapped, handle accordingly
         setDoctors(Array.isArray(resDoc.data) ? resDoc.data : (resDoc.data.data || []));
       } catch (err) {
         console.error("Error fetching dependencies", err);
@@ -51,6 +58,75 @@ const WalkInRegistration = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchAvailableSessions = async () => {
+      if (!formData.schedule_date) {
+        setAvailableSessions([]);
+        return;
+      }
+      setIsLoadingSessions(true);
+      try {
+        const params = new URLSearchParams({ date: formData.schedule_date });
+        if (formData.doctor_id) {
+          params.append('doctor_id', formData.doctor_id);
+        }
+        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/available-sessions?${params.toString()}`);
+        setAvailableSessions(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching available sessions", err);
+        setAvailableSessions([]);
+      } finally {
+        setIsLoadingSessions(false);
+      }
+    };
+
+    fetchAvailableSessions();
+  }, [formData.schedule_date, formData.doctor_id]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (searchQuery.trim().length < 3) {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/users?role=Owner&search=${searchQuery}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSearchResults(res.data.data.data || []);
+      } catch (err) {
+        console.error("Error searching users", err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(() => fetchUsers(), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSelectOwner = async (owner) => {
+    setSelectedOwner(owner);
+    setSearchQuery('');
+    setSearchResults([]);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await axios.get(`https://zeta-connect-api.vercel.app/api/users/${owner.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOwnerPets(res.data.data.pets || []);
+      if (res.data.data.pets && res.data.data.pets.length > 0) {
+        setSelectedPetId(res.data.data.pets[0].id.toString());
+      } else {
+        setSelectedPetId('');
+      }
+    } catch (err) {
+      console.error("Error fetching owner pets", err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,28 +138,54 @@ const WalkInRegistration = () => {
     setIsSubmitting(true);
     
     try {
-        // 1. Create User
-        const userPayload = {
-            name: formData.ownerName,
-            email: `walkin_${Date.now()}@zeta.com`,
-            password: "password123",
-            phone_number: formData.ownerPhone,
-            role: "Owner",
-            status: "Aktif",
-            address: formData.ownerAddress || "Alamat tidak diisi"
+        const token = localStorage.getItem('auth_token');
+        const config = {
+            headers: { Authorization: `Bearer ${token}` }
         };
-        const userRes = await axios.post('http://127.0.0.1:8000/api/users', userPayload);
-        const ownerId = userRes.data.data.id;
 
-        // 2. Create Pet
-        const petPayload = {
-            owner_id: ownerId,
-            name: formData.petName,
-            species: formData.species,
-            gender: "Jantan" // default
-        };
-        const petRes = await axios.post('http://127.0.0.1:8000/api/pets', petPayload);
-        const petId = petRes.data.data.id;
+        let ownerId, petId, petName, ownerName;
+        
+        if (isNewUser) {
+            // 1. Create User
+            const userPayload = {
+                name: formData.ownerName,
+                email: `walkin_${Date.now()}@zeta.com`,
+                password: "password123",
+                phone_number: formData.ownerPhone,
+                role: "Owner",
+                status: "Aktif",
+                address: formData.ownerAddress || "Alamat tidak diisi"
+            };
+            const userRes = await axios.post('https://zeta-connect-api.vercel.app/api/users', userPayload, config);
+            ownerId = userRes.data.data.id;
+            ownerName = formData.ownerName;
+
+            // 2. Create Pet
+            const petPayload = {
+                owner_id: ownerId,
+                name: formData.petName,
+                species: formData.species,
+                gender: "Jantan" // default
+            };
+            const petRes = await axios.post('https://zeta-connect-api.vercel.app/api/pets', petPayload, config);
+            petId = petRes.data.data.id;
+            petName = formData.petName;
+        } else {
+            if (!selectedOwner) {
+                setErrorMsg("Silakan pilih Pasien Lama terlebih dahulu.");
+                setIsSubmitting(false);
+                return;
+            }
+            if (!selectedPetId) {
+                setErrorMsg("Pemilik ini belum memiliki hewan peliharaan terdaftar. Silakan gunakan mode Pasien Baru.");
+                setIsSubmitting(false);
+                return;
+            }
+            ownerId = selectedOwner.id;
+            ownerName = selectedOwner.name;
+            petId = selectedPetId;
+            petName = ownerPets.find(p => p.id.toString() === selectedPetId)?.name || 'Hewan';
+        }
 
         // 3. Create Appointment
         const appointmentPayload = {
@@ -97,13 +199,13 @@ const WalkInRegistration = () => {
             initial_complaint: formData.initial_complaint,
             status: "Disetujui"
         };
-        const aptRes = await axios.post('http://127.0.0.1:8000/api/appointments', appointmentPayload);
+        const aptRes = await axios.post('https://zeta-connect-api.vercel.app/api/appointments', appointmentPayload, config);
         const appointment = aptRes.data.data;
 
         setPrintData({
             queueNumber: appointment.queue_number,
-            petName: formData.petName,
-            ownerName: formData.ownerName,
+            petName: petName,
+            ownerName: ownerName,
             doctorName: formData.doctor_id ? doctors.find(d => d.doctor_id.toString() === formData.doctor_id)?.name : 'Umum (Tanpa Preferensi)',
             service: services.find(s => s.id.toString() === formData.service_id)?.name || '-',
             date: formData.schedule_date,
@@ -165,6 +267,24 @@ const WalkInRegistration = () => {
       );
   }
 
+  const todayDateString = new Date().toISOString().split('T')[0];
+  const isToday = formData.schedule_date === todayDateString;
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
+  const filteredSessions = availableSessions.filter(time => {
+      if (!isToday) return true;
+      const [hourStr, minuteStr] = time.split(':');
+      const sessionHour = parseInt(hourStr, 10);
+      const sessionMinute = parseInt(minuteStr, 10);
+      
+      if (sessionHour < currentHour) return false;
+      if (sessionHour === currentHour && sessionMinute <= currentMinute) return false;
+      
+      return true;
+  });
+
   return (
     <div className="space-y-6 pb-10 relative">
       {/* Error Modal */}
@@ -219,6 +339,94 @@ const WalkInRegistration = () => {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
 
+          {/* Toggle Type */}
+          <div className="flex bg-slate-100 p-1 rounded-sm border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setIsNewUser(true)}
+              className={`flex-1 py-2 text-sm font-bold transition-all rounded-sm ${isNewUser ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Pasien Baru
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsNewUser(false)}
+              className={`flex-1 py-2 text-sm font-bold transition-all rounded-sm ${!isNewUser ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Pasien Lama
+            </button>
+          </div>
+
+          {!isNewUser ? (
+            <div className="rounded-sm border border-slate-200 bg-white shadow-sm p-6 space-y-6">
+              {!selectedOwner ? (
+                <div className="space-y-4">
+                  <label className="text-sm font-semibold text-slate-700">Cari Pemilik (Nama/Email)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Ketik minimal 3 huruf..."
+                      className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                    />
+                    {isSearching && <span className="absolute right-3 top-2.5 text-xs text-slate-400">Mencari...</span>}
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="border border-slate-200 rounded-sm divide-y max-h-48 overflow-y-auto">
+                      {searchResults.map(user => (
+                        <div 
+                          key={user.id} 
+                          className="p-3 hover:bg-slate-50 cursor-pointer flex flex-col"
+                          onClick={() => handleSelectOwner(user)}
+                        >
+                          <span className="font-bold text-slate-800 text-sm">{user.name}</span>
+                          <span className="text-xs text-slate-500">{user.email} - {user.phone_number}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {searchQuery.length >= 3 && searchResults.length === 0 && !isSearching && (
+                     <div className="text-sm text-slate-500 p-2">Pemilik tidak ditemukan.</div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-100 rounded-sm">
+                    <div>
+                      <div className="font-bold text-slate-800">{selectedOwner.name}</div>
+                      <div className="text-xs text-slate-500">{selectedOwner.phone_number}</div>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedOwner(null)}
+                      className="text-xs font-bold text-blue-600 hover:underline"
+                    >
+                      Ganti
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Pilih Hewan Peliharaan <span className="text-red-500">*</span></label>
+                    {ownerPets.length === 0 ? (
+                       <div className="text-sm text-red-500 p-2 border border-red-200 bg-red-50 rounded-sm">Belum ada hewan terdaftar. Silakan gunakan mode Pasien Baru.</div>
+                    ) : (
+                      <select
+                        value={selectedPetId}
+                        onChange={(e) => setSelectedPetId(e.target.value)}
+                        className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                      >
+                        {ownerPets.map(pet => (
+                          <option key={pet.id} value={pet.id}>{pet.name} ({pet.species})</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
           {/* Data Hewan */}
           <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
@@ -261,7 +469,7 @@ const WalkInRegistration = () => {
           </div>
 
           {/* Data Pemilik */}
-          <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
+          <div className="rounded-sm border border-slate-200 bg-white shadow-sm mt-6">
             <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-orange-600">
                 <User className="h-4 w-4" />
@@ -273,40 +481,43 @@ const WalkInRegistration = () => {
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nama Pemilik <span className="text-red-500">*</span></label>
                 <input
-                  required
+                  required={isNewUser}
                   type="text"
                   name="ownerName"
                   value={formData.ownerName}
                   onChange={handleChange}
-                  placeholder="Nama lengkap"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                  placeholder="Contoh: Budi Santoso"
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nomor Telepon <span className="text-red-500">*</span></label>
                 <input
-                  required
-                  type="tel"
+                  required={isNewUser}
+                  type="text"
                   name="ownerPhone"
                   value={formData.ownerPhone}
                   onChange={handleChange}
-                  placeholder="0812xxxx"
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                  placeholder="Contoh: 08123456789"
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              <div className="sm:col-span-2 space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-semibold text-slate-700">Alamat</label>
                 <textarea
-                  rows="2"
                   name="ownerAddress"
                   value={formData.ownerAddress}
                   onChange={handleChange}
-                  placeholder="Alamat lengkap pemilik..."
-                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500"
+                  placeholder="Alamat lengkap (opsional)"
+                  rows="2"
+                  className="w-full rounded-sm border border-slate-300 px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 ></textarea>
               </div>
             </div>
           </div>
+          </>
+          )}
+
         </div>
 
         <div className="space-y-6 lg:col-span-4">
@@ -350,6 +561,7 @@ const WalkInRegistration = () => {
                 <label className="text-sm font-semibold text-slate-700">Tanggal Jadwal <span className="text-red-500">*</span></label>
                 <input
                   type="date" name="schedule_date" value={formData.schedule_date} onChange={handleChange}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   required
                 />
@@ -358,14 +570,21 @@ const WalkInRegistration = () => {
                 <label className="text-sm font-semibold text-slate-700">Waktu Jadwal <span className="text-red-500">*</span></label>
                 <select
                   name="schedule_time" value={formData.schedule_time} onChange={handleChange}
-                  className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-sm border border-slate-300 bg-transparent px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                   required
+                  disabled={isLoadingSessions || !formData.schedule_date || filteredSessions.length === 0}
                 >
-                  <option value="" disabled>Pilih Waktu</option>
-                  <option value="10:00">10.00 - 11.30</option>
-                  <option value="13:00">13.00 - 14.30</option>
-                  <option value="15:00">15.00 - 16.30</option>
-                  <option value="19:00">19.00 - 20.30</option>
+                  <option value="" disabled>
+                    {!formData.schedule_date ? 'Pilih tanggal lebih dulu' : (isLoadingSessions ? 'Memuat jadwal...' : (filteredSessions.length === 0 ? 'Tidak ada jadwal tersedia / Sesi hari ini sudah lewat' : 'Pilih Waktu'))}
+                  </option>
+                  {filteredSessions.map((time, index) => {
+                      const endTime = (parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0') + ':00';
+                      return (
+                          <option key={index} value={time}>
+                              {time} - {endTime}
+                          </option>
+                      );
+                  })}
                 </select>
               </div>
               <div className="space-y-1.5">
