@@ -31,7 +31,7 @@ const QueueMonitor = () => {
     const fetchQueue = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const res = await axios.get(`http://127.0.0.1:8000/api/appointments?date=${today}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments?date=${today}`);
         const data = res.data.data.data || [];
         setAppointments(data);
       } catch (err) {

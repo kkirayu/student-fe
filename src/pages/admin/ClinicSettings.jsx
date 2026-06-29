@@ -33,7 +33,7 @@ const ClinicSettings = () => {
         
         if (data.logo_url) {
           // Assuming backend returns relative path like /storage/logos/xxx or absolute URL
-          const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8000';
+          const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'https://zeta-connect-api.vercel.app';
           const fullLogoUrl = data.logo_url.startsWith('http') ? data.logo_url : `${baseUrl}${data.logo_url}`;
           setLogoPreview(fullLogoUrl);
         }

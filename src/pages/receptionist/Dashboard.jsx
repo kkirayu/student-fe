@@ -25,7 +25,7 @@ const ReceptionistDashboard = () => {
       try {
         setLoading(true);
         const today = new Date().toISOString().split('T')[0];
-        const response = await axios.get(`http://127.0.0.1:8000/api/appointments?date=${today}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments?date=${today}`);
         // Backend returns paginate(10) so array is at response.data.data.data
         setAppointments(response.data.data.data || []);
       } catch (err) {
@@ -39,7 +39,7 @@ const ReceptionistDashboard = () => {
 
   const handleAcceptBooking = async (req) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/appointments/${req.rawId}`, { status: 'Disetujui' });
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${req.rawId}`, { status: 'Disetujui' });
       setAppointments(appointments.map(a => a.id === req.rawId ? { ...a, status: 'Disetujui' } : a));
       setApprovedBooking(req);
       setTimeout(() => {
@@ -52,7 +52,7 @@ const ReceptionistDashboard = () => {
 
   const handleRejectBooking = async (id) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/appointments/${id}`, { status: 'Batal' });
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${id}`, { status: 'Batal' });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Batal' } : a));
     } catch (err) {
       console.error(err);
@@ -61,7 +61,7 @@ const ReceptionistDashboard = () => {
 
   const handleCallPatient = async (id) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/appointments/${id}`, { status: 'Dalam Periksa' });
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${id}`, { status: 'Dalam Periksa' });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Dalam Periksa' } : a));
     } catch (err) {
       console.error("Error calling patient:", err);

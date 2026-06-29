@@ -395,9 +395,10 @@ const DocumentModal = ({ doc, onClose }) => {
     }
   };
 
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'https://zeta-connect-api.vercel.app';
   const targetUrl = doc.document_url?.startsWith('http')
     ? doc.document_url
-    : `http://localhost:8000${doc.document_url}`;
+    : `${baseUrl}${doc.document_url}`;
 
   const fallbackFileName = doc.document_file ? doc.document_file.split('/').pop() : 'DOKUMEN_LAB.png';
   return (
