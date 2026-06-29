@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // const token = localStorage.getItem('auth_token');
+  // const token = localStorage.getItem('auth_token'); 
   // Ini token sementara untuk testing, nanti diganti dengan mekanisme autentikasi yang sebenarnya (misal: ambil dari localStorage atau context)
   const token = "adR9hWZ2BGLv47kCBP8ufwkTRozRNIy32qo2UMH56b4f6521"; 
   if (token) {
