@@ -17,7 +17,7 @@ export const deleteUser = async (id) => {
 
 // --- Dashboard & Settings ---
 export const getAdminDashboardStats = async () => {
-  const response = await api.get('/dashboard'); // Need to verify if dashboard exists in api.php
+  const response = await api.get('/admin/dashboard/summary');
   return response.data;
 };
 
