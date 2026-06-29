@@ -5,7 +5,7 @@ import { getStockMutationReport } from '../../../services/adminService';
 const StockMutationReport = () => {
   const [stocksData, setStocksData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('Bulan Ini');
+  const [dateFilter, setDateFilter] = useState('Semua Waktu');
 
   useEffect(() => {
     const fetchData = async () => {
