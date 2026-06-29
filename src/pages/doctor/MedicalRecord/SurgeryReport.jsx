@@ -17,8 +17,6 @@ const SurgeryReport = () => {
   // State UI & Loading
   const [isLoadingPets, setIsLoadingPets] = useState(!activeSurgery);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // State disesuaikan 100% dengan struktur SurgeryResource
   const [formData, setFormData] = useState({
     pet_id: activeSurgery?.pet_id || '',
     surgery_type: activeSurgery?.surgery_type || activeSurgery?.action_name || '',

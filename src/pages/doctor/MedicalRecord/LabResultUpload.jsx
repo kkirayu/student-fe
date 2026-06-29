@@ -369,7 +369,7 @@ const LabResultUpload = () => {
 };
 
 /**
- * Komponen Modal Detail terikat props LabResultResource
+ * Komponen Modal Detail terikat props LabResultResource 
  */
 const DocumentModal = ({ doc, onClose }) => {
 
