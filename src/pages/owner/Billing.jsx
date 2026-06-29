@@ -3,7 +3,6 @@ import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../../services/api';
 import { showSuccess, showError, showWarning } from '../../utils/alertUtils';
 
-const OWNER_ID = 1;
 
 // Helper format Rupiah
 const formatRupiah = (number) =>
@@ -24,6 +23,9 @@ const getStatusBadge = (status) => {
 };
 
 const Billing = () => {
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const OWNER_ID = storedUser.id || 1;
+
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
