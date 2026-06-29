@@ -6,6 +6,7 @@ const CustomerManagement = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('Semua Status');
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -25,11 +26,15 @@ const CustomerManagement = () => {
           id: user.id,
           name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Tanpa Nama',
           email: user.email || '-',
-          phone: user.phone || '-',
+          phone: user.phone_number || user.phone || '-',
           pet: user.pets ? user.pets.map(p => p.name).join(', ') : 'Belum ada peliharaan',
-          status: user.status || 'Aktif'
+          status: user.status || 'Aktif',
+          role: user.role || ''
         }));
-        setCustomers(mapped);
+        
+        // Filter hanya untuk role Owner
+        const ownerOnly = mapped.filter(c => c.role.toLowerCase() === 'owner' || c.role.toLowerCase() === 'pemilik hewan');
+        setCustomers(ownerOnly);
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {
@@ -39,10 +44,13 @@ const CustomerManagement = () => {
     fetchCustomers();
   }, []);
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          c.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'Semua Status' || c.status.toLowerCase() === filterStatus.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const handleToggleStatus = (id) => {
     setCustomers(customers.map(c => {
@@ -61,17 +69,29 @@ const CustomerManagement = () => {
       </div>
 
       <div className="flex flex-col gap-4 border border-slate-200 rounded-sm p-4 sm:flex-row sm:items-center sm:justify-between bg-white shadow-sm">
-        <div className="relative w-full max-w-md">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <Search className="h-5 w-5" />
-          </span>
-          <input
-            type="text"
-            placeholder="Cari nama atau email pemilik..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-transparent py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-          />
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <div className="relative w-full max-w-md">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="h-5 w-5" />
+            </span>
+            <input
+              type="text"
+              placeholder="Cari nama atau email pemilik..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded border border-slate-300 bg-transparent py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            />
+          </div>
+
+          <select 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full sm:w-48 rounded border border-slate-300 bg-transparent py-2 px-3 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+          >
+            <option value="Semua Status">Semua Status</option>
+            <option value="Aktif">Aktif</option>
+            <option value="Tidak Aktif">Tidak Aktif</option>
+          </select>
         </div>
       </div>
 
@@ -135,7 +155,7 @@ const CustomerManagement = () => {
                               ? 'text-rose-600 hover:bg-rose-50'
                               : 'text-emerald-600 hover:bg-emerald-50'
                           }`}
-                          title={customer.status === 'Aktif' ? 'Tangguhkan Akun' : 'Aktifkan Akun'}
+                          title={customer.status === 'Aktif' ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>

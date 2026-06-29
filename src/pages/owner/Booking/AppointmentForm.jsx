@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
-import { getServices, createAppointment } from '../../../services/ownerService';
-import api from '../../../services/api';
+import { getPets, getServices, createAppointment } from '../../../services/ownerService';
 
 const AppointmentForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
 
-    // TODO: Ganti dengan owner_id dari sistem auth setelah login diimplementasi
-    const OWNER_ID = 1;
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const OWNER_ID = storedUser.id || 1;
 
     const [formData, setFormData] = useState({
         pet_id: '',
@@ -40,18 +39,13 @@ const AppointmentForm = () => {
             try {
                 setIsLoading(true);
 
-                // Fetch pets — coba /owner/pets dulu, fallback ke /pets
+                // Fetch pets for logged in owner
                 let petsArray = [];
                 try {
-                    const res = await api.get('/owner/pets');
-                    petsArray = extractArray(res.data);
-                } catch (_) {
-                    try {
-                        const res = await api.get('/pets');
-                        petsArray = extractArray(res.data);
-                    } catch (e) {
-                        console.warn('Gagal memuat pets:', e?.response?.status);
-                    }
+                    const res = await getPets({ owner_id: OWNER_ID });
+                    petsArray = extractArray(res);
+                } catch (e) {
+                    console.warn('Gagal memuat pets:', e?.response?.status);
                 }
                 setPetsData(petsArray);
 
@@ -90,6 +84,15 @@ const AppointmentForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (formData.initial_complaint) {
+            const wordCount = formData.initial_complaint.trim().split(/\s+/).filter(word => word.length > 0).length;
+            if (wordCount < 10 || wordCount > 200) {
+                setErrorMessage('Keluhan awal minimal 10 kata dan maksimal 200 kata.');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         setErrorMessage('');
 

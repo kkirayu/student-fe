@@ -6,6 +6,10 @@ const AuditLog = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('Semua Role');
+  const [filterSeverity, setFilterSeverity] = useState('Semua Tingkat');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -24,10 +28,44 @@ const AuditLog = () => {
   }, []);
 
   const filteredLogs = logs.filter(log => {
+    // Hide owner activity from admin
     const isNotOwner = !log.role || log.role.toLowerCase() !== 'owner';
+    if (!isNotOwner) return false;
+
+    // Role filter
+    if (filterRole !== 'Semua Role' && log.role.toLowerCase() !== filterRole.toLowerCase()) {
+      return false;
+    }
+
+    // Severity filter
+    if (filterSeverity !== 'Semua Tingkat' && log.severity.toLowerCase() !== filterSeverity.toLowerCase()) {
+      return false;
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+      const datePart = log.timestamp.split(',')[0];
+      const logDate = new Date(datePart);
+
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (logDate < start) return false;
+      }
+
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (logDate > end) return false;
+      }
+    }
+
+    // Search filter
     const matchesSearch = log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           log.action.toLowerCase().includes(searchTerm.toLowerCase());
-    return isNotOwner && matchesSearch;
+    if (!matchesSearch) return false;
+
+    return true;
   });
 
   return (
@@ -37,18 +75,66 @@ const AuditLog = () => {
         <p className="text-sm text-slate-500 font-medium">Catatan riwayat aktivitas seluruh staf dan perubahan krusial pada sistem klinik.</p>
       </div>
 
-      <div className="flex flex-col gap-4 border border-slate-200 rounded-sm p-4 sm:flex-row sm:items-center sm:justify-between bg-white shadow-sm">
-        <div className="relative w-full max-w-md">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <Search className="h-5 w-5" />
-          </span>
-          <input
-            type="text"
-            placeholder="Cari pelaku atau tindakan..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-transparent py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-          />
+      <div className="flex flex-col gap-4 border border-slate-200 rounded-sm p-4 bg-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+          
+          <div className="relative w-full lg:col-span-2">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="h-5 w-5" />
+            </span>
+            <input
+              type="text"
+              placeholder="Cari pelaku atau tindakan..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded border border-slate-300 bg-transparent py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            />
+          </div>
+
+          <div className="lg:col-span-1">
+            <select 
+              value={filterRole} 
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="w-full rounded border border-slate-300 bg-transparent py-2 px-3 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            >
+              <option value="Semua Role">Semua Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Dokter">Dokter</option>
+              <option value="Resepsionis">Resepsionis</option>
+              <option value="Apoteker">Apoteker</option>
+              <option value="Kasir">Kasir</option>
+            </select>
+          </div>
+
+          <div className="lg:col-span-1">
+            <select 
+              value={filterSeverity} 
+              onChange={(e) => setFilterSeverity(e.target.value)}
+              className="w-full rounded border border-slate-300 bg-transparent py-2 px-3 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            >
+              <option value="Semua Tingkat">Semua Tingkat</option>
+              <option value="Normal">Normal</option>
+              <option value="Tinggi">Tinggi</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 lg:col-span-2">
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              title="Tanggal Mulai"
+              className="w-full rounded border border-slate-300 bg-transparent py-2 px-2 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            />
+            <span className="self-center text-slate-500 text-sm">-</span>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              title="Tanggal Akhir"
+              className="w-full rounded border border-slate-300 bg-transparent py-2 px-2 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            />
+          </div>
         </div>
       </div>
 

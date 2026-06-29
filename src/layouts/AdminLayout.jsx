@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Box, Search } from 'lucide-react'; 
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Box, Search, LogOut, ChevronDown } from 'lucide-react'; 
 
 import { roleMenus } from '../utils/menuConfig'; 
 
 const AdminLayout = ({ userRole = 'admin' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
   
@@ -20,7 +28,15 @@ const AdminLayout = ({ userRole = 'admin' }) => {
     cashier: 'Kasir',
     receptionist: 'Resepsionis'
   };
-  const currentName = displayNames[userRole] || 'User';
+
+  const userStr = localStorage.getItem('user');
+  let userData = null;
+  try {
+    userData = userStr ? JSON.parse(userStr) : null;
+  } catch(e) {}
+
+  const currentName = userData?.name || displayNames[userRole] || 'User';
+  const displayRole = userData?.role || userRole;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
@@ -110,16 +126,40 @@ const AdminLayout = ({ userRole = 'admin' }) => {
             {/* Profil User */}
             <div className="flex items-center gap-4">
               <div className="hidden rounded bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-600 sm:block">
-                Role: {userRole}
+                Role: {displayRole}
               </div>
-              <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
-                <div className="hidden text-right lg:block">
-                  <p className="text-sm font-bold leading-tight text-black">{currentName}</p>
-                  <p className="text-xs font-medium text-slate-500 capitalize">{userRole}</p>
-                </div>
-                <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5">
-                  <img src={`https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`} alt="User" className="h-full w-full rounded-full" />
-                </div>
+              <div className="relative">
+                <button 
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center gap-3 border-l border-slate-200 pl-4 hover:opacity-80 transition-opacity"
+                >
+                  <div className="hidden text-right lg:block">
+                    <p className="text-sm font-bold leading-tight text-black">{currentName}</p>
+                    <p className="text-xs font-medium text-slate-500 capitalize">{displayRole}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5 flex items-center justify-center">
+                    <img src={`https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`} alt="User" className="h-full w-full rounded-full" />
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {profileDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setProfileDropdownOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-3 w-48 rounded-xl border border-slate-200 bg-white py-2 shadow-lg z-50">
+                      <button 
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Keluar
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

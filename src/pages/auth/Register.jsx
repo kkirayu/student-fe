@@ -19,6 +19,8 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +32,40 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.email.endsWith('@gmail.com')) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Email harus berformat @gmail.com!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Nama hanya boleh berisi huruf!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
+    if (!/^0\d{0,12}$/.test(formData.phone_number)) {
+      setPopup({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mendaftar',
+        message: 'Nomor HP maksimal 13 digit angka dan harus dimulai dengan 0!',
+        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
+      });
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setPopup({
         isOpen: true,
@@ -41,6 +77,7 @@ const Register = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/register', {
         name: formData.name,
@@ -64,6 +101,8 @@ const Register = () => {
         message: error.response?.data?.message || 'Terjadi kesalahan pada server.',
         onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,7 +157,10 @@ const Register = () => {
                       type="text" 
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => {
+                        const lettersOnly = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        setFormData({...formData, name: lettersOnly});
+                      }}
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
                       placeholder="Masukkan nama lengkap Anda"
                     />
@@ -243,8 +285,16 @@ const Register = () => {
                 </div>
               </div>
               <div className="pt-2 md:pt-4">
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                  <i className="fa-solid fa-user-plus"></i> Daftar Sekarang
+                <button 
+                  type="submit" 
+                  disabled={isLoading || isGoogleLoading}
+                  className={`w-full text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 ${isLoading || isGoogleLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {isLoading ? (
+                    <><i className="fa-solid fa-spinner animate-spin"></i> Memproses...</>
+                  ) : (
+                    <><i className="fa-solid fa-user-plus"></i> Daftar Sekarang</>
+                  )}
                 </button>
 
                 <div className="relative my-6">
@@ -259,6 +309,7 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={async () => {
+                    setIsGoogleLoading(true);
                     try {
                       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api';
                       const res = await axios.get(`${apiUrl}/auth/google`);
@@ -266,6 +317,7 @@ const Register = () => {
                         window.location.href = res.data.url;
                       }
                     } catch (e) {
+                      setIsGoogleLoading(false);
                       setPopup({
                         isOpen: true,
                         type: 'error',
@@ -275,10 +327,14 @@ const Register = () => {
                       });
                     }
                   }}
-                  className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm mb-4"
+                  disabled={isLoading || isGoogleLoading}
+                  className={`w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-3 shadow-sm mb-4 ${isLoading || isGoogleLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                 >
-                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                  Google
+                  {isGoogleLoading ? (
+                    <><i className="fa-solid fa-spinner animate-spin text-slate-500"></i> Memproses...</>
+                  ) : (
+                    <><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" /> Google</>
+                  )}
                 </button>
                 <p className="text-center text-sm text-slate-500 mt-6">
                   Sudah punya akun? <Link to="/login" className="text-blue-600 font-bold hover:underline">Masuk di sini</Link>

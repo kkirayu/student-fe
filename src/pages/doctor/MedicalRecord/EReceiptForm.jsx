@@ -1,87 +1,57 @@
-// src/pages/doctor/MedicalRecord/EReceiptForm.jsx
 import React, { useState, useEffect } from 'react';
-import { Pill, User, Plus, Trash2, FileText, Loader2, CheckCircle, Search } from 'lucide-react';
+import { Pill, User, Plus, Trash2, FileText, Loader2, ArrowLeft } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { doctorService } from '../../../services/doctorService';
 
 const EReceiptForm = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Menangkap context data pasien aktif dari SOAP / Waiting List
+  const { activeAppointment } = location.state || {};
+
   // State data dari API
-  const [patients, setPatients] = useState([]);
-  const [availableMedicines, setAvailableMedicines] = useState([]);
-  
-  // State UI & Loading
-  const [isLoadingPatients, setIsLoadingPatients] = useState(true);
-  const [isLoadingMedicines, setIsLoadingMedicines] = useState(true);
+  const [pets, setPets] = useState([]);
+  const [isLoadingPets, setIsLoadingPets] = useState(!activeAppointment);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // State Formulir Utama
-  const [selectedPatient, setSelectedPatient] = useState('');
-  const [petName, setPetName] = useState('');
-  const [petType, setPetType] = useState('');
+  const [selectedPetId, setSelectedPetId] = useState(activeAppointment?.pet_id || '');
+  const [appointmentId, setAppointmentId] = useState(activeAppointment?.id || '1'); // Default '1' untuk uji coba
+  const [petName, setPetName] = useState(activeAppointment?.pet?.name || '');
+  const [petType, setPetType] = useState(activeAppointment?.pet?.species || '');
   const [prescriptionNotes, setPrescriptionNotes] = useState('');
   
+  // State Item Obat Dinamis
   const [prescribedItems, setPrescribedItems] = useState([
-    { medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }
+    { medicine_name: '', dosage: '', frequency: '', quantity: 1, doctor_instructions: '' }
   ]);
 
+  // Ambil daftar hewan jika tidak di-pass dari halaman sebelumnya
   useEffect(() => {
-    const fetchPatients = async () => {
+    if (activeAppointment) return;
+    const fetchPetsData = async () => {
       try {
-        const response = await fetch('https://dummyjson.com/users?limit=10');
-        const data = await response.json();
-        
-        const petNames = ['Milo', 'Luna', 'Kuro', 'Bella', 'Simba', 'Chloe', 'Max', 'Oreo', 'Coco', 'Rocky'];
-        const petTypes = ['Kucing', 'Anjing', 'Kucing', 'Hamster', 'Anjing', 'Kelinci', 'Burung', 'Kucing', 'Musang', 'Anjing'];
-
-        const mapped = data.users.map((user, idx) => ({
-          id: user.id,
-          ownerName: `${user.firstName} ${user.lastName}`,
-          petName: petNames[idx],
-          petType: petTypes[idx]
-        }));
-        setPatients(mapped);
+        setIsLoadingPets(true);
+        const response = await doctorService.getPets();
+        const petsData = response?.data?.data || response?.data || response;
+        setPets(Array.isArray(petsData) ? petsData : []);
       } catch (error) {
         console.error('Gagal mengambil data pasien:', error);
       } finally {
-        setIsLoadingPatients(false);
+        setIsLoadingPets(false);
       }
     };
+    fetchPetsData();
+  }, [activeAppointment]);
 
-    const fetchMedicines = async () => {
-      try {
-        const response = await fetch('https://dummyjson.com/products/category/beauty?limit=15');
-        const data = await response.json();
-        
-        const medicalNames = [
-          'Amoxicillin 150mg Vet', 'Ivermectin Anti-Parasit', 'Ketoconazole Jamur Drop', 
-          'Enrofloxacin Antibiotik', 'Meloxicam Anti-Inflamasi', 'Vitamin B-Complex Vet', 
-          'Obat Cacing Pyrantel', 'Ear Drop Otopain', 'Nutri-Plus Gel Supplement',
-          'Shampoo Medicated Selsun', 'Prednisolone Anti-Alergi', 'Salep Mata Chloramphenicol'
-        ];
-
-        const mappedMedicines = data.products.map((item, idx) => ({
-          id: item.id,
-          name: medicalNames[idx] || item.title,
-          unit: idx % 2 === 0 ? 'Tablet' : 'Botol/Sirup',
-          stock: item.stock
-        }));
-        setAvailableMedicines(mappedMedicines);
-      } catch (error) {
-        console.error('Gagal mengambil data obat:', error);
-      } finally {
-        setIsLoadingMedicines(false);
-      }
-    };
-
-    fetchPatients();
-    fetchMedicines();
-  }, []);
-
-  const handlePatientChange = (patientId) => {
-    setSelectedPatient(patientId);
-    const patient = patients.find(p => p.id === parseInt(patientId));
-    if (patient) {
-      setPetName(patient.petName);
-      setPetType(patient.petType);
+  const handlePetChange = (petId) => {
+    setSelectedPetId(petId);
+    const selectedPet = pets.find(p => p.id === parseInt(petId));
+    if (selectedPet) {
+      setPetName(selectedPet.name);
+      setPetType(selectedPet.species);
     } else {
       setPetName('');
       setPetType('');
@@ -97,7 +67,7 @@ const EReceiptForm = () => {
   const addPrescriptionRow = () => {
     setPrescribedItems([
       ...prescribedItems,
-      { medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }
+      { medicine_name: '', dosage: '', frequency: '', quantity: 1 }
     ]);
   };
 
@@ -108,75 +78,106 @@ const EReceiptForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validasi input minimal sebelum dikirim
+    const isItemsValid = prescribedItems.every(item => item.medicine_name.trim() !== '' && item.quantity > 0);
+    if (!isItemsValid || (!selectedPetId && !activeAppointment)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Form Belum Lengkap',
+        text: 'Pastikan Anda telah memilih hewan dan mengisi nama obat di setiap baris.',
+        confirmButtonColor: '#2563eb'
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitSuccess(true);
+    // Kirim payload berstruktur nested object agar ditangkap sekaligus di backend
+    const payload = {
+      appointment_id: appointmentId,
+      pet_id: selectedPetId || activeAppointment?.pet_id,
+      doctor_id: 1, // Fallback ID dokter bertugas
+      doctor_instructions: prescriptionNotes,
+      items: prescribedItems // Array berisi objek medicine_name, dosage, frequency, quantity
+    };
+
+    try {
+      const response = await doctorService.submitEReceipt(payload);
       
-      setTimeout(() => {
-        setSubmitSuccess(false);
-        setSelectedPatient('');
-        setPetName('');
-        setPetType('');
-        setPrescriptionNotes('');
-        setPrescribedItems([{ medicineId: '', dosage: '', frequency: '', quantity: 1, instructions: '' }]);
-      }, 3000);
-    }, 1500);
+      await Swal.fire({
+        icon: 'success',
+        title: 'E-Resep Berhasil Dibuat!',
+        text: response?.message || 'Resep digital telah diteruskan ke bagian Kasir & Farmasi.',
+        confirmButtonColor: '#10b981'
+      });
+
+      navigate('/doctor');
+    } catch (error) {
+      console.error('Gagal mengirim E-Resep:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan E-Resep',
+        text: error.response?.data?.message || 'Terjadi kesalahan sistem (422/500). Periksa validasi backend Anda.',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="mx-auto max-w-4xl flex flex-col gap-6">
-      {/* Header Halaman */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Pembuatan E-Resep</h2>
-        <p className="text-sm text-slate-500">Formulir digital pembuatan resep obat untuk pasien rawat jalan.</p>
-      </div>
-
-      {submitSuccess && (
-        <div className="flex items-center gap-3 rounded bg-emerald-50 p-4 text-emerald-800 border border-emerald-200 shadow-sm animate-fadeIn">
-          <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-          <div>
-            <p className="font-semibold">E-Resep Berhasil Dibuat!</p>
-            <p className="text-xs text-emerald-600">Data resep digital telah dikirimkan secara otomatis ke Modul Apotek.</p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Pembuatan E-Resep</h2>
+          <p className="text-sm text-slate-500">Formulir digital pembuatan resep obat terintegrasi database klinik.</p>
         </div>
-      )}
+        <Link 
+          to="/doctor"
+          className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+        >
+          <ArrowLeft className="h-4 w-4" /> Kembali
+        </Link>
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* KARTU 1: INFORMASI PASIEN */}
         <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <User className="h-5 w-5 text-blue-600" />
-            <h3 className="font-bold text-slate-800">Pilih Pasien & Pemilik</h3>
+            <h3 className="font-bold text-slate-800">Pilih Pasien / Hewan</h3>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Dropdown Owner */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Nama Pemilik (Owner)</label>
-              {isLoadingPatients ? (
+              <label className="text-sm font-semibold text-slate-700">Registrasi Pasien (Pet)</label>
+              {activeAppointment ? (
+                <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 font-semibold">
+                  {activeAppointment?.pet?.name || 'Pasien Aktif'}
+                </div>
+              ) : isLoadingPets ? (
                 <div className="flex h-10 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xs text-slate-400">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-500" /> Memuat Owner...
+                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-500" /> Memuat Pasien...
                 </div>
               ) : (
                 <select
                   required
-                  value={selectedPatient}
-                  onChange={(e) => handlePatientChange(e.target.value)}
-                  className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  value={selectedPetId}
+                  onChange={(e) => handlePetChange(e.target.value)}
+                  className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
                 >
-                  <option value="">-- Pilih Pemilik --</option>
-                  {patients.map(p => (
-                    <option key={p.id} value={p.id}>{p.ownerName}</option>
+                  <option value="">-- Pilih Hewan --</option>
+                  {pets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} (Owner: {p.owner?.name || 'N/A'})</option>
                   ))}
                 </select>
               )}
             </div>
 
-            {/* Nama Hewan (Auto) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Nama Hewan</label>
               <input
@@ -188,7 +189,6 @@ const EReceiptForm = () => {
               />
             </div>
 
-            {/* Jenis Hewan (Auto) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Jenis Hewan</label>
               <input
@@ -218,93 +218,82 @@ const EReceiptForm = () => {
             </button>
           </div>
 
-          {isLoadingMedicines ? (
-            <div className="flex flex-col items-center justify-center py-10 text-blue-500">
-              <Loader2 className="h-7 w-7 animate-spin" />
-              <p className="mt-2 text-xs text-slate-500">Sinkronisasi katalog obat via API...</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {prescribedItems.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="relative grid grid-cols-1 gap-3 rounded border border-slate-100 bg-slate-50 p-4 pt-8 shadow-inner sm:grid-cols-12 sm:pt-4"
-                >
-                  {/* Tombol Hapus Pojok Kanan Atas */}
-                  <button
-                    type="button"
-                    disabled={prescribedItems.length === 1}
-                    onClick={() => removePrescriptionRow(index)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-rose-500 disabled:opacity-30 sm:static sm:col-span-1 sm:flex sm:items-center sm:justify-center sm:mt-6"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-
-                  {/* Dropdown Nama Obat */}
-                  <div className="flex flex-col gap-1 sm:col-span-4">
-                    <label className="text-xs font-semibold text-slate-600">Nama Obat</label>
-                    <select
-                      required
-                      value={item.medicineId}
-                      onChange={(e) => handleItemChange(index, 'medicineId', e.target.value)}
-                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
-                    >
-                      <option value="">-- Pilih Obat --</option>
-                      {availableMedicines.map(med => (
-                        <option key={med.id} value={med.id}>{med.name} ({med.unit})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Dosis (Contoh: 1/2, 1) */}
-                  <div className="flex flex-col gap-1 sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-600">Takaran Dosis</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Misal: 1 tab / 5ml"
-                      value={item.dosage}
-                      onChange={(e) => handleItemChange(index, 'dosage', e.target.value)}
-                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
-                    />
-                  </div>
-
-                  {/* Frekuensi (Contoh: 3x sehari) */}
-                  <div className="flex flex-col gap-1 sm:col-span-3">
-                    <label className="text-xs font-semibold text-slate-600">Frekuensi</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Misal: 3x sehari (Sesudah Makan)"
-                      value={item.frequency}
-                      onChange={(e) => handleItemChange(index, 'frequency', e.target.value)}
-                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
-                    />
-                  </div>
-
-                  {/* Jumlah Kuantitas */}
-                  <div className="flex flex-col gap-1 sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-600">Jumlah Qty</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
-                    />
-                  </div>
+          <div className="flex flex-col gap-4">
+            {prescribedItems.map((item, index) => (
+              <div 
+                key={index} 
+                className="relative grid grid-cols-1 gap-3 rounded border border-slate-100 bg-slate-50 p-4 pt-8 shadow-inner sm:grid-cols-12 sm:pt-4 items-end"
+              >
+                <div className="flex flex-col gap-1 sm:col-span-4">
+                  <label className="text-xs font-semibold text-slate-600">Nama Obat</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Amoxicillin 150mg Vet"
+                    value={item.medicine_name}
+                    onChange={(e) => handleItemChange(index, 'medicine_name', e.target.value)}
+                    className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* Takaran Dosis */}
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-600">Takaran Dosis</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Misal: 1 tab / 5ml"
+                    value={item.dosage}
+                    onChange={(e) => handleItemChange(index, 'dosage', e.target.value)}
+                    className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Frekuensi */}
+                <div className="flex flex-col gap-1 sm:col-span-3">
+                  <label className="text-xs font-semibold text-slate-600">Frekuensi</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Misal: 3x sehari"
+                    value={item.frequency}
+                    onChange={(e) => handleItemChange(index, 'frequency', e.target.value)}
+                    className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Jumlah Kuantitas */}
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-600">Jumlah Qty</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                    className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Tombol Hapus Baris */}
+                <button
+                  type="button"
+                  disabled={prescribedItems.length === 1}
+                  onClick={() => removePrescriptionRow(index)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-rose-500 disabled:opacity-30 sm:static sm:col-span-1 sm:flex sm:items-center sm:justify-center sm:mb-1.5"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* KARTU 3: CATATAN TAMBAHAN */}
+        {/* KARTU 3: INTRUKSI KHUSUS */}
         <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <FileText className="h-5 w-5 text-blue-600" />
-            <h3 className="font-bold text-slate-800">Instruksi Khusus Dokter</h3>
+            <h3 className="font-bold text-slate-800">Instruksi Tambahan</h3>
           </div>
           <div className="flex flex-col gap-1.5">
             <textarea
@@ -317,18 +306,18 @@ const EReceiptForm = () => {
           </div>
         </div>
 
-        {/* AKSI SUBMIT */}
+        {/* AKSI BUTTONS */}
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => navigate('/doctor')}
             className="rounded border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
             Batal
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || isLoadingMedicines || !selectedPatient}
+            disabled={isSubmitting || (!selectedPetId && !activeAppointment)}
             className="flex items-center gap-2 rounded bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
           >
             {isSubmitting ? (

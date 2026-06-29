@@ -5,11 +5,13 @@ import {
 } from 'lucide-react';
 import { getUserById, updateUser } from '../../services/ownerService';
 
-const OWNER_ID = 1;
 
 const SPECIES_EMOJI = { Anjing: '🐶', Kucing: '🐱' };
 
 const OwnerProfile = () => {
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const OWNER_ID = storedUser.id || 1;
+
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',

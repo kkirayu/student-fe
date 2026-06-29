@@ -12,6 +12,7 @@ import Login from '../pages/auth/Login';
 import OTPVerification from '../pages/auth/OTPVerification';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import AuthCallback from '../pages/auth/AuthCallback';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 import AdminDashboard from '../pages/admin/Dashboard';
 import StaffList from '../pages/admin/StaffManagement/StaffList';
@@ -91,7 +92,11 @@ const AppRouter = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
-        <Route path="/admin" element={<AdminLayout userRole="admin" />}>
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout userRole="admin" />
+          </ProtectedRoute>
+        }>
           <Route index element={<AdminDashboard />} />
           <Route path="staff" element={<StaffList />} />
           <Route path="staff/add" element={<StaffForm />} />
@@ -113,7 +118,11 @@ const AppRouter = () => {
           </Route>
         </Route>
 
-        <Route path="/owner" element={<AdminLayout userRole="owner" />}>
+        <Route path="/owner" element={
+          <ProtectedRoute allowedRoles={['owner', 'pemilik hewan']}>
+            <AdminLayout userRole="owner" />
+          </ProtectedRoute>
+        }>
           <Route index element={<OwnerDashboard />} />
           <Route path="profile" element={<OwnerProfile />} />
           <Route path="pets" element={<PetList />} />

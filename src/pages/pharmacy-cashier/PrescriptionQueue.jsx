@@ -87,6 +87,40 @@ const PrescriptionQueue = () => {
     }
   };
 
+// Card Stats
+const cardStats = [
+  {
+    title: 'Total Resep',
+    value: prescriptions.length,
+    icon: <FileText className="text-blue-600 h-6 w-6" />,
+    bgIcon: 'bg-blue-100',
+  },
+  {
+    title: 'Menunggu',
+    value: prescriptions.filter(
+      (p) => p.status === 'Pending'
+    ).length,
+    icon: <AlertTriangle className="text-amber-600 h-6 w-6" />,
+    bgIcon: 'bg-amber-100',
+  },
+  {
+    title: 'Sebagian Ditebus',
+    value: prescriptions.filter(
+      (p) => p.status === 'Sebagian Ditebus'
+    ).length,
+    icon: <Loader2 className="text-cyan-600 h-6 w-6" />,
+    bgIcon: 'bg-cyan-100',
+  },
+  {
+    title: 'Selesai',
+    value: prescriptions.filter(
+      (p) => p.status === 'Selesai'
+    ).length,
+    icon: <CheckCircle className="text-emerald-600 h-6 w-6" />,
+    bgIcon: 'bg-emerald-100',
+  },
+];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -120,6 +154,50 @@ const PrescriptionQueue = () => {
           </button>
         </div>
       </div>
+
+<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+  {cardStats.map((stat, index) => (
+    <div
+      key={index}
+      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+    >
+      {/* Gradient Bottom */}
+      <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-500/20 via-cyan-400/20 to-transparent" />
+
+      {/* Watermark */}
+      <div className="absolute right-4 bottom-3 opacity-5 scale-[2.8] text-slate-700 pointer-events-none">
+        {stat.icon}
+      </div>
+
+      <div className="relative flex items-center gap-4">
+        {/* Icon */}
+        <div
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${stat.bgIcon}`}
+        >
+          {stat.icon}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1">
+          <p className="text-sm font-medium text-slate-500">
+            {stat.title}
+          </p>
+
+          <h2 className="mt-1 text-4xl font-bold tracking-tight text-slate-800">
+            {stat.value}
+          </h2>
+
+          <p className="mt-1 text-xs text-slate-400">
+            {index === 0 && "Semua resep"}
+            {index === 1 && "Perlu diproses"}
+            {index === 2 && "Sedang diproses"}
+            {index === 3 && "Sudah selesai"}
+          </p>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
 
       {/* Konten */}
       {isLoading ? (
