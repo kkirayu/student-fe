@@ -51,7 +51,7 @@ const SOAPForm = () => {
 
       } catch (error) {
         console.error("Gagal mengambil data penunjang:", error);
-        // Fallback data dummy jika API bermasalah agar UI tetap bisa dites jal dijalankan
+        // Fallback data dummy jika API bermasalah agar UI tetap bisa dites dijalankan
         setPetOptions([
           { id: '1', name: 'Luna', species: 'Kucing' },
           { id: '2', name: 'Bruno', species: 'Anjing' }
@@ -244,7 +244,6 @@ const SOAPForm = () => {
                   className="w-full appearance-none rounded border border-slate-300 bg-transparent py-2 pl-4 pr-10 text-sm outline-none focus:border-blue-600 disabled:bg-slate-100"
                 >
                   <option value="">{loadingFetch ? 'Memuat Kamus Diagnosis...' : 'Pilih Diagnosis Penyakit...'}</option>
-                  {/* 🌟 ANTI-CRASH 3: Proteksi map data diagnosis */}
                   {Array.isArray(diagnosisOptions) && diagnosisOptions.map(diag => (
                     <option key={diag.id} value={diag.id}>
                       {diag.disease_name}

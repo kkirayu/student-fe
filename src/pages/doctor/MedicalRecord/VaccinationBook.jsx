@@ -82,7 +82,7 @@ const VaccinationBook = () => {
 
     setIsSubmitting(true);
 
-    // Payload presisi 1:1 mengikuti ekspektasi tabel backend vaccinations
+    // Payload tabel backend vaccinations
     const payload = {
       pet_id: parseInt(formData.pet_id),
       doctor_id: 1, // Default ID dokter bertugas (Drh. Bunga)

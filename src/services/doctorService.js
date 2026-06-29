@@ -2,12 +2,37 @@ import api from './api';
 
 export const doctorService = {
   getPets: async () => {
-    const response = await api.get('/pets'); 
+    const response = await api.get('/pets');  
     return response.data;
   },
 
+  // Ambil semua data referensi diagnosis / kamus penyakit
   getDiagnoses: async () => {
     const response = await api.get('/doctor/diagnoses');
+    return response.data;
+  },
+
+  // Ambil rincian detail 1 data penyakit berdasarkan ID (untuk edit mode)
+  getDiagnosisById: async (id) => {
+    const response = await api.get(`/doctor/diagnoses/${id}`);
+    return response.data;
+  },
+
+  // Buat referensi diagnosis baru
+  createDiagnosis: async (diagnosisData) => {
+    const response = await api.post('/doctor/diagnoses', diagnosisData);
+    return response.data;
+  },
+
+  // Perbarui referensi diagnosis yang sudah ada
+  updateDiagnosis: async (id, diagnosisData) => {
+    const response = await api.put(`/doctor/diagnoses/${id}`, diagnosisData);
+    return response.data;
+  },
+
+  // Hapus referensi diagnosis
+  deleteDiagnosis: async (id) => {
+    const response = await api.delete(`/doctor/diagnoses/${id}`);
     return response.data;
   },
 
