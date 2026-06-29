@@ -1,4 +1,3 @@
-// src/pages/doctor/MedicalRecord/EReceiptForm.jsx
 import React, { useState, useEffect } from 'react';
 import { Pill, User, Plus, Trash2, FileText, Loader2, ArrowLeft } from 'lucide-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
@@ -17,14 +16,14 @@ const EReceiptForm = () => {
   const [isLoadingPets, setIsLoadingPets] = useState(!activeAppointment);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State Formulir Utama (Sinkron dengan field database Laravel)
+  // State Formulir Utama
   const [selectedPetId, setSelectedPetId] = useState(activeAppointment?.pet_id || '');
   const [appointmentId, setAppointmentId] = useState(activeAppointment?.id || '1'); // Default '1' untuk uji coba
   const [petName, setPetName] = useState(activeAppointment?.pet?.name || '');
   const [petType, setPetType] = useState(activeAppointment?.pet?.species || '');
   const [prescriptionNotes, setPrescriptionNotes] = useState('');
   
-  // State Item Obat Dinamis (Disamakan PERSIS dengan $fillable EReceiptItem)
+  // State Item Obat Dinamis
   const [prescribedItems, setPrescribedItems] = useState([
     { medicine_name: '', dosage: '', frequency: '', quantity: 1, doctor_instructions: '' }
   ]);
@@ -225,7 +224,6 @@ const EReceiptForm = () => {
                 key={index} 
                 className="relative grid grid-cols-1 gap-3 rounded border border-slate-100 bg-slate-50 p-4 pt-8 shadow-inner sm:grid-cols-12 sm:pt-4 items-end"
               >
-                {/* 🌟 PERUBAHAN UTAMA: Diganti dari <select> menjadi <input text> bebas sesuai model database */}
                 <div className="flex flex-col gap-1 sm:col-span-4">
                   <label className="text-xs font-semibold text-slate-600">Nama Obat</label>
                   <input
