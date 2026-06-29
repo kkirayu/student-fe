@@ -100,21 +100,16 @@ const CheckoutPOS = () => {
     // Process to backend
     setIsProcessing(true);
     try {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const payload = {
-        amount: grandTotal,
+        invoice_id: 'INV-20260629-001', // ID Invoice dummy untuk demo
+        cashier_id: storedUser.id || 1,
         payment_method: paymentMethod,
-        discount: discount,
-        amount_given: amountGiven || 0,
-        items: cart.map(item => ({
-          id: item.id,
-          qty: item.qty,
-          price: item.price
-        }))
+        amount_paid: paymentMethod === 'Tunai' ? Number(amountGiven) : grandTotal,
       };
       
-      // Simulate/call actual API
-      // If payment route isn't fully ready in backend, we simulate success for demo
-      // await processPayment(payload); 
+      // Call actual API
+      await processPayment(payload); 
       
       // Delay for loading effect
       await new Promise(resolve => setTimeout(resolve, 1500));
