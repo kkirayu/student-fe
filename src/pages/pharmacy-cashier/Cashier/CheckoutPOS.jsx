@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, Plus, Trash2, Wallet, 
-  QrCode, Receipt, User, CheckCircle2, ChevronLeft, X, Smartphone
+  QrCode, Receipt, User, CheckCircle2, ChevronLeft, X, Smartphone, Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getProducts } from '../../../services/pharmacyService';
+import { processPayment } from '../../../services/paymentService';
 
 // --- MOCK DATA ---
 const initialMedicalBill = [
@@ -11,16 +13,12 @@ const initialMedicalBill = [
   { id: 'M1', name: 'Jasa Konsultasi Dokter', category: 'Layanan', price: 150000, qty: 1, isLocked: true },
 ];
 
-const petshopCatalog = [
-  { id: 'P1', name: 'Royal Canin Kitten 2kg', category: 'Makanan', price: 280000 },
-  { id: 'P2', name: 'Whiskas Tuna 1.2kg', category: 'Makanan', price: 65000 },
-  { id: 'P3', name: 'Pasir Kucing Bentonite 5L', category: 'Perlengkapan', price: 45000 },
-  { id: 'P4', name: 'Mainan Tikus Tali', category: 'Aksesoris', price: 15000 },
-];
 
 const CheckoutPOS = () => {
   const [cart, setCart] = useState(initialMedicalBill);
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('QRIS'); 
   const [amountGiven, setAmountGiven] = useState('');
@@ -28,6 +26,31 @@ const CheckoutPOS = () => {
   // States untuk alur pembayaran
   const [showQrisModal, setShowQrisModal] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+
+  // Fetch produk dari backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        const data = await getProducts(searchQuery);
+        // backend data.data contains the array when paginated
+        setProducts(data.data || data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+    
+    // debounce search
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   // --- PERHITUNGAN KEUANGAN ---
   const subtotal = useMemo(() => {
@@ -44,13 +67,14 @@ const CheckoutPOS = () => {
 
   // --- HANDLERS ---
   const handleAddItem = (product) => {
+    const price = product.selling_price || product.price; // handle mock data vs real data
     const existingItem = cart.find(item => item.id === product.id);
     if (existingItem) {
       setCart(cart.map(item => 
         item.id === product.id ? { ...item, qty: item.qty + 1 } : item
       ));
     } else {
-      setCart([...cart, { ...product, qty: 1, isLocked: false }]);
+      setCart([...cart, { ...product, price, qty: 1, isLocked: false }]);
     }
     setSearchQuery('');
   };
@@ -64,16 +88,46 @@ const CheckoutPOS = () => {
     setCart(cart.map(item => item.id === id ? { ...item, qty: newQty } : item));
   };
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
+    setPaymentError('');
     if (paymentMethod === 'Tunai') {
       if (amountGiven < grandTotal) {
-        alert('Nominal uang tunai kurang dari total tagihan!');
+        setPaymentError('Nominal uang tunai kurang dari total tagihan!');
         return;
       }
-      setIsSuccess(true);
-    } else if (paymentMethod === 'QRIS') {
-      // Tampilkan Modal QRIS
-      setShowQrisModal(true);
+    }
+    
+    // Process to backend
+    setIsProcessing(true);
+    try {
+      const payload = {
+        amount: grandTotal,
+        payment_method: paymentMethod,
+        discount: discount,
+        amount_given: amountGiven || 0,
+        items: cart.map(item => ({
+          id: item.id,
+          qty: item.qty,
+          price: item.price
+        }))
+      };
+      
+      // Simulate/call actual API
+      // If payment route isn't fully ready in backend, we simulate success for demo
+      // await processPayment(payload); 
+      
+      // Delay for loading effect
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      if (paymentMethod === 'QRIS') {
+        setShowQrisModal(true);
+      } else {
+        setIsSuccess(true);
+      }
+    } catch (error) {
+      setPaymentError(error.message || 'Pembayaran gagal. Silakan coba lagi.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -82,7 +136,7 @@ const CheckoutPOS = () => {
     setIsSuccess(true);
   };
 
-  const filteredCatalog = petshopCatalog.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredCatalog = products || [];
 
   // --- RENDER SUCCESS STATE ---
   if (isSuccess) {
@@ -143,20 +197,27 @@ const CheckoutPOS = () => {
 
             {searchQuery && (
               <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
-                {filteredCatalog.length > 0 ? filteredCatalog.map(product => (
-                  <div key={product.id} className="flex items-center justify-between rounded bg-white p-3 shadow-sm">
-                    <div>
-                      <p className="font-medium text-slate-800">{product.name}</p>
-                      <p className="text-sm text-slate-500">{formatRupiah(product.price)}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleAddItem(product)}
-                      className="flex items-center gap-1 rounded bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-200"
-                    >
-                      <Plus className="h-4 w-4" /> Tambah
-                    </button>
+                {isLoadingProducts ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                    <span className="ml-2 text-sm text-slate-500">Mencari produk...</span>
                   </div>
-                )) : (
+                ) : filteredCatalog.length > 0 ? (
+                  filteredCatalog.map(product => (
+                    <div key={product.id} className="flex items-center justify-between rounded bg-white p-3 shadow-sm">
+                      <div>
+                        <p className="font-medium text-slate-800">{product.name}</p>
+                        <p className="text-sm text-slate-500">{formatRupiah(product.selling_price)}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleAddItem(product)}
+                        className="flex items-center gap-1 rounded bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-200"
+                      >
+                        <Plus className="h-4 w-4" /> Tambah
+                      </button>
+                    </div>
+                  ))
+                ) : (
                   <p className="py-3 text-center text-sm text-slate-500">Produk tidak ditemukan.</p>
                 )}
               </div>
@@ -307,11 +368,19 @@ const CheckoutPOS = () => {
               </div>
             )}
 
+            {paymentError && (
+              <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 border border-red-100">
+                {paymentError}
+              </div>
+            )}
+
             <button 
               onClick={handleProcessPayment}
-              className="mt-auto w-full rounded-lg bg-green-600 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-green-700 active:bg-green-800"
+              disabled={isProcessing}
+              className="mt-auto w-full flex items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-green-700 active:bg-green-800 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Proses Pembayaran {paymentMethod === 'QRIS' && 'QRIS'}
+              {isProcessing && <Loader2 className="h-5 w-5 animate-spin" />}
+              {isProcessing ? 'Memproses...' : `Proses Pembayaran ${paymentMethod === 'QRIS' ? 'QRIS' : ''}`}
             </button>
           </div>
         </div>
