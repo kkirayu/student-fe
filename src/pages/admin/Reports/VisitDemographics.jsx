@@ -6,7 +6,7 @@ const VisitDemographics = () => {
   const [speciesData, setSpeciesData] = useState([]);
   const [breedData, setBreedData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('Bulan Ini');
+  const [dateFilter, setDateFilter] = useState('Semua Waktu');
 
   useEffect(() => {
     const fetchData = async () => {

@@ -5,7 +5,7 @@ import { getFinancialReport } from '../../../services/adminService';
 const FinancialReport = () => {
   const [financialData, setFinancialData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('Bulan Ini');
+  const [dateFilter, setDateFilter] = useState('Semua Waktu');
 
   useEffect(() => {
     const fetchData = async () => {
