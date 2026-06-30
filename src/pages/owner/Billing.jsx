@@ -76,10 +76,12 @@ const Billing = () => {
 
     setIsProcessing(true);
     try {
-      // Update status invoice via API
-      await api.put(`/invoices/${selectedInvoice.id}`, {
+      // Update status invoice dan buat record payment via API
+      await api.post(`/payments`, {
+        invoice_id: selectedInvoice.id,
+        cashier_id: OWNER_ID, // Untuk self-service, gunakan ID user yang sedang login
         payment_method: selectedPaymentMethod,
-        status: 'Paid',
+        amount_paid: selectedInvoice.total_amount,
       });
 
       // Update data lokal
