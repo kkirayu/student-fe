@@ -6,6 +6,11 @@ export const getUserById = async (id) => {
   return response.data; // { success: true, data: { ... } }
 };
 
+export const getOwnerProfile = async () => {
+  const response = await api.get('/user');
+  return response.data; // Returns user object directly or wrapped in data depending on backend
+};
+
 export const updateUser = async (id, userData) => {
   if (userData instanceof FormData) {
     userData.append('_method', 'PUT');
@@ -13,6 +18,11 @@ export const updateUser = async (id, userData) => {
     return response.data;
   }
   const response = await api.put(`/users/${id}`, userData);
+  return response.data;
+};
+
+export const updateOwnerProfile = async (profileData) => {
+  const response = await api.post('/user/profile', profileData);
   return response.data;
 };
 

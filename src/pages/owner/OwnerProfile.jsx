@@ -3,15 +3,12 @@ import {
   User, Mail, Phone, MapPin, Save, Lock, Camera, Edit,
   AlertCircle, Loader2, Shield, CheckCircle, PawPrint
 } from 'lucide-react';
-import { getUserById, updateUser } from '../../services/ownerService';
+import { getOwnerProfile, updateOwnerProfile } from '../../services/ownerService';
 
 
 const SPECIES_EMOJI = { Anjing: '🐶', Kucing: '🐱' };
 
 const OwnerProfile = () => {
-  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const OWNER_ID = storedUser.id || 1;
-
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -38,9 +35,8 @@ const OwnerProfile = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await getUserById(OWNER_ID);
-        // Response: { success: true, data: { id, name, email, phone_number, address, role, status, pets, ... } }
-        const data = res.data;
+        const data = await getOwnerProfile();
+        // Response: data directly since /user returns the object directly
         setUserData(data);
         setFormData(prev => ({
           ...prev,
@@ -120,7 +116,7 @@ const OwnerProfile = () => {
         }
       }
 
-      const res = await updateUser(OWNER_ID, payload);
+      const res = await updateOwnerProfile(payload);
 
       // Update local userData
       setUserData(prev => ({
