@@ -144,6 +144,9 @@ const OwnerProfile = () => {
   const getAvatarUrl = () => {
     if (photoPreview) return photoPreview;
     if (userData?.photo) {
+      if (userData.photo.startsWith('http')) {
+        return userData.photo;
+      }
       const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
       return `${baseUrl}/${userData.photo}`;
     }
