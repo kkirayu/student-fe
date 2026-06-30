@@ -78,3 +78,8 @@ export const updateClinicSettings = async (formData) => {
   });
   return response.data;
 };
+
+export const downloadDatabaseBackup = async () => {
+  const response = await api.get('/backup-database', { responseType: 'blob' });
+  return response.data;
+};

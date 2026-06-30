@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Database, Image as ImageIcon, Building, Phone, MapPin, Clock, Loader2 } from 'lucide-react';
-import { getClinicSettings, updateClinicSettings } from '../../services/adminService';
+import { getClinicSettings, updateClinicSettings, downloadDatabaseBackup } from '../../services/adminService';
 import { showSuccess, showError } from '../../utils/alertUtils';
 
 const ClinicSettings = () => {
@@ -15,6 +15,7 @@ const ClinicSettings = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -96,6 +97,26 @@ const ClinicSettings = () => {
       setIsSaving(false);
     }
   };
+  const handleBackup = async () => {
+    try {
+      setIsBackingUp(true);
+      const blob = await downloadDatabaseBackup();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `backup_zeta_connect_${new Date().getTime()}.sql`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showSuccess('Backup database berhasil diunduh');
+    } catch (error) {
+      console.error('Failed to backup database:', error);
+      showError('Gagal mengunduh backup database');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -252,8 +273,13 @@ const ClinicSettings = () => {
             <p className="text-sm text-red-700 mb-5">
               Unduh salinan seluruh data klinik (pasien, rekam medis, transaksi) dalam format `.sql` untuk keamanan data.
             </p>
-            <button className="w-full flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all">
-              Mulai Backup
+            <button 
+              onClick={handleBackup}
+              disabled={isBackingUp}
+              className="w-full flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all disabled:opacity-70"
+            >
+              {isBackingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+              {isBackingUp ? 'Memproses Backup...' : 'Mulai Backup'}
             </button>
           </div>
 
