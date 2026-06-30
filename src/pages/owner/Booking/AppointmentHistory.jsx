@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getMyAppointments } from '../../../services/ownerService';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 const AppointmentHistory = () => {
-  // Data riwayat janji temu (Bisa juga diambil dari API nantinya)
-  const historyData = [
-    { id: 1, pet: 'Milo', service: 'Konsultasi Medis', date: '2026-05-20', time: '10:00', status: 'Menunggu' },
-    { id: 2, pet: 'Buster', service: 'Vaksinasi', date: '2026-05-18', time: '13:30', status: 'Disetujui' },
-    { id: 3, pet: 'Milo', service: 'Grooming', date: '2026-04-10', time: '09:00', status: 'Selesai' },
-    { id: 4, pet: 'Luna', service: 'Konsultasi Medis', date: '2026-03-05', time: '15:00', status: 'Batal' },
-  ];
+  const [historyData, setHistoryData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setIsLoading(true);
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const ownerId = storedUser.id;
+        
+        const res = await getMyAppointments({ owner_id: ownerId });
+        let data = [];
+        if (Array.isArray(res)) data = res;
+        else if (Array.isArray(res?.data)) data = res.data;
+        else if (Array.isArray(res?.data?.data)) data = res.data.data;
+        
+        setHistoryData(data);
+      } catch (err) {
+        console.error('Error fetching appointment history:', err);
+        setError('Gagal memuat riwayat janji temu');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, []);
 
   // Fungsi untuk menentukan warna badge berdasarkan status
   const getStatusBadge = (status) => {
@@ -40,34 +63,59 @@ const AppointmentHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {historyData.map((item) => (
-              <tr 
-                key={item.id} 
-                className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 text-sm text-slate-700"
-              >
-                <td className="p-4 font-medium text-slate-900">#{item.id}</td>
-                <td className="p-4">{item.pet}</td>
-                <td className="p-4">{item.service}</td>
-                <td className="p-4">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{item.date}</span>
-                    <span className="text-xs text-slate-500">{item.time} WIB</span>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <span 
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(item.status)}`}
-                  >
-                    {item.status}
-                  </span>
+            {isLoading ? (
+              <tr>
+                <td colSpan="5" className="p-8 text-center">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-blue-500" />
+                  <p className="mt-2 text-sm text-slate-500">Memuat data...</p>
                 </td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td colSpan="5" className="p-8 text-center text-red-500">
+                  <AlertCircle className="mx-auto h-6 w-6 mb-2" />
+                  {error}
+                </td>
+              </tr>
+            ) : (
+              historyData.map((item, index) => {
+                const petName = item.pet?.name || `Pet #${item.pet_id}`;
+                const serviceName = item.service?.name || item.initial_complaint || '-';
+                const dateStr = item.appointment_date 
+                  ? new Date(item.appointment_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '-';
+                const timeStr = item.appointment_time || '-';
+                
+                return (
+                  <tr 
+                    key={item.id ?? index} 
+                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 text-sm text-slate-700"
+                  >
+                    <td className="p-4 font-medium text-slate-900">#{item.id ?? index}</td>
+                    <td className="p-4">{petName}</td>
+                    <td className="p-4">{serviceName}</td>
+                    <td className="p-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{dateStr}</span>
+                        <span className="text-xs text-slate-500">{timeStr} WIB</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span 
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(item.status)}`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
 
         {/* State Kosong jika tidak ada data */}
-        {historyData.length === 0 && (
+        {!isLoading && !error && historyData.length === 0 && (
           <div className="p-8 text-center text-slate-500">
             Belum ada riwayat janji temu.
           </div>

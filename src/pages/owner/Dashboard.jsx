@@ -13,12 +13,19 @@ import {
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 
-const OWNER_ID = 1;
+const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+const OWNER_ID = storedUser.id || 1;
 
 const OwnerDashboard = () => {
   const [pets, setPets] = useState([]);
   const [petsLoading, setPetsLoading] = useState(true);
   const [petsError, setPetsError] = useState(false);
+
+  const [medRecords, setMedRecords] = useState([]);
+  const [medRecordsLoading, setMedRecordsLoading] = useState(true);
+
+  const [unpaidInvoices, setUnpaidInvoices] = useState([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(true);
 
 
   // Fetch hewan peliharaan milik owner yang login
@@ -56,10 +63,10 @@ const OwnerDashboard = () => {
         });
         const list = res.data?.data?.data ?? res.data?.data ?? [];
 
-        // Urutkan ascending: schedule_date dulu, lalu schedule_time
+        // Urutkan ascending: appointment_date dulu, lalu appointment_time
         const sorted = [...list].sort((a, b) => {
-          const dtA = new Date(`${a.schedule_date}T${a.schedule_time ?? '00:00'}`);
-          const dtB = new Date(`${b.schedule_date}T${b.schedule_time ?? '00:00'}`);
+          const dtA = new Date(`${a.appointment_date}T${a.appointment_time ?? '00:00'}`);
+          const dtB = new Date(`${b.appointment_date}T${b.appointment_time ?? '00:00'}`);
           return dtA - dtB;
         });
 
@@ -71,7 +78,31 @@ const OwnerDashboard = () => {
       }
     };
 
+    const fetchStatsData = async () => {
+      try {
+        setMedRecordsLoading(true);
+        setInvoicesLoading(true);
+
+        const [medRes, invRes] = await Promise.all([
+          api.get('/medical-records', { params: { owner_id: OWNER_ID } }),
+          api.get('/invoices', { params: { owner_id: OWNER_ID, status: 'Unpaid' } })
+        ]);
+
+        const medList = medRes.data?.data?.data ?? medRes.data?.data ?? [];
+        setMedRecords(medList);
+
+        const invList = invRes.data?.data?.data ?? invRes.data?.data ?? [];
+        setUnpaidInvoices(invList);
+      } catch (err) {
+        console.error('Fetch stats data error:', err);
+      } finally {
+        setMedRecordsLoading(false);
+        setInvoicesLoading(false);
+      }
+    };
+
     fetchAllAppointments();
+    fetchStatsData();
   }, []);
 
   // Hitung appointment berstatus 'Disetujui' dari data yang sudah di-fetch
@@ -82,8 +113,8 @@ const OwnerDashboard = () => {
     if (allApptLoading) return '...';
     if (confirmedAppointments.length === 0) return 'Tidak ada jadwal aktif';
     const nearest = confirmedAppointments[0]; // sudah diurutkan ascending
-    const date = nearest?.schedule_date
-      ? new Date(nearest.schedule_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    const date = nearest?.appointment_date
+      ? new Date(nearest.appointment_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
       : '—';
     return `Terdekat: ${date}`;
   };
@@ -121,15 +152,23 @@ const OwnerDashboard = () => {
     },
     {
       title: 'Riwayat Rekam Medis',
-      value: '8 Catatan',
-      subtitle: 'Terakhir: 10 Mei 2026',
+      value: medRecordsLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-orange-600" />
+        : `${medRecords.length} Catatan`,
+      subtitle: medRecords.length > 0 
+        ? `Terakhir: ${new Date(medRecords[0]?.created_at || new Date()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : 'Tidak ada riwayat',
       icon: <FileText className="text-orange-600 h-6 w-6" />,
       bgIcon: 'bg-orange-100',
     },
     {
       title: 'Tagihan Tertunda',
-      value: 'Rp 350.000',
-      subtitle: '1 Invoice Belum Lunas',
+      value: invoicesLoading
+        ? <Loader2 className="h-6 w-6 animate-spin text-rose-600" />
+        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(
+            unpaidInvoices.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0)
+          ),
+      subtitle: unpaidInvoices.length > 0 ? `${unpaidInvoices.length} Invoice Belum Lunas` : 'Tidak ada tagihan tertunda',
       icon: <DollarSign className="text-rose-600 h-6 w-6" />,
       bgIcon: 'bg-rose-100',
     },
@@ -259,7 +298,7 @@ const OwnerDashboard = () => {
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {formatScheduleDate(appt.schedule_date)} @ {appt.schedule_time} WIB
+                              {formatScheduleDate(appt.appointment_date)} @ {appt.appointment_time} WIB
                             </span>
                           </div>
                         </div>

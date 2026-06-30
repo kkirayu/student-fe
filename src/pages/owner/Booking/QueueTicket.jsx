@@ -95,7 +95,10 @@ const QueueTicket = () => {
     const fetchTickets = async () => {
       try {
         setIsLoading(true);
-        const res = await getMyAppointments();
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const ownerId = storedUser.id;
+        
+        const res = await getMyAppointments({ owner_id: ownerId });
         const data = extractArray(res).map(normalizeTicket);
         setTickets(data);
 
@@ -196,11 +199,11 @@ const QueueTicket = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 font-bold text-slate-800">
                           <Calendar className="h-4 w-4 text-blue-500" />
-                          {formatDate(ticket.schedule_date)}
+                          {formatDate(ticket.appointment_date)}
                         </div>
                         <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                           <Clock className="h-3.5 w-3.5" />
-                          {ticket.schedule_time} WIB
+                          {ticket.appointment_time} WIB
                         </div>
                       </td>
                       <td className="px-6 py-4 text-slate-600 font-medium">
@@ -331,9 +334,9 @@ const QueueTicket = () => {
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jadwal</p>
                     <p className="text-sm font-bold text-slate-800">
-                      {formatDate(selectedTicket.schedule_date)}
+                      {formatDate(selectedTicket.appointment_date)}
                     </p>
-                    <p className="text-xs text-slate-500">{selectedTicket.schedule_time} WIB</p>
+                    <p className="text-xs text-slate-500">{selectedTicket.appointment_time} WIB</p>
                   </div>
                 </div>
 

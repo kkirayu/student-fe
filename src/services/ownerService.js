@@ -87,8 +87,8 @@ export const createAppointment = async (appointmentData) => {
   return response.data;
 };
 
-export const getMyAppointments = async () => {
-  const response = await api.get('/appointments');
+export const getMyAppointments = async (params = {}) => {
+  const response = await api.get('/appointments', { params });
   return response.data;
 };
 
