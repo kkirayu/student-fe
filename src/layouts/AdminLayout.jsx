@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Box, Search, LogOut, ChevronDown } from 'lucide-react'; 
 
@@ -29,14 +29,40 @@ const AdminLayout = ({ userRole = 'admin' }) => {
     receptionist: 'Resepsionis'
   };
 
-  const userStr = localStorage.getItem('user');
-  let userData = null;
-  try {
-    userData = userStr ? JSON.parse(userStr) : null;
-  } catch(e) {}
+  const [userData, setUserData] = useState(() => {
+    const userStr = localStorage.getItem('user');
+    try {
+      return userStr ? JSON.parse(userStr) : null;
+    } catch(e) {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      const userStr = localStorage.getItem('user');
+      try {
+        setUserData(userStr ? JSON.parse(userStr) : null);
+      } catch(e) {
+        setUserData(null);
+      }
+    };
+
+    window.addEventListener('userUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userUpdated', handleUserUpdate);
+  }, []);
 
   const currentName = userData?.name || displayNames[userRole] || 'User';
   const displayRole = userData?.role || userRole;
+
+  const getAvatarUrl = () => {
+    if (userData?.photo) {
+      if (userData.photo.startsWith('http')) return userData.photo;
+      const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+      return `${baseUrl}/${userData.photo}`;
+    }
+    return `https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-600">
@@ -137,8 +163,8 @@ const AdminLayout = ({ userRole = 'admin' }) => {
                     <p className="text-sm font-bold leading-tight text-black">{currentName}</p>
                     <p className="text-xs font-medium text-slate-500 capitalize">{displayRole}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5 flex items-center justify-center">
-                    <img src={`https://ui-avatars.com/api/?name=${currentName.split(' ').join('+')}&background=3b82f6&color=fff&bold=true`} alt="User" className="h-full w-full rounded-full" />
+                  <div className="h-10 w-10 rounded-full border border-slate-200 p-0.5 flex items-center justify-center overflow-hidden">
+                    <img src={getAvatarUrl()} alt="User" className="h-full w-full rounded-full object-cover" />
                   </div>
                   <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>

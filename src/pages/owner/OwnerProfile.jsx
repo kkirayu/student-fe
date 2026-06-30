@@ -119,13 +119,18 @@ const OwnerProfile = () => {
       const res = await updateOwnerProfile(payload);
 
       // Update local userData
-      setUserData(prev => ({
-        ...prev,
-        name: formData.fullName,
-        phone_number: formData.phone,
-        address: formData.address,
-        photo: res?.data?.photo || prev?.photo,
-      }));
+      setUserData(prev => {
+        const updatedUser = {
+          ...prev,
+          name: formData.fullName,
+          phone_number: formData.phone,
+          address: formData.address,
+          photo: res?.data?.photo || prev?.photo,
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event('userUpdated'));
+        return updatedUser;
+      });
 
       setSuccessMsg('Profil berhasil diperbarui!');
       setIsEditing(false);
