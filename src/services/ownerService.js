@@ -7,6 +7,11 @@ export const getUserById = async (id) => {
 };
 
 export const updateUser = async (id, userData) => {
+  if (userData instanceof FormData) {
+    userData.append('_method', 'PUT');
+    const response = await api.post(`/users/${id}`, userData);
+    return response.data;
+  }
   const response = await api.put(`/users/${id}`, userData);
   return response.data;
 };

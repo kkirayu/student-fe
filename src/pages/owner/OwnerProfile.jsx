@@ -23,6 +23,9 @@ const OwnerProfile = () => {
     confirmPassword: '',
   });
 
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +76,8 @@ const OwnerProfile = () => {
       newPassword: '',
       confirmPassword: '',
     }));
+    setPhotoFile(null);
+    setPhotoPreview(null);
     setError(null);
   };
 
@@ -89,18 +94,33 @@ const OwnerProfile = () => {
     setSuccessMsg('');
 
     try {
-      const payload = {
-        name: formData.fullName,
-        phone_number: formData.phone,
-        address: formData.address,
-      };
+      let payload;
+      
+      if (photoFile) {
+        payload = new FormData();
+        payload.append('name', formData.fullName);
+        payload.append('phone_number', formData.phone);
+        payload.append('address', formData.address);
+        payload.append('photo', photoFile);
 
-      if (formData.newPassword && formData.currentPassword) {
-        payload.current_password = formData.currentPassword;
-        payload.new_password = formData.newPassword;
+        if (formData.newPassword && formData.currentPassword) {
+          payload.append('current_password', formData.currentPassword);
+          payload.append('new_password', formData.newPassword);
+        }
+      } else {
+        payload = {
+          name: formData.fullName,
+          phone_number: formData.phone,
+          address: formData.address,
+        };
+
+        if (formData.newPassword && formData.currentPassword) {
+          payload.current_password = formData.currentPassword;
+          payload.new_password = formData.newPassword;
+        }
       }
 
-      await updateUser(OWNER_ID, payload);
+      const res = await updateUser(OWNER_ID, payload);
 
       // Update local userData
       setUserData(prev => ({
@@ -108,10 +128,13 @@ const OwnerProfile = () => {
         name: formData.fullName,
         phone_number: formData.phone,
         address: formData.address,
+        photo: res?.data?.photo || prev?.photo,
       }));
 
       setSuccessMsg('Profil berhasil diperbarui!');
       setIsEditing(false);
+      setPhotoFile(null);
+      setPhotoPreview(null);
       setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
     } catch (err) {
       const msg = err?.response?.data?.message || 'Gagal menyimpan perubahan. Coba lagi.';
@@ -122,9 +145,25 @@ const OwnerProfile = () => {
     }
   };
 
-  const avatarUrl = formData.fullName
-    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=3b82f6&color=fff&bold=true&size=128`
-    : `https://ui-avatars.com/api/?name=Owner&background=3b82f6&color=fff&bold=true&size=128`;
+  const getAvatarUrl = () => {
+    if (photoPreview) return photoPreview;
+    if (userData?.photo) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+      return `${baseUrl}/${userData.photo}`;
+    }
+    return formData.fullName
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=3b82f6&color=fff&bold=true&size=128`
+      : `https://ui-avatars.com/api/?name=Owner&background=3b82f6&color=fff&bold=true&size=128`;
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+      setIsEditing(true); // Otomatis aktifkan mode edit jika ubah foto
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -180,17 +219,25 @@ const OwnerProfile = () => {
             <div className="relative mb-4">
               <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-blue-50 shadow">
                 <img
-                  src={avatarUrl}
+                  src={getAvatarUrl()}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
               </div>
-              <button
-                type="button"
-                className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow hover:bg-blue-700 transition-colors"
+              <label
+                htmlFor="photo-upload"
+                className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow hover:bg-blue-700 transition-colors"
+                title="Ubah Foto"
               >
                 <Camera className="h-3.5 w-3.5" />
-              </button>
+                <input 
+                  id="photo-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handlePhotoChange} 
+                />
+              </label>
             </div>
 
             <h3 className="text-base font-bold text-slate-800">{formData.fullName || '—'}</h3>
