@@ -1,64 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Search, Filter, Calendar, Download, Printer, Eye, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, Download, Printer, Eye, ChevronRight, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
+
+const formatRupiah = (number) =>
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(number ?? 0);
 
 const LogTransaction = () => {
-  // State sederhana untuk simulasi search
   const [searchTerm, setSearchTerm] = useState('');
+  const [transactionLogs, setTransactionLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Data Mockup Log Transaksi
-  const transactionLogs = [
-    { 
-      id: '#INV-2024-8819', 
-      date: '09 Jun 2024, 10:35',
-      name: 'Herman (Panda - Kucing)', 
-      items: '1x Konsultasi Dokter, 1x Tindakan Rawat Luka', 
-      total: 'Rp 350.000',
-      payment: 'QRIS',
-      status: 'Berhasil', 
-      statusBg: 'bg-emerald-100 text-emerald-700' 
-    },
-    { 
-      id: '#INV-2024-8818', 
-      date: '09 Jun 2024, 10:30',
-      name: 'Bambang S. (Rocky - Anjing)', 
-      items: '1x Pet Carrier Size L, 2x Jerky Dog Treats', 
-      total: 'Rp 425.000',
-      payment: 'Kartu Debit',
-      status: 'Berhasil', 
-      statusBg: 'bg-emerald-100 text-emerald-700' 
-    },
-    { 
-      id: '#INV-2024-8817', 
-      date: '09 Jun 2024, 09:15',
-      name: 'Rina (Luna - Kelinci)', 
-      items: '1x Grooming Kelinci, 1x Timothy Hay 1kg', 
-      total: 'Rp 180.000',
-      payment: 'Tunai',
-      status: 'Berhasil', 
-      statusBg: 'bg-emerald-100 text-emerald-700' 
-    },
-    { 
-      id: '#INV-2024-8816', 
-      date: '08 Jun 2024, 16:45',
-      name: 'Budi (Max - Anjing)', 
-      items: '1x Vaksin Tahunan, 1x Buku Vaksin', 
-      total: 'Rp 250.000',
-      payment: 'Transfer Bank',
-      status: 'Dibatalkan', 
-      statusBg: 'bg-red-100 text-red-700' 
-    },
-    { 
-      id: '#INV-2024-8815', 
-      date: '08 Jun 2024, 14:20',
-      name: 'Siska (Kimi - Kucing)', 
-      items: '1x Royal Canin Urinary 1.5kg, 1x Pasir Gumpal 10L', 
-      total: 'Rp 410.000',
-      payment: 'QRIS',
-      status: 'Refund', 
-      statusBg: 'bg-orange-100 text-orange-700' 
-    },
-  ];
+  useEffect(() => {
+    const fetchLogs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get('/invoices');
+        const data = response.data?.data?.data || response.data?.data || response.data || [];
+        setTransactionLogs(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to fetch transaction logs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
+
+  const filteredLogs = transactionLogs.filter(log => {
+    if (!searchTerm) return true;
+    const lowerQuery = searchTerm.toLowerCase();
+    return log.id.toLowerCase().includes(lowerQuery) || 
+           (log.owner?.name || '').toLowerCase().includes(lowerQuery);
+  });
 
   return (
     <div className="space-y-6 font-sans">
@@ -125,35 +103,74 @@ const LogTransaction = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-700">
-              {transactionLogs.map((log, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-blue-600">{log.id}</p>
-                    <p className="text-xs text-slate-400 mt-1">{log.date}</p>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-slate-800">{log.name}</td>
-                  <td className="px-6 py-4 text-slate-500 max-w-xs truncate" title={log.items}>
-                    {log.items}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-slate-800">{log.total}</p>
-                    <p className="text-xs text-slate-400 mt-1">{log.payment}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${log.statusBg}`}>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                    <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Lihat Detail">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Cetak Struk">
-                      <Printer className="h-4 w-4" />
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="6" className="py-10 text-center">
+                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600" />
+                    <p className="mt-2 text-sm text-slate-500">Memuat log transaksi...</p>
                   </td>
                 </tr>
-              ))}
+              ) : filteredLogs.length > 0 ? (
+                filteredLogs.map((log) => {
+                  const ownerName = log.owner?.name || '-';
+                  const petName = log.appointment?.pet?.name || '-';
+                  const petSpecies = log.appointment?.pet?.species || '-';
+                  const itemsStr = log.items?.map(i => `${i.quantity}x ${i.item_type === 'Service' ? 'Layanan' : 'Produk'}`).join(', ') || '-';
+                  const totalAmount = log.total_amount || log.items?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
+                  
+                  let statusLabel = 'Dibatalkan';
+                  let statusBg = 'bg-red-100 text-red-700';
+                  if (log.status === 'Paid') {
+                    statusLabel = 'Berhasil';
+                    statusBg = 'bg-emerald-100 text-emerald-700';
+                  } else if (log.status === 'Unpaid') {
+                    statusLabel = 'Belum Dibayar';
+                    statusBg = 'bg-orange-100 text-orange-700';
+                  }
+
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-blue-600">{log.id}</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {new Date(log.created_at).toLocaleDateString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-slate-800">
+                        {ownerName} <span className="text-slate-500 font-normal">({petName} - {petSpecies})</span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 max-w-xs truncate" title={itemsStr}>
+                        {itemsStr}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-slate-800">{formatRupiah(totalAmount)}</p>
+                        <p className="text-xs text-slate-400 mt-1">{log.payment_method || '-'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${statusBg}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
+                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Lihat Detail">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Cetak Struk">
+                          <Printer className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-6 text-center text-slate-500 text-sm">
+                    Tidak ada transaksi yang ditemukan.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
