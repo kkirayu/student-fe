@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Stethoscope, Pill, Syringe, Calendar, FileText, Weight, Loader2, Info } from 'lucide-react';
 import { getAllMedicalHistory } from '../../services/ownerService';
 
-const OWNER_ID = 1; // Sesuaikan dengan login sistem
+const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+const OWNER_ID = storedUser.id || 1;
 
 const MedicalHistory = () => {
   const [historyRecords, setHistoryRecords] = useState([]);
@@ -136,7 +137,7 @@ const MedicalHistory = () => {
                     <div>
                       <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Assessment (Diagnosa Utama)</h4>
                       <div className="inline-flex rounded-md bg-red-50 px-3 py-1.5 border border-red-100">
-                        <span className="text-sm font-bold text-red-700">{record.diagnosis?.disease_name || '-'}</span>
+                        <span className="text-sm font-bold text-red-700">{record.assessment || '-'}</span>
                       </div>
                     </div>
 
