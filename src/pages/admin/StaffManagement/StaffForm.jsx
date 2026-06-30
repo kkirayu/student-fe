@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { showSuccess, showError } from '../../../utils/alertUtils';
+import { showSuccess, showError, showConfirm } from '../../../utils/alertUtils';
 import api from '../../../services/api';
 
 const StaffForm = () => {
@@ -60,6 +60,13 @@ const StaffForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const isConfirmed = await showConfirm(
+      'Simpan Data',
+      'Apakah Anda yakin data yang dimasukkan sudah benar?',
+      'Ya, Simpan'
+    );
+    if (!isConfirmed) return;
+
     setSubmitting(true);
 
     try {

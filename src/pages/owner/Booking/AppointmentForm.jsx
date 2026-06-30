@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
 import { getPets, getServices, createAppointment } from '../../../services/ownerService';
+import { showSuccess, showConfirm } from '../../../utils/alertUtils';
 
 const AppointmentForm = () => {
     const { id } = useParams();
@@ -93,6 +94,14 @@ const AppointmentForm = () => {
             }
         }
 
+        const isConfirmed = await showConfirm(
+            'Konfirmasi Janji Temu',
+            'Apakah Anda yakin ingin mengajukan janji temu ini?',
+            'Ya, Ajukan'
+        );
+
+        if (!isConfirmed) return;
+
         setIsSubmitting(true);
         setErrorMessage('');
 
@@ -121,6 +130,7 @@ const AppointmentForm = () => {
 
             console.log('[AppointmentForm] Appointment Data:', appointmentData);
 
+            await showSuccess('Berhasil!', 'Janji temu berhasil diajukan.');
             navigate('/owner/booking/ticket', { state: { appointment: appointmentData } });
         } catch (error) {
             console.error('[AppointmentForm] Error:', error?.response ?? error);

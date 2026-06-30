@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, ArrowLeft, Search } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { showSuccess, showError, showConfirm, showWarning } from '../../../utils/alertUtils';
 import { doctorService } from '../../../services/doctorService';
 
 const SOAPForm = () => {
@@ -78,14 +78,16 @@ const SOAPForm = () => {
 
     // Validasi input wajib sebelum dikirim ke Laravel
     if (!formData.pet_id || !formData.diagnosis_dictionary_id || !formData.subjective || !formData.objective) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Form Belum Lengkap',
-        text: 'Kolom Hewan, Diagnosis, Subjective, dan Objective wajib diisi.',
-        confirmButtonColor: '#2563eb'
-      });
+      showWarning('Form Belum Lengkap', 'Kolom Hewan, Diagnosis, Subjective, dan Objective wajib diisi.');
       return;
     }
+
+    const isConfirmed = await showConfirm(
+      'Simpan Rekam Medis',
+      'Apakah Anda yakin data SOAP yang dimasukkan sudah benar?',
+      'Ya, Simpan'
+    );
+    if (!isConfirmed) return;
 
     setLoadingSubmit(true);
 
@@ -93,24 +95,20 @@ const SOAPForm = () => {
       // Kirim payload terstruktur ke API Route: /api/doctor/medical-records
       const response = await doctorService.submitSOAP(formData);
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Rekam Medis Disimpan',
-        text: response?.message || 'Data SOAP berhasil masuk ke Electronic Medical Record.',
-        confirmButtonColor: '#2563eb'
-      });
+      await showSuccess(
+        'Rekam Medis Disimpan',
+        response?.message || 'Data SOAP berhasil masuk ke Electronic Medical Record.'
+      );
 
       // Kembali ke halaman dashboard/antrean dokter
       navigate('/doctor');
 
     } catch (error) {
       console.error("Error submit SOAP:", error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Menyimpan',
-        text: error.response?.data?.message || 'Terjadi masalah pada server backend.',
-        confirmButtonColor: '#ef4444'
-      });
+      showError(
+        'Gagal Menyimpan',
+        error.response?.data?.message || 'Terjadi masalah pada server backend.'
+      );
     } finally {
       setLoadingSubmit(false);
     }

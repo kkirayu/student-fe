@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Tag } from 'lucide-react';
 import { getServiceById, createService, updateService } from '../../../services/adminService';
-import { showSuccess, showError } from '../../../utils/alertUtils';
+import { showSuccess, showError, showConfirm } from '../../../utils/alertUtils';
 
 const ServiceRatesForm = () => {
   const { id } = useParams();
@@ -65,6 +65,13 @@ const ServiceRatesForm = () => {
         return;
       }
     }
+
+    const isConfirmed = await showConfirm(
+      'Simpan Layanan',
+      'Apakah Anda yakin data layanan yang dimasukkan sudah benar?',
+      'Ya, Simpan'
+    );
+    if (!isConfirmed) return;
 
     setIsSubmitting(true);
     

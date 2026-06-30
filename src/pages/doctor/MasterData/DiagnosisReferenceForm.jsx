@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
-import Swal from 'sweetalert2'; 
+import { showSuccess, showError, showConfirm } from '../../../utils/alertUtils';
 import { doctorService } from '../../../services/doctorService';
 
 const DiagnosisReferenceForm = () => {
@@ -29,13 +29,10 @@ const DiagnosisReferenceForm = () => {
         } catch (error) {
           console.error('Gagal mengambil detail data penyakit:', error);
           
-          // Ganti dengan SweetAlert error
-          Swal.fire({
-            icon: 'error',
-            title: 'Gagal Memuat Data',
-            text: 'Rincian data penyakit tidak ditemukan atau gagal dimuat.',
-            confirmButtonColor: '#3085d6',
-          });
+          await showError(
+            'Gagal Memuat Data',
+            'Rincian data penyakit tidak ditemukan atau gagal dimuat.'
+          );
           
           navigate('/doctor/diagnosis');
         }
@@ -50,45 +47,35 @@ const DiagnosisReferenceForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const isConfirmed = await showConfirm(
+      'Simpan Data Diagnosis',
+      'Apakah Anda yakin data diagnosis yang dimasukkan sudah benar?',
+      'Ya, Simpan'
+    );
+    if (!isConfirmed) return;
+
     setSubmitting(true);
     
     try {
       if (isEditMode) {
         // Kirim update (PUT)
         await doctorService.updateDiagnosis(id, formData);
-        
         // 2. SweetAlert Sukses untuk Edit Mode
-        await Swal.fire({
-          icon: 'success',
-          title: 'Berhasil Diperbarui',
-          text: 'Data referensi diagnosis sukses disimpan!',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        await showSuccess('Berhasil Diperbarui', 'Data referensi diagnosis sukses disimpan!');
       } else {
         // Kirim data baru (POST)
         await doctorService.createDiagnosis(formData);
-        
         // 3. SweetAlert Sukses untuk Tambah Mode
-        await Swal.fire({
-          icon: 'success',
-          title: 'Berhasil Ditambahkan',
-          text: 'Referensi penyakit baru berhasil didaftarkan!',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        await showSuccess('Berhasil Ditambahkan', 'Referensi penyakit baru berhasil didaftarkan!');
       }
       navigate('/doctor/diagnosis');
     } catch (error) {
       console.error('Gagal menyimpan data diagnosis:', error);
-      
       // 4. SweetAlert Gagal/Error saat submit
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Menyimpan',
-        text: error.response?.data?.message || 'Terjadi kesalahan sistem saat menyimpan data.',
-        confirmButtonColor: '#d33',
-      });
+      showError(
+        'Gagal Menyimpan',
+        error.response?.data?.message || 'Terjadi kesalahan sistem saat menyimpan data.'
+      );
     } finally {
       setSubmitting(false);
     }

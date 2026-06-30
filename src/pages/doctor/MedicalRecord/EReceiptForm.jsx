@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pill, User, Plus, Trash2, FileText, Loader2, ArrowLeft } from 'lucide-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { showSuccess, showError, showConfirm, showWarning } from '../../../utils/alertUtils';
 import { doctorService } from '../../../services/doctorService';
 
 const EReceiptForm = () => {
@@ -84,14 +84,19 @@ const EReceiptForm = () => {
     // Validasi input minimal sebelum dikirim
     const isItemsValid = prescribedItems.every(item => item.medicine_name.trim() !== '' && item.quantity > 0);
     if (!isItemsValid || (!selectedPetId && !activeAppointment)) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Form Belum Lengkap',
-        text: 'Pastikan Anda telah memilih hewan dan mengisi nama obat di setiap baris.',
-        confirmButtonColor: '#2563eb'
-      });
+      showWarning(
+        'Form Belum Lengkap',
+        'Pastikan Anda telah memilih hewan dan mengisi nama obat di setiap baris.'
+      );
       return;
     }
+
+    const isConfirmed = await showConfirm(
+      'Buat E-Resep',
+      'Apakah Anda yakin e-resep ini sudah benar dan siap dikirim?',
+      'Ya, Buat'
+    );
+    if (!isConfirmed) return;
 
     setIsSubmitting(true);
 
@@ -107,22 +112,18 @@ const EReceiptForm = () => {
     try {
       const response = await doctorService.submitEReceipt(payload);
       
-      await Swal.fire({
-        icon: 'success',
-        title: 'E-Resep Berhasil Dibuat!',
-        text: response?.message || 'Resep digital telah diteruskan ke bagian Kasir & Farmasi.',
-        confirmButtonColor: '#10b981'
-      });
+      await showSuccess(
+        'E-Resep Berhasil Dibuat!',
+        response?.message || 'Resep digital telah diteruskan ke bagian Kasir & Farmasi.'
+      );
 
       navigate('/doctor');
     } catch (error) {
       console.error('Gagal mengirim E-Resep:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Menyimpan E-Resep',
-        text: error.response?.data?.message || 'Terjadi kesalahan sistem (422/500). Periksa validasi backend Anda.',
-        confirmButtonColor: '#ef4444'
-      });
+      showError(
+        'Gagal Menyimpan E-Resep',
+        error.response?.data?.message || 'Terjadi kesalahan sistem (422/500). Periksa validasi backend Anda.'
+      );
     } finally {
       setIsSubmitting(false);
     }

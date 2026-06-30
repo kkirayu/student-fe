@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react';
 import { createPet, getPetById, updatePet } from '../../../services/ownerService';
+import { showSuccess, showConfirm } from '../../../utils/alertUtils';
 
 const PetForm = () => {
   const { id } = useParams();
@@ -103,6 +104,14 @@ const PetForm = () => {
       return;
     }
 
+    const isConfirmed = await showConfirm(
+      'Simpan Data',
+      'Apakah Anda yakin data yang dimasukkan sudah benar?',
+      'Ya, Simpan'
+    );
+
+    if (!isConfirmed) return;
+
     setIsLoading(true);
     setError(null);
     // Mengambil owner_id dari data user yang login di localStorage
@@ -124,8 +133,10 @@ const PetForm = () => {
     try {
       if (isEditMode) {
         await updatePet(id, payload);
+        await showSuccess('Berhasil!', 'Data pets berhasil diperbarui.');
       } else {
         await createPet(payload);
+        await showSuccess('Berhasil!', 'Data pets berhasil ditambahkan.');
       }
       
       // Hapus cache agar PetList mengambil data baru
