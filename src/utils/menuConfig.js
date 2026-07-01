@@ -1,11 +1,11 @@
-import { 
-  LayoutDashboard, 
-  Users, 
-  User, 
-  Box, 
-  FileText, 
-  Activity, 
-  Pill, 
+import {
+  LayoutDashboard,
+  Users,
+  User,
+  Box,
+  FileText,
+  Activity,
+  Pill,
   Monitor,
   History,
   ClipboardList,
@@ -61,6 +61,7 @@ export const roleMenus = {
   ],
   receptionist: [
     { title: 'List Pasien', path: '/receptionist', icon: Users },
+    { title: 'Riwayat Selesai', path: '/receptionist/history', icon: History },
     { title: 'Monitor', path: '/receptionist/queue-monitor', icon: Monitor },
   ]
 };

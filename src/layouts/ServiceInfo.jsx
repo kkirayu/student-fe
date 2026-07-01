@@ -40,6 +40,7 @@ const InfoLayanan = () => {
   const todayString = daysMap[new Date().getDay()];
 
   const [selectedDay, setSelectedDay] = useState(todayString);
+  const [selectedSession, setSelectedSession] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState('');
 
   const [doctors, setDoctors] = useState([]);
@@ -129,18 +130,28 @@ const InfoLayanan = () => {
   const allDays = ["Semua", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
   const sessionToTime = {
-    "Sesi 1": "08.00 - 10.00",
-    "Sesi 2": "10.00 - 12.00",
-    "Sesi 3": "13.00 - 15.00",
-    "Sesi 4": "15.00 - 17.00",
-    "Sesi 5": "18.30 - 20.30"
+    "Sesi 1": "08.00 - 09.00",
+    "Sesi 2": "09.00 - 10.00",
+    "Sesi 3": "10.00 - 11.00",
+    "Sesi 4": "11.00 - 12.00",
+    "Sesi 5": "12.00 - 13.00",
+    "Sesi 6": "13.00 - 14.00",
+    "Sesi 7": "14.00 - 15.00",
+    "Sesi 8": "15.00 - 16.00"
   };
+
+  const allSessions = ["Semua", "Sesi 1", "Sesi 2", "Sesi 3", "Sesi 4", "Sesi 5", "Sesi 6", "Sesi 7", "Sesi 8"];
 
   const filteredDoctors = doctors.filter(doc => {
     const docDays = doc.schedules ? [...new Set(doc.schedules.map(s => s.hari_praktik))] : [];
+    const docSessionsForSelectedDay = doc.schedules 
+      ? doc.schedules.filter(s => selectedDay === "Semua" || s.hari_praktik === selectedDay).map(s => s.sesi_praktik)
+      : [];
+
     const matchDay = selectedDay === "Semua" || docDays.includes(selectedDay);
+    const matchSession = selectedSession === "Semua" || docSessionsForSelectedDay.includes(selectedSession);
     const matchSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchDay && matchSearch;
+    return matchDay && matchSession && matchSearch;
   });
 
   return (
@@ -186,7 +197,7 @@ const InfoLayanan = () => {
           </div>
 
           <form 
-            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center"
+            className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
             onSubmit={(e) => e.preventDefault()}
           >
             {/* Cari Nama Dokter */}
@@ -227,6 +238,28 @@ const InfoLayanan = () => {
                 </div>
               </div>
             </div>
+
+            {/* Filter Sesi */}
+            <div className="w-full">
+              <span className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 block"><i className="fa-regular fa-clock text-blue-600 mr-2"></i> Filter Sesi</span>
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <i className="fa-regular fa-clock text-slate-400"></i>
+                </div>
+                <select 
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all text-sm font-medium appearance-none cursor-pointer"
+                  value={selectedSession}
+                  onChange={(e) => setSelectedSession(e.target.value)}
+                >
+                  {allSessions.map(session => (
+                    <option key={session} value={session}>{session}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                  <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                </div>
+              </div>
+            </div>
             
           </form>
 
@@ -260,8 +293,28 @@ const InfoLayanan = () => {
                         <img src={imageMap[doc.image] || doc.image} alt={doc.name} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 grayscale group-hover:grayscale-0" />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent"></div>
                         <div className="absolute bottom-4 left-4 right-4 text-white">
-                          <span className="inline-block px-3 py-1 bg-blue-600/80 backdrop-blur-sm rounded-full text-xs font-semibold mb-2">{doc.spesialisasi}</span>
-                          <h3 className="text-xl font-bold">{doc.name}</h3>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            <span className="inline-block px-3 py-1 bg-blue-600/90 backdrop-blur-sm rounded-full text-[10px] font-bold shadow-sm">Dokter Hewan</span>
+                            {doc.schedules && (
+                              selectedDay !== "Semua" 
+                                ? doc.schedules.filter(s => s.hari_praktik === selectedDay).map((s, i) => (
+                                    <span key={i} className="inline-block px-2 py-1 bg-white/25 backdrop-blur-md rounded-full text-[10px] font-semibold shadow-sm border border-white/20">
+                                      {s.sesi_praktik} ({sessionToTime[s.sesi_praktik]?.split(' - ')[0]})
+                                    </span>
+                                  ))
+                                : [...new Set(doc.schedules.map(s => s.hari_praktik))].slice(0, 3).map((hari, i) => (
+                                    <span key={i} className="inline-block px-2 py-1 bg-white/25 backdrop-blur-md rounded-full text-[10px] font-semibold shadow-sm border border-white/20">
+                                      {hari}
+                                    </span>
+                                  ))
+                            )}
+                            {doc.schedules && selectedDay === "Semua" && [...new Set(doc.schedules.map(s => s.hari_praktik))].length > 3 && (
+                                <span className="inline-block px-2 py-1 bg-white/25 backdrop-blur-md rounded-full text-[10px] font-semibold shadow-sm border border-white/20">
+                                  +{ [...new Set(doc.schedules.map(s => s.hari_praktik))].length - 3 }
+                                </span>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-bold leading-tight">{doc.name}</h3>
                         </div>
                       </div>
                     </div>
@@ -274,9 +327,9 @@ const InfoLayanan = () => {
                   <i className="fa-solid fa-user-doctor text-3xl text-slate-300"></i>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">Tidak ada dokter tersedia</h3>
-                <p className="text-slate-500 max-w-md mx-auto">Maaf, tidak ada dokter dengan spesialisasi tersebut yang tersedia pada hari yang dipilih. Silakan ubah filter pencarian Anda.</p>
+                <p className="text-slate-500 max-w-md mx-auto">Maaf, tidak ada dokter yang sesuai dengan kriteria yang dipilih. Silakan ubah filter pencarian Anda.</p>
                 <button 
-                  onClick={() => { setSelectedDay("Semua"); setSearchQuery(""); }}
+                  onClick={() => { setSelectedDay("Semua"); setSelectedSession("Semua"); setSearchQuery(""); }}
                   className="mt-6 px-6 py-2.5 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors inline-flex items-center gap-2"
                 >
                   <i className="fa-solid fa-rotate-right"></i> Reset Filter

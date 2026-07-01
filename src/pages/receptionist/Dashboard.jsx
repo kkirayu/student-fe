@@ -16,6 +16,7 @@ const ReceptionistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
   const [approvedBooking, setApprovedBooking] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,9 @@ const ReceptionistDashboard = () => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
-        const today = new Date().toISOString().split('T')[0];
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments?date=${today}`);
-        // Backend returns paginate(10) so array is at response.data.data.data
+        const token = localStorage.getItem('auth_token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const response = await axios.get(`https://zeta-connect-api.vercel.app/api/appointments?date=${selectedDate}`, config);
         setAppointments(response.data.data.data || []);
       } catch (err) {
         console.error("Error fetching appointments:", err);
@@ -35,11 +36,12 @@ const ReceptionistDashboard = () => {
       }
     };
     fetchAppointments();
-  }, []);
+  }, [selectedDate]);
 
   const handleAcceptBooking = async (req) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${req.rawId}`, { status: 'Disetujui' });
+      const token = localStorage.getItem('auth_token');
+      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${req.rawId}`, { status: 'Disetujui' }, { headers: { Authorization: `Bearer ${token}` } });
       setAppointments(appointments.map(a => a.id === req.rawId ? { ...a, status: 'Disetujui' } : a));
       setApprovedBooking(req);
       setTimeout(() => {
@@ -52,7 +54,8 @@ const ReceptionistDashboard = () => {
 
   const handleRejectBooking = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${id}`, { status: 'Batal' });
+      const token = localStorage.getItem('auth_token');
+      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Batal' }, { headers: { Authorization: `Bearer ${token}` } });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Batal' } : a));
     } catch (err) {
       console.error(err);
@@ -61,10 +64,44 @@ const ReceptionistDashboard = () => {
 
   const handleCallPatient = async (id) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api'}/appointments/${id}`, { status: 'Dalam Periksa' });
+      const token = localStorage.getItem('auth_token');
+      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Dalam Periksa' }, { headers: { Authorization: `Bearer ${token}` } });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Dalam Periksa' } : a));
     } catch (err) {
       console.error("Error calling patient:", err);
+    }
+  };
+
+  const handleCallSession = async (sessionTime) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const patientsToCall = queueData.filter(item => item.time === sessionTime && item.status === 'Disetujui');
+      
+      await Promise.all(patientsToCall.map(item => 
+        axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${item.rawId}`, { status: 'Dalam Periksa' }, { headers: { Authorization: `Bearer ${token}` } })
+      ));
+
+      setAppointments(appointments.map(a => {
+        if (patientsToCall.find(p => p.rawId === a.id)) {
+          return { ...a, status: 'Dalam Periksa' };
+        }
+        return a;
+      }));
+    } catch (err) {
+      console.error("Error calling session:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinishPatient = async (id) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Selesai' }, { headers: { Authorization: `Bearer ${token}` } });
+      setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Selesai' } : a));
+    } catch (err) {
+      console.error("Error finishing patient:", err);
     }
   };
 
@@ -83,7 +120,7 @@ const ReceptionistDashboard = () => {
     }));
 
   const queueData = appointments
-    .filter(a => !(a.status === 'Menunggu' && a.booking_type === 'Online') && a.status !== 'Batal')
+    .filter(a => !(a.status === 'Menunggu' && a.booking_type === 'Online') && a.status !== 'Batal' && a.status !== 'Selesai')
     .map(a => ({
       rawId: a.id,
       id: a.queue_number,
@@ -97,7 +134,7 @@ const ReceptionistDashboard = () => {
 
   const stats = [
     {
-      title: 'Total Antrian Hari Ini',
+      title: 'Total Antrian',
       value: queueData.length + bookingRequests.length,
       icon: <Users className="text-blue-600 h-6 w-6" />,
       bgIcon: 'bg-blue-100',
@@ -129,6 +166,8 @@ const ReceptionistDashboard = () => {
     const matchesStatus = statusFilter === 'Semua' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const activeSessions = [...new Set(queueData.filter(q => q.status === 'Disetujui').map(q => q.time))].sort();
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -242,8 +281,38 @@ const ReceptionistDashboard = () => {
       <div className="rounded-sm border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-lg font-bold text-black">Daftar Antrian Hari Ini</h3>
+            <h3 className="text-lg font-bold text-black">
+              Daftar Antrian {selectedDate === new Date().toISOString().split('T')[0] ? 'Hari Ini' : selectedDate}
+            </h3>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {activeSessions.length > 0 && (
+                <div className="flex items-center gap-2 mr-4 border-r pr-4 border-slate-200">
+                  <select 
+                    id="sessionToCall" 
+                    className="rounded-sm border border-slate-300 py-1.5 px-3 text-sm outline-none focus:border-teal-500"
+                  >
+                    {activeSessions.map(session => (
+                       <option key={session} value={session}>Sesi {session}</option>
+                    ))}
+                  </select>
+                  <button 
+                    onClick={() => {
+                      const sel = document.getElementById('sessionToCall').value;
+                      if(sel) handleCallSession(sel);
+                    }}
+                    className="rounded-sm bg-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition-colors"
+                  >
+                    Panggil Semua
+                  </button>
+                </div>
+              )}
+              <input 
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                className="rounded-sm border border-slate-300 py-2 px-3 text-sm outline-none focus:border-blue-500"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input 
@@ -310,6 +379,14 @@ const ReceptionistDashboard = () => {
                           className="rounded bg-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition-colors"
                         >
                           Panggil
+                        </button>
+                      )}
+                      {item.status === 'Sedang Diperiksa' && (
+                        <button 
+                          onClick={() => handleFinishPatient(item.rawId)}
+                          className="rounded bg-slate-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-slate-700 transition-colors"
+                        >
+                          Selesai
                         </button>
                       )}
                       <button className="text-blue-600 hover:text-blue-800 font-medium text-sm py-1.5">
