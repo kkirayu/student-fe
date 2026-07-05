@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, Calendar, Download, Printer, Eye, ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import { getInvoices } from '../../../services/paymentService';
+import TransactionDetailModal from '../../../components/TransactionDetailModal';
 
 const LogTransaction = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +17,10 @@ const LogTransaction = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [dateFilter, setDateFilter] = useState(''); // '' = all time, 'today' = hari ini
+
+  // Modal State
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -61,6 +66,16 @@ const LogTransaction = () => {
   const toggleDateFilter = () => {
     setPage(1); // Reset page on filter change
     setDateFilter(prev => prev === 'today' ? '' : 'today');
+  };
+
+  const handleOpenDetail = (log) => {
+    setSelectedTransaction(log);
+    setIsModalOpen(true);
+  };
+
+  const handlePrint = (e) => {
+    e.stopPropagation();
+    window.print();
   };
 
     return (
@@ -164,11 +179,16 @@ const LogTransaction = () => {
                   }
                   
                   const itemsSummary = log.items ? log.items.map(i => `${i.quantity}x Item`).join(', ') : '-';
+                  const displayId = `#INV-${String(log.id).padStart(4, '0')}`;
 
                   return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr 
+                      key={log.id} 
+                      onClick={() => handleOpenDetail(log)}
+                      className="hover:bg-blue-50/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-6 py-4">
-                        <p className="font-medium text-blue-600">{log.id}</p>
+                        <p className="font-medium text-blue-600">{displayId}</p>
                         <p className="text-xs text-slate-400 mt-1">{formatDate(log.created_at)}</p>
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-800">{ownerName}{petName}</td>
@@ -177,7 +197,7 @@ const LogTransaction = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-800">{formatCurrency(log.total_amount)}</p>
-                        <p className="text-xs text-slate-400 mt-1">{log.payment_method}</p>
+                        <p className="text-xs text-slate-400 mt-1">{log.payment_method || '-'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${statusBg}`}>
@@ -185,10 +205,18 @@ const LogTransaction = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Lihat Detail">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenDetail(log); }}
+                          className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" 
+                          title="Lihat Detail"
+                        >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" title="Cetak Struk">
+                        <button 
+                          onClick={handlePrint}
+                          className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center" 
+                          title="Cetak Struk"
+                        >
                           <Printer className="h-4 w-4" />
                         </button>
                       </td>
@@ -232,6 +260,12 @@ const LogTransaction = () => {
           </div>
         )}
       </section>
+
+      <TransactionDetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        data={selectedTransaction} 
+      />
 
         </div>
     );

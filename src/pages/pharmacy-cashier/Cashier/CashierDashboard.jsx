@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Wallet, CreditCard, Clock, CheckCircle, ChevronRight, PlusCircle, Printer, Eye, Edit, RefreshCw, AlertCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { getCashierDashboardStats } from '../../../services/cashierDashboardService';
+import TransactionDetailModal from '../../../components/TransactionDetailModal';
 
 const CashierDashboard = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     total_revenue_today: 0,
     revenue_percentage_change: 0,
@@ -17,6 +20,10 @@ const CashierDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Modal State
+  const [selectedQueue, setSelectedQueue] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -40,6 +47,21 @@ const CashierDashboard = () => {
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+  };
+
+  const handleOpenDetail = (queue) => {
+    setSelectedQueue(queue);
+    setIsModalOpen(true);
+  };
+
+  const handlePrint = (e) => {
+    e.stopPropagation();
+    window.print();
+  };
+
+  const handleEdit = (e, queue) => {
+    e.stopPropagation();
+    navigate('/cashier/new-transaction');
   };
 
   // 1. Statistik Ringkasan Shift Aktif
@@ -94,11 +116,18 @@ const CashierDashboard = () => {
     );
   }
 
-  // Generate heights for chart based on max revenue
-  const maxHourlyRev = Math.max(...data.hourly_revenue.map(hr => hr.revenue), 1); 
-  const chartHeights = data.hourly_revenue.length > 0 
-    ? data.hourly_revenue.map(hr => Math.max((hr.revenue / maxHourlyRev) * 100, 5)) 
-    : [5, 5, 5, 5, 5, 5, 5, 5]; // fallback skeleton
+  // Custom Tooltip for Recharts
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-800 text-white text-xs py-2 px-3 rounded shadow-lg border border-slate-700">
+          <p className="font-semibold mb-1">{label}</p>
+          <p className="text-blue-300">{formatCurrency(payload[0].value)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -121,20 +150,25 @@ const CashierDashboard = () => {
             </div>
           </div>
           
-          {/* Minimal Trend Chart Simulation */}
-          <div className="mt-6 h-24 w-full flex items-end gap-2" title="Pendapatan 8 Jam Terakhir">
-            {chartHeights.map((height, i) => (
-              <div 
-                key={i} 
-                className={`flex-1 ${i === chartHeights.length - 1 ? 'bg-blue-600' : 'bg-blue-50'} rounded-t-sm transition-all hover:bg-blue-100 cursor-pointer relative group`} 
-                style={{ height: `${height}%` }}
-              >
-                {/* Tooltip */}
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap pointer-events-none transition-opacity">
-                  {data.hourly_revenue[i] ? `${data.hourly_revenue[i].hour} : ${formatCurrency(data.hourly_revenue[i].revenue)}` : 'No data'}
-                </div>
-              </div>
-            ))}
+          {/* Trend Chart using Recharts */}
+          <div className="mt-6 h-28 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.hourly_revenue} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                <XAxis 
+                  dataKey="hour" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                  dy={10} 
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+                  {data.hourly_revenue.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === data.hourly_revenue.length - 1 ? '#2563eb' : '#bfdbfe'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -216,7 +250,11 @@ const CashierDashboard = () => {
                   else if (queue.status === 'Selesai') statusBg = 'bg-blue-100 text-blue-700';
 
                   return (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                    <tr 
+                      key={i} 
+                      onClick={() => handleOpenDetail(queue)}
+                      className="hover:bg-blue-50/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-6 py-4 font-medium text-blue-600">{queue.id}</td>
                       <td className="px-6 py-4 font-semibold text-slate-800">{queue.name}</td>
                       <td className="px-6 py-4 text-slate-500 max-w-xs truncate">{queue.items}</td>
@@ -228,11 +266,29 @@ const CashierDashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-right space-x-1">
                         {queue.status === 'Selesai' ? (
-                          <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Eye className="h-4 w-4" /></button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleOpenDetail(queue); }}
+                            className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"
+                            title="Lihat Detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
                         ) : (
-                          <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Edit className="h-4 w-4" /></button>
+                          <button 
+                            onClick={(e) => handleEdit(e, queue)}
+                            className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"
+                            title="Proses Transaksi"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
                         )}
-                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Printer className="h-4 w-4" /></button>
+                        <button 
+                          onClick={handlePrint}
+                          className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"
+                          title="Cetak Struk"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   )
@@ -248,6 +304,12 @@ const CashierDashboard = () => {
           </table>
         </div>
       </section>
+
+      <TransactionDetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        data={selectedQueue} 
+      />
 
     </div>
   );
