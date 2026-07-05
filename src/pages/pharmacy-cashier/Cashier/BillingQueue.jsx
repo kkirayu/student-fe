@@ -1,11 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, FileText, Printer, CheckCircle2, Clock, AlertCircle, ChevronRight, Eye } from 'lucide-react';
+import { Search, Filter, FileText, Printer, CheckCircle2, Clock, AlertCircle, ChevronRight, Eye, Loader2 } from 'lucide-react';
+import { getInvoices } from '../../../services/paymentService';
 
 const BillingQueue = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
+  const [invoices, setInvoices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    try {
+      setIsLoading(true);
+      const res = await getInvoices();
+      const list = res?.data?.data || res?.data || [];
+      // Tampilkan hanya yang belum dibayar di antrean awal jika tidak difilter
+      setInvoices(list);
+    } catch (err) {
+      console.error('Fetch invoices error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 1. Ringkasan Antrean Tagihan saat ini
   const queueStats = [
@@ -32,82 +53,29 @@ const BillingQueue = () => {
     },
   ];
 
-  // 2. Data Otomatis Turun dari Ruangan Dokter (Mockup API)
-  const billingQueueData = [
-    {
-      id: '#ANT-0842',
-      time: '11:15',
-      petName: 'Milo',
-      petType: 'Kucing (Persia)',
-      ownerName: 'Rian Hadi',
-      doctor: 'drh. Sarah Amelia',
-      treatments: [
-        { name: 'Konsultasi & Pemeriksaan', cost: 75000 },
-        { name: 'Suntik Vitamin & Nebulizer', cost: 120000 }
-      ],
-      prescriptions: [
-        { name: 'Antibiotik (Clavamox drop)', cost: 95000 },
-        { name: 'Obat Racikan Flu (6 Kapsul)', cost: 60000 }
-      ],
-      status: 'Menunggu Pembayaran',
-      statusColor: 'bg-orange-100 text-orange-700'
-    },
-    {
-      id: '#ANT-0841',
-      time: '11:02',
-      petName: 'Boni',
-      petType: 'Anjing (Golden)',
-      ownerName: 'Siti Lestari',
-      doctor: 'drh. Rahmat Sulistio',
-      treatments: [
-        { name: 'Tindakan Pembersihan Telinga (Ear Cleaning)', cost: 85000 },
-        { name: 'Treatment Kutu (Spot On)', cost: 150000 }
-      ],
-      prescriptions: [
-        { name: 'Obat Telinga (Otopain)', cost: 115000 }
-      ],
-      status: 'Menunggu Pembayaran',
-      statusColor: 'bg-orange-100 text-orange-700'
-    },
-    {
-      id: '#ANT-0840',
-      time: '10:50',
-      petName: 'Cleo',
-      petType: 'Kucing (Domestik)',
-      ownerName: 'Andi Wijaya',
-      doctor: 'drh. Sarah Amelia',
-      treatments: [
-        { name: 'Rawat Luka Abses', cost: 180000 }
-      ],
-      prescriptions: [
-        { name: 'Salep Luka (Centbio)', cost: 45000 },
-        { name: 'Obat Anti Nyeri (Meloxicam)', cost: 35000 }
-      ],
-      status: 'Sedang Disiapkan',
-      statusColor: 'bg-blue-100 text-blue-700'
-    },
-    {
-      id: '#ANT-0839',
-      time: '10:15',
-      petName: 'Kiko',
-      petType: 'Kelinci',
-      ownerName: 'Dewi Sartika',
-      doctor: 'drh. Rahmat Sulistio',
-      treatments: [
-        { name: 'Potong Gigi (Grooming Medis)', cost: 100000 }
-      ],
-      prescriptions: [],
-      status: 'Selesai',
-      statusColor: 'bg-slate-100 text-slate-700'
+  // Mapping status dari API ke label lokal
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'Unpaid': return 'Menunggu Pembayaran';
+      case 'Paid': return 'Selesai';
+      case 'Cancelled': return 'Dibatalkan';
+      default: return status;
     }
-  ];
-
-  // Menghitung total tagihan per pasien secara otomatis
-  const calculateTotal = (treatments, prescriptions) => {
-    const totalTreatments = treatments.reduce((sum, item) => sum + item.cost, 0);
-    const totalPrescriptions = prescriptions.reduce((sum, item) => sum + item.cost, 0);
-    return totalTreatments + totalPrescriptions;
   };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Unpaid': return 'bg-orange-100 text-orange-700';
+      case 'Paid': return 'bg-emerald-100 text-emerald-700';
+      case 'Cancelled': return 'bg-slate-100 text-slate-700';
+      default: return 'bg-blue-100 text-blue-700';
+    }
+  };
+
+  const getClientName = (inv) => inv?.owner?.name ?? inv?.client_name ?? '—';
+  const getPetName = (inv) => inv?.appointment?.pet?.name ?? '—';
+  const getPetType = (inv) => inv?.appointment?.pet?.species ?? '—';
+  const getDoctorName = (inv) => inv?.appointment?.doctor?.name ?? '—';
 
   return (
     <div className="space-y-6 font-sans">
@@ -162,9 +130,9 @@ const BillingQueue = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="Semua">Semua Status</option>
-              <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
-              <option value="Sedang Disiapkan">Sedang Disiapkan</option>
-              <option value="Selesai">Selesai</option>
+              <option value="Unpaid">Menunggu Pembayaran</option>
+              <option value="Paid">Selesai</option>
+              <option value="Cancelled">Dibatalkan</option>
             </select>
           </div>
         </div>
@@ -186,101 +154,124 @@ const BillingQueue = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-700">
-              {billingQueueData
-                .filter(item => statusFilter === 'Semua' || item.status === statusFilter)
-                .filter(item => item.petName.toLowerCase().includes(searchTerm.toLowerCase()) || item.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.includes(searchTerm))
-                .map((queue, i) => {
-                  const totalBilling = calculateTotal(queue.treatments, queue.prescriptions);
-                  return (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors align-top">
-                      {/* No Antrean & Waktu */}
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-blue-600 block">{queue.id}</span>
-                        <span className="text-xs text-slate-400 font-medium block mt-0.5">Jam: {queue.time}</span>
-                      </td>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="py-12 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-blue-500" />
+                    <p className="mt-2 text-sm text-slate-500">Memuat data antrean...</p>
+                  </td>
+                </tr>
+              ) : invoices.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="py-10 text-center text-sm text-slate-400">
+                    Tidak ada antrean ditemukan.
+                  </td>
+                </tr>
+              ) : (
+                invoices
+                  .filter(item => statusFilter === 'Semua' || item.status === statusFilter)
+                  .filter(item => {
+                    const search = searchTerm.toLowerCase();
+                    return getPetName(item).toLowerCase().includes(search) || 
+                           getClientName(item).toLowerCase().includes(search) || 
+                           item.id.toString().toLowerCase().includes(search);
+                  })
+                  .map((queue, i) => {
+                    const services = queue.items?.filter(it => it.item_type === 'Service' || it.item_type === 'App\\Models\\Service') || [];
+                    const products = queue.items?.filter(it => it.item_type === 'Product' || it.item_type === 'App\\Models\\Product') || [];
+                    return (
+                      <tr key={queue.id || i} className="hover:bg-slate-50/50 transition-colors align-top">
+                        {/* No Antrean & Waktu */}
+                        <td className="px-6 py-4">
+                          <span className="font-bold text-blue-600 block">{queue.id}</span>
+                          <span className="text-xs text-slate-400 font-medium block mt-0.5">
+                            Tanggal: {new Date(queue.created_at).toLocaleDateString('id-ID')}
+                          </span>
+                        </td>
 
-                      {/* Pasien & Pemilik */}
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800">{queue.petName} <span className="text-xs font-normal text-slate-500">({queue.petType})</span></div>
-                        <div className="text-xs text-slate-400 mt-0.5">Pmlk: {queue.ownerName}</div>
-                      </td>
+                        {/* Pasien & Pemilik */}
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-slate-800">{getPetName(queue)} <span className="text-xs font-normal text-slate-500">({getPetType(queue)})</span></div>
+                          <div className="text-xs text-slate-400 mt-0.5">Pmlk: {getClientName(queue)}</div>
+                        </td>
 
-                      {/* Dokter */}
-                      <td className="px-6 py-4">
-                        <span className="text-slate-600 font-medium">{queue.doctor}</span>
-                      </td>
+                        {/* Dokter */}
+                        <td className="px-6 py-4">
+                          <span className="text-slate-600 font-medium">{getDoctorName(queue)}</span>
+                        </td>
 
-                      {/* Rincian Otomatis Komparasi */}
-                      <td className="px-6 py-4 max-w-xs">
-                        <div className="space-y-1.5">
-                          {/* Bagian Tindakan */}
-                          {queue.treatments.length > 0 && (
-                            <div>
-                              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Tindakan/Layanan</span>
-                              {queue.treatments.map((t, idx) => (
-                                <div key={idx} className="text-xs text-slate-600 flex justify-between mt-0.5">
-                                  <span>• {t.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {/* Bagian Obat */}
-                          {queue.prescriptions.length > 0 && (
-                            <div className="mt-1">
-                              <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Tebus Obat / Resep</span>
-                              {queue.prescriptions.map((p, idx) => (
-                                <div key={idx} className="text-xs text-slate-600 flex justify-between mt-0.5">
-                                  <span>• {p.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
+                        {/* Rincian Otomatis Komparasi */}
+                        <td className="px-6 py-4 max-w-xs">
+                          <div className="space-y-1.5">
+                            {/* Bagian Tindakan */}
+                            {services.length > 0 && (
+                              <div>
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Tindakan/Layanan</span>
+                                {services.map((t, idx) => (
+                                  <div key={idx} className="text-xs text-slate-600 flex justify-between mt-0.5">
+                                    <span>• {t.item_name ?? `${t.item_type} #${t.item_id}`}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Bagian Obat */}
+                            {products.length > 0 && (
+                              <div className="mt-1">
+                                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Tebus Obat / Resep</span>
+                                {products.map((p, idx) => (
+                                  <div key={idx} className="text-xs text-slate-600 flex justify-between mt-0.5">
+                                    <span>• {p.item_name ?? `${p.item_type} #${p.item_id}`}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-                      {/* Total Tagihan */}
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-slate-800">Rp {totalBilling.toLocaleString('id-ID')}</span>
-                      </td>
+                        {/* Total Tagihan */}
+                        <td className="px-6 py-4">
+                          <span className="font-bold text-slate-800">Rp {(queue.total_amount ?? 0).toLocaleString('id-ID')}</span>
+                        </td>
 
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${queue.statusColor}`}>
-                          {queue.status}
-                        </span>
-                      </td>
+                        {/* Status */}
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(queue.status)}`}>
+                            {getStatusLabel(queue.status)}
+                          </span>
+                        </td>
 
-                      {/* Tombol Aksi */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          {queue.status === 'Selesai' ? (
-                            <>
-                              <button title="Lihat Riwayat Kwitansi" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"><Eye className="h-4 w-4" /></button>
-                              <button title="Cetak Ulang Nota" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"><Printer className="h-4 w-4" /></button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => window.location.href = '/cashier/Checkout'}
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
-                              >
-                                <FileText className="h-3.5 w-3.5" />
-                                <span>Bayar</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        {/* Tombol Aksi */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1">
+                            {queue.status === 'Paid' ? (
+                              <>
+                                <button title="Lihat Riwayat Kwitansi" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"><Eye className="h-4 w-4" /></button>
+                                <button title="Cetak Ulang Nota" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"><Printer className="h-4 w-4" /></button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => navigate(`/cashier/checkout?invoice_id=${queue.id}`)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                  <span>Bayar</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+              )}
             </tbody>
           </table>
         </div>
 
         {/* FOOTER PAGINATION */}
         <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs text-slate-400 font-medium">
-          <p>Menampilkan {billingQueueData.length} data antrean medis</p>
+          <p>Menampilkan {invoices.length} data antrean medis</p>
           <div className="flex gap-1">
             <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white hover:bg-slate-50">⟨</button>
             <button className="w-8 h-8 flex items-center justify-center rounded bg-blue-600 text-white font-bold">1</button>

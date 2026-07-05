@@ -155,7 +155,11 @@ const AppRouter = () => {
           <Route path="vaccination" element={<VaccinationBook />} />
         </Route>
 
-        <Route path="/pharmacy" element={<AdminLayout userRole="pharmacy" />}>
+        <Route path="/pharmacy" element={
+          <ProtectedRoute allowedRoles={['farmasi', 'apoteker']}>
+            <AdminLayout userRole="pharmacy" />
+          </ProtectedRoute>
+        }>
           <Route index element={<PharmacyDashboard />} />
           <Route path="prescriptions" element={<PrescriptionQueue />} />
           <Route path="inventory" element={<ProductCatalog />} />
@@ -166,7 +170,11 @@ const AppRouter = () => {
           <Route path="stock-mutations" element={<StockMutations />} />
         </Route>
 
-        <Route path="/cashier" element={<AdminLayout userRole="cashier" />}>
+        <Route path="/cashier" element={
+          <ProtectedRoute allowedRoles={['kasir']}>
+            <AdminLayout userRole="cashier" />
+          </ProtectedRoute>
+        }>
           <Route index element={<CashierDashboard />} />
           <Route path="queue" element={<BillingQueue />} />
           <Route path="checkout" element={<CheckoutPOS />} />
