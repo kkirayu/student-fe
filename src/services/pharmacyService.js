@@ -24,6 +24,26 @@ export const getProducts = async (search = '', page = 1) => {
 };
 
 /**
+ * Membuat produk baru
+ * @param {Object|FormData} data - Data produk yang baru
+ */
+export const createProduct = async (data) => {
+  try {
+    let response;
+    if (data instanceof FormData) {
+      response = await api.post('/products', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } else {
+      response = await api.post('/products', data);
+    }
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal membuat produk.');
+  }
+};
+
+/**
  * Menghapus produk berdasarkan ID
  * @param {number} id - ID produk
  */

@@ -1,7 +1,9 @@
 import React from 'react';
-import { X, Printer } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Printer, Edit } from 'lucide-react';
 
 const TransactionDetailModal = ({ isOpen, onClose, data }) => {
+  const navigate = useNavigate();
   if (!isOpen || !data) return null;
 
   const { id, type, raw_data, name, items, status, total_amount, payment_method } = data;
@@ -34,6 +36,12 @@ const TransactionDetailModal = ({ isOpen, onClose, data }) => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleEdit = () => {
+    onClose();
+    const invId = isDirectInvoice ? data.id : (rawData?.id || data.id);
+    navigate(`/cashier/checkout?invoice_id=${invId}`);
   };
 
   return (
@@ -90,9 +98,9 @@ const TransactionDetailModal = ({ isOpen, onClose, data }) => {
                   {dataType === 'invoice' && rawData?.items ? (
                     rawData.items.map((item, idx) => (
                       <tr key={idx}>
-                        <td className="px-4 py-3">{item.item_type ? item.item_type.split('\\').pop() : 'Item'}</td>
+                        <td className="px-4 py-3">{item.item?.name || (item.item_type ? item.item_type.split('\\').pop() : 'Item')}</td>
                         <td className="px-4 py-3 text-center">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(item.price)}</td>
                         <td className="px-4 py-3 text-right font-medium">{formatCurrency(item.subtotal)}</td>
                       </tr>
                     ))
@@ -148,13 +156,24 @@ const TransactionDetailModal = ({ isOpen, onClose, data }) => {
           >
             Tutup
           </button>
-          <button 
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-          >
-            <Printer size={16} />
-            Cetak Struk
-          </button>
+          
+          {displayStatus === 'Selesai' ? (
+            <button 
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            >
+              <Printer size={16} />
+              Cetak Struk
+            </button>
+          ) : (
+            <button 
+              onClick={handleEdit}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            >
+              <Edit size={16} />
+              Proses Transaksi
+            </button>
+          )}
         </div>
       </div>
     </div>

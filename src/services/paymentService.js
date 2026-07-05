@@ -1,8 +1,16 @@
 import api from './api';
 
 const handleServiceError = (error, defaultMessage) => {
-  if (error.response && error.response.data && error.response.data.message) {
-    throw new Error(error.response.data.message);
+  if (error.response && error.response.data) {
+    let msg = error.response.data.message || defaultMessage;
+    if (error.response.data.errors) {
+      const errs = error.response.data.errors;
+      const firstKey = Object.keys(errs)[0];
+      if (firstKey) {
+        msg = `${msg}: ${errs[firstKey][0]}`;
+      }
+    }
+    throw new Error(msg);
   }
   throw new Error(defaultMessage);
 };
@@ -44,5 +52,32 @@ export const getInvoices = async (params = {}) => {
     return response.data;
   } catch (error) {
     handleServiceError(error, 'Gagal memuat daftar invoice.');
+  }
+};
+
+/**
+ * Mengambil detail invoice berdasarkan ID
+ * @param {string} id - ID invoice
+ */
+export const getInvoiceById = async (id) => {
+  try {
+    const response = await api.get(`/invoices/${id}`);
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal memuat detail invoice.');
+  }
+};
+
+/**
+ * Memperbarui invoice (diskon, items, dll)
+ * @param {string} id - ID invoice
+ * @param {Object} data - Data pembaruan
+ */
+export const updateInvoice = async (id, data) => {
+  try {
+    const response = await api.put(`/invoices/${id}`, data);
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal memperbarui invoice.');
   }
 };

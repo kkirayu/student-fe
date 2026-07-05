@@ -3,19 +3,18 @@ import {
   Search, Plus, Trash2, Wallet, 
   QrCode, Receipt, User, CheckCircle2, ChevronLeft, X, Smartphone, Loader2
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getProducts } from '../../../services/pharmacyService';
-import { processPayment } from '../../../services/paymentService';
-
-// --- MOCK DATA ---
-const initialMedicalBill = [
-  // isLocked: true HANYA untuk Konsultasi Dokter
-  { id: 'M1', name: 'Jasa Konsultasi Dokter', category: 'Layanan', price: 150000, qty: 1, isLocked: true },
-];
-
+import { processPayment, getInvoiceById, updateInvoice } from '../../../services/paymentService';
+import { showError, showSuccess, showWarning } from '../../../utils/alertUtils';
 
 const CheckoutPOS = () => {
-  const [cart, setCart] = useState(initialMedicalBill);
+  const [searchParams] = useSearchParams();
+  const invoiceId = searchParams.get('invoice_id');
+
+  const [cart, setCart] = useState([]);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -29,13 +28,48 @@ const CheckoutPOS = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState('');
 
-  // Fetch produk dari backend
+  // Fetch invoice if invoiceId exists
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!invoiceId) return;
+      setIsLoadingInvoice(true);
+      try {
+        const res = await getInvoiceById(invoiceId);
+        const data = res?.data || res;
+        if (data) {
+          setInvoiceData(data);
+          setDiscount(data.discount || 0);
+          
+          // Populate cart
+          if (data.items && data.items.length > 0) {
+            const mappedItems = data.items.map(item => ({
+              id: item.item_id, // we use item_id as product/service id
+              item_type: item.item_type,
+              name: item.item?.name || item.item_name || `${item.item_type} #${item.item_id}`,
+              category: item.item_type === 'Service' || item.item_type === 'App\\Models\\Service' ? 'Layanan' : 'Produk',
+              price: item.price,
+              qty: item.quantity,
+              // Kunci layanan agar tidak bisa dihapus, hanya produk yang bisa
+              isLocked: item.item_type === 'Service' || item.item_type === 'App\\Models\\Service'
+            }));
+            setCart(mappedItems);
+          }
+        }
+      } catch (error) {
+        showError('Gagal memuat invoice', error.message);
+      } finally {
+        setIsLoadingInvoice(false);
+      }
+    };
+    fetchInvoice();
+  }, [invoiceId]);
+
+  // Fetch produk dari backend (untuk tambahan)
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoadingProducts(true);
       try {
         const data = await getProducts(searchQuery);
-        // backend data.data contains the array when paginated
         setProducts(data.data || data);
       } catch (error) {
         console.error(error);
@@ -46,7 +80,7 @@ const CheckoutPOS = () => {
     
     // debounce search
     const delayDebounceFn = setTimeout(() => {
-      fetchProducts();
+      if(searchQuery) fetchProducts();
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
@@ -68,24 +102,32 @@ const CheckoutPOS = () => {
   // --- HANDLERS ---
   const handleAddItem = (product) => {
     const price = product.selling_price || product.price; // handle mock data vs real data
-    const existingItem = cart.find(item => item.id === product.id);
+    const existingItem = cart.find(item => item.id === product.id && item.category === 'Produk');
     if (existingItem) {
       setCart(cart.map(item => 
-        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        (item.id === product.id && item.category === 'Produk') ? { ...item, qty: item.qty + 1 } : item
       ));
     } else {
-      setCart([...cart, { ...product, price, qty: 1, isLocked: false }]);
+      setCart([...cart, { 
+        id: product.id, 
+        name: product.name,
+        category: 'Produk', 
+        item_type: 'Product',
+        price, 
+        qty: 1, 
+        isLocked: false 
+      }]);
     }
     setSearchQuery('');
   };
 
-  const handleRemoveItem = (id) => {
-    setCart(cart.filter(item => item.id !== id));
+  const handleRemoveItem = (id, category) => {
+    setCart(cart.filter(item => !(item.id === id && item.category === category)));
   };
 
-  const handleQtyChange = (id, newQty) => {
+  const handleQtyChange = (id, category, newQty) => {
     if (newQty < 1) return;
-    setCart(cart.map(item => item.id === id ? { ...item, qty: newQty } : item));
+    setCart(cart.map(item => (item.id === id && item.category === category) ? { ...item, qty: newQty } : item));
   };
 
   const handleProcessPayment = async () => {
@@ -101,26 +143,42 @@ const CheckoutPOS = () => {
     setIsProcessing(true);
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const payload = {
-        invoice_id: 'INV-20260629-001', // ID Invoice dummy untuk demo
-        cashier_id: storedUser.id || 1,
+      const cashierId = storedUser.id || 4;
+
+      // 1. Sync invoice items first (in case there are additions)
+      if (invoiceId) {
+        const payloadUpdate = {
+          discount,
+          payment_method: paymentMethod,
+          items: cart.map(item => ({
+            item_type: item.item_type === 'Product' || item.category === 'Produk' ? 'Product' : 'Service',
+            item_id: item.id,
+            quantity: item.qty,
+            price: item.price
+          }))
+        };
+        await updateInvoice(invoiceId, payloadUpdate);
+      }
+
+      // 2. Post to /payments
+      const payloadPayment = {
+        invoice_id: invoiceId || 'INV-20260629-001', // fallback untuk demo
+        cashier_id: cashierId,
         payment_method: paymentMethod,
         amount_paid: paymentMethod === 'Tunai' ? Number(amountGiven) : grandTotal,
       };
       
-      // Call actual API
-      await processPayment(payload); 
-      
-      // Delay for loading effect
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await processPayment(payloadPayment); 
       
       if (paymentMethod === 'QRIS') {
         setShowQrisModal(true);
       } else {
         setIsSuccess(true);
+        showSuccess('Pembayaran Berhasil', 'Transaksi telah lunas.');
       }
     } catch (error) {
       setPaymentError(error.message || 'Pembayaran gagal. Silakan coba lagi.');
+      showError('Gagal', error.message || 'Pembayaran gagal.');
     } finally {
       setIsProcessing(false);
     }
@@ -129,6 +187,7 @@ const CheckoutPOS = () => {
   const handleQrisSuccess = () => {
     setShowQrisModal(false);
     setIsSuccess(true);
+    showSuccess('Pembayaran Berhasil', 'Transaksi QRIS telah lunas.');
   };
 
   const filteredCatalog = products || [];
@@ -139,22 +198,24 @@ const CheckoutPOS = () => {
       <div className="flex h-[80vh] flex-col items-center justify-center space-y-6">
         <CheckCircle2 className="h-24 w-24 text-green-500" />
         <h2 className="text-3xl font-bold text-slate-800">Pembayaran Berhasil!</h2>
-        <p className="text-slate-500">Metode: {paymentMethod} | Nomor Struk: INV-{Math.floor(Math.random() * 1000000)}</p>
+        <p className="text-slate-500">Metode: {paymentMethod} | Nomor Struk: {invoiceId || `INV-${Math.floor(Math.random() * 1000000)}`}</p>
         <div className="flex gap-4">
           <button onClick={() => window.location.href = '/cashier/invoice'}
            className="rounded-md bg-blue-600 px-6 py-2.5 font-medium text-white hover:bg-blue-700">
             Cetak Struk
           </button>
           <button 
-            onClick={() => window.location.reload()} 
+            onClick={() => window.location.href = '/cashier/dashboard'} 
             className="rounded-md border border-slate-300 bg-white px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-50"
           >
-            Kembali ke Antrean
+            Kembali ke Dashboard
           </button>
         </div>
       </div>
     );
   }
+
+  const clientName = invoiceData?.owner?.name || invoiceData?.client_name || 'Pelanggan Umum';
 
   return (
     <div className="flex flex-col gap-6">
@@ -162,14 +223,14 @@ const CheckoutPOS = () => {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/admin/pharmacy-cashier/cashier/BillingQueue" className="rounded-full p-2 hover:bg-slate-200">
+          <button onClick={() => window.history.back()} className="rounded-full p-2 hover:bg-slate-200 transition-colors">
             <ChevronLeft className="h-5 w-5 text-slate-600" />
-          </Link>
+          </button>
           <h1 className="text-2xl font-bold text-slate-800">Checkout POS</h1>
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-700">
           <Receipt className="h-5 w-5" />
-          <span className="font-semibold">INV-260520-001</span>
+          <span className="font-semibold">{invoiceId || 'Tagihan Baru'}</span>
         </div>
       </div>
 
@@ -178,12 +239,12 @@ const CheckoutPOS = () => {
         <div className="flex flex-col gap-6 xl:col-span-2">
           
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 font-semibold text-slate-800">Tambah Item (Petshop / Obat Bebas)</h2>
+            <h2 className="mb-4 font-semibold text-slate-800">Tambah Item (Produk / Obat Bebas)</h2>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Cari makanan, mainan, atau perlengkapan..." 
+                placeholder="Ketik untuk mencari makanan, mainan, atau obat..." 
                 className="w-full rounded-lg border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 outline-none focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -202,7 +263,7 @@ const CheckoutPOS = () => {
                     <div key={product.id} className="flex items-center justify-between rounded bg-white p-3 shadow-sm">
                       <div>
                         <p className="font-medium text-slate-800">{product.name}</p>
-                        <p className="text-sm text-slate-500">{formatRupiah(product.selling_price)}</p>
+                        <p className="text-sm text-slate-500">{formatRupiah(product.selling_price || product.price)}</p>
                       </div>
                       <button 
                         onClick={() => handleAddItem(product)}
@@ -224,57 +285,76 @@ const CheckoutPOS = () => {
               <h2 className="font-semibold text-slate-800">Rincian Tagihan</h2>
             </div>
             <div className="flex-grow overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3 font-medium">Item</th>
-                    <th className="px-5 py-3 font-medium">Harga</th>
-                    <th className="px-5 py-3 text-center font-medium">Qty</th>
-                    <th className="px-5 py-3 text-right font-medium">Subtotal</th>
-                    <th className="px-5 py-3 text-center font-medium">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {cart.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-50/50">
-                      <td className="px-5 py-4">
-                        <p className="font-medium text-slate-800">{item.name}</p>
-                        <span className={`inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${item.isLocked ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-slate-600">{formatRupiah(item.price)}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button 
-                            onClick={() => handleQtyChange(item.id, item.qty - 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                            disabled={item.qty <= 1}
-                          >-</button>
-                          <span className="w-6 text-center font-medium">{item.qty}</span>
-                          <button 
-                            onClick={() => handleQtyChange(item.id, item.qty + 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-200"
-                          >+</button>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right font-medium text-slate-800">
-                        {formatRupiah(item.price * item.qty)}
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        {/* HANYA KONSULTASI YANG TERKUNCI */}
-                        {!item.isLocked ? (
-                          <button onClick={() => handleRemoveItem(item.id)} className="text-slate-400 hover:text-red-500">
-                            <Trash2 className="mx-auto h-4 w-4" />
-                          </button>
-                        ) : (
-                          <span className="text-xs font-semibold text-red-400" title="Konsultasi tidak dapat dihapus">Terkunci</span>
-                        )}
-                      </td>
+              {isLoadingInvoice ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-slate-500 font-medium">Memuat rincian tagihan...</span>
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th className="px-5 py-3 font-medium">Item</th>
+                      <th className="px-5 py-3 font-medium">Harga</th>
+                      <th className="px-5 py-3 text-center font-medium">Qty</th>
+                      <th className="px-5 py-3 text-right font-medium">Subtotal</th>
+                      <th className="px-5 py-3 text-center font-medium">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {cart.map((item, idx) => (
+                      <tr key={`${item.id}-${item.category}-${idx}`} className="hover:bg-slate-50/50">
+                        <td className="px-5 py-4">
+                          <p className="font-medium text-slate-800">{item.name}</p>
+                          <span className={`inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${item.isLocked ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-slate-600">{formatRupiah(item.price)}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => handleQtyChange(item.id, item.category, item.qty - 1)}
+                              className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                              disabled={item.qty <= 1}
+                            >-</button>
+                            <span className="w-6 text-center font-medium">{item.qty}</span>
+                            <button 
+                              onClick={() => handleQtyChange(item.id, item.category, item.qty + 1)}
+                              className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-200"
+                            >+</button>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-right font-medium text-slate-800">
+                          {formatRupiah(item.price * item.qty)}
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          {/* HANYA KONSULTASI YANG TERKUNCI */}
+                          {!item.isLocked ? (
+                            <button onClick={() => handleRemoveItem(item.id, item.category)} className="text-slate-400 hover:text-red-500">
+                              <Trash2 className="mx-auto h-4 w-4" />
+                            </button>
+                          ) : (
+                            <span className="text-xs font-semibold text-red-400" title="Layanan tidak dapat dihapus">Terkunci</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {cart.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="text-center py-6 text-slate-500">Belum ada item tagihan</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            
+            {/* PERINGATAN MERAH DI BAWAH TABEL */}
+            <div className="px-5 py-3 bg-red-50/50 border-t border-red-100">
+              <p className="text-xs font-semibold text-red-500 text-center">
+                * Perubahan/penambahan item hanya dengan persetujuan dokter atau jika terdapat kesalahan.
+              </p>
             </div>
           </div>
 
@@ -288,8 +368,10 @@ const CheckoutPOS = () => {
               <User className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">Bpk. Ahmad Subarjo</h3>
-              <p className="text-sm text-slate-500">Pemilik Pet: "Mochi" (Kucing)</p>
+              <h3 className="font-bold text-slate-800">{clientName}</h3>
+              <p className="text-sm text-slate-500">
+                {invoiceData?.appointment?.pet?.name ? `Pet: "${invoiceData.appointment.pet.name}"` : 'Pasien Klinik'}
+              </p>
             </div>
           </div>
 
@@ -371,7 +453,7 @@ const CheckoutPOS = () => {
 
             <button 
               onClick={handleProcessPayment}
-              disabled={isProcessing}
+              disabled={isProcessing || cart.length === 0}
               className="mt-auto w-full flex items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-green-700 active:bg-green-800 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isProcessing && <Loader2 className="h-5 w-5 animate-spin" />}

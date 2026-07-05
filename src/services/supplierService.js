@@ -13,12 +13,27 @@ export const getSupplierById = async (id) => {
 };
 
 export const createSupplier = async (data) => {
-  const response = await api.post(API_URL, data);
+  let response;
+  if (data instanceof FormData) {
+    response = await api.post(API_URL, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  } else {
+    response = await api.post(API_URL, data);
+  }
   return response.data;
 };
 
 export const updateSupplier = async (id, data) => {
-  const response = await api.put(`${API_URL}/${id}`, data);
+  let response;
+  if (data instanceof FormData) {
+    data.append('_method', 'PUT');
+    response = await api.post(`${API_URL}/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  } else {
+    response = await api.put(`${API_URL}/${id}`, data);
+  }
   return response.data;
 };
 

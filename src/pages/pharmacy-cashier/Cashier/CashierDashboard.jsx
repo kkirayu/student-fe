@@ -61,7 +61,8 @@ const CashierDashboard = () => {
 
   const handleEdit = (e, queue) => {
     e.stopPropagation();
-    navigate('/cashier/new-transaction');
+    const invoiceId = queue.raw_data?.id || queue.id;
+    navigate(`/cashier/checkout?invoice_id=${invoiceId}`);
   };
 
   // 1. Statistik Ringkasan Shift Aktif
@@ -119,9 +120,10 @@ const CashierDashboard = () => {
   // Custom Tooltip for Recharts
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const fullHour = payload[0].payload.hour || label;
       return (
         <div className="bg-slate-800 text-white text-xs py-2 px-3 rounded shadow-lg border border-slate-700">
-          <p className="font-semibold mb-1">{label}</p>
+          <p className="font-semibold mb-1">{fullHour}</p>
           <p className="text-blue-300">{formatCurrency(payload[0].value)}</p>
         </div>
       );
@@ -155,7 +157,7 @@ const CashierDashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.hourly_revenue} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <XAxis 
-                  dataKey="hour" 
+                  dataKey="short_label" 
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fontSize: 10, fill: '#94a3b8' }} 
@@ -164,7 +166,7 @@ const CashierDashboard = () => {
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
                 <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
                   {data.hourly_revenue.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === data.hourly_revenue.length - 1 ? '#2563eb' : '#bfdbfe'} />
+                    <Cell key={`cell-${index}`} fill="#60a5fa" />
                   ))}
                 </Bar>
               </BarChart>

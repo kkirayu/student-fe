@@ -55,6 +55,7 @@ import VaccinationBook from '../pages/doctor/MedicalRecord/VaccinationBook';
 
 import PharmacyDashboard from '../pages/pharmacy-cashier/Dashboard';
 import ProductCatalog from '../pages/pharmacy-cashier/Inventory/ProductCatalog';
+import FormTambahProduct from '../pages/pharmacy-cashier/Inventory/FormTambahProduct';
 import FormRestockBarang from '../pages/pharmacy-cashier/Inventory/RestockForm';
 import StockMonitoring from '../pages/pharmacy-cashier/Inventory/StockMonitoring';
 import SupplierList from '../pages/pharmacy-cashier/Supplier/SupplierList';
@@ -158,6 +159,7 @@ const AppRouter = () => {
           <Route index element={<PharmacyDashboard />} />
           <Route path="prescriptions" element={<PrescriptionQueue />} />
           <Route path="inventory" element={<ProductCatalog />} />
+          <Route path="inventory/add" element={<FormTambahProduct />} />
           <Route path="inventory/monitoring" element={<StockMonitoring />} />
           <Route path="restock" element={<FormRestockBarang />} />
           <Route path="supplier" element={<SupplierList />} />

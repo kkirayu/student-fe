@@ -133,7 +133,7 @@ const ProductCatalog = () => {
           <p className="mt-1 text-sm font-medium text-slate-500">Kelola daftar obat, vaksin, makanan, dan aksesori klinik.</p>
         </div>
         <Link 
-          to="/pharmacy/restock" 
+          to="/pharmacy/inventory/add" 
           className="inline-flex items-center justify-center gap-2 rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 shadow-sm"
         >
           <Plus className="h-4 w-4" />
@@ -240,14 +240,26 @@ const ProductCatalog = () => {
 
                 <div className="my-3 border-t border-dashed border-slate-100" />
 
-                <div className={`w-full inline-flex items-center justify-between rounded-sm p-2 text-xs font-medium border ${
+                <div className={`w-full flex flex-col gap-1.5 rounded-sm p-2 text-xs font-medium border ${
                   product.is_expired ? 'bg-red-50 text-red-700 border-red-100' : 'bg-slate-50 text-slate-600 border-slate-100'
                 }`}>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Calendar className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                    <span className="truncate">Exp: {formatDate(product.exp_date)}</span>
-                  </div>
-                  {product.exp_date && <AlertCircle className="h-3.5 w-3.5 shrink-0 opacity-80" />}
+                  {(product.product_batches && product.product_batches.length > 0) ? (
+                    product.product_batches.map((batch, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Calendar className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                          <span className="truncate">Exp: {formatDate(batch.exp_date)} ({batch.stock} Pcs)</span>
+                        </div>
+                        {batch.exp_date && batch.exp_date < new Date().toISOString().split('T')[0] && <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0 opacity-80" />}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Calendar className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                      <span className="truncate">Exp: {formatDate(product.exp_date)}</span>
+                      {product.exp_date && <AlertCircle className="h-3.5 w-3.5 shrink-0 opacity-80" />}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
@@ -505,19 +517,37 @@ const ProductCatalog = () => {
                     )}
                   </div>
 
-                  {/* Kedaluwarsa */}
+                  {/* Kedaluwarsa - Multi Batch */}
                   <div className={`rounded-sm border p-3 ${selectedProduct.is_expired ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400" />
-                        <div>
-                          <div className="text-xs font-bold uppercase text-slate-400">Tanggal Kedaluwarsa</div>
-                          <div className="mt-0.5 text-sm font-bold text-slate-800">{formatDate(selectedProduct.exp_date)}</div>
+                    <div className="text-xs font-bold uppercase text-slate-400 mb-3 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      Daftar Kedaluwarsa (Berdasarkan Batch)
+                    </div>
+                    <div className="space-y-2">
+                      {(selectedProduct.product_batches && selectedProduct.product_batches.length > 0) ? (
+                        selectedProduct.product_batches.map((batch, idx) => {
+                          const isBatchExpired = batch.exp_date && batch.exp_date < new Date().toISOString().split('T')[0];
+                          return (
+                            <div key={idx} className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`h-2 w-2 rounded-full ${isBatchExpired ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                                <div className="text-sm font-bold text-slate-800">{formatDate(batch.exp_date)}</div>
+                                <div className="text-xs text-slate-500 ml-2">({batch.stock} Pcs)</div>
+                              </div>
+                              <span className={`text-xs font-medium ${isBatchExpired ? 'text-red-600' : 'text-emerald-600'}`}>
+                                {isBatchExpired ? 'Expired' : 'Aman'}
+                              </span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-bold text-slate-800">{formatDate(selectedProduct.exp_date)}</div>
+                          <span className={`text-xs font-medium ${selectedProduct.is_expired ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {selectedProduct.is_expired ? 'Sudah Expired' : 'Masih Aman'}
+                          </span>
                         </div>
-                      </div>
-                      <span className={`text-xs font-medium ${selectedProduct.is_expired ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {selectedProduct.is_expired ? 'Sudah Expired' : 'Masih Aman'}
-                      </span>
+                      )}
                     </div>
                   </div>
                 </div>
