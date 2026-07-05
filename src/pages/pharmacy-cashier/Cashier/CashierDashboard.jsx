@@ -1,65 +1,104 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; // Tambahkan baris ini
-import { Wallet, CreditCard, Clock, CheckCircle, ChevronRight, PlusCircle, Printer, Eye, Edit } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Wallet, CreditCard, Clock, CheckCircle, ChevronRight, PlusCircle, Printer, Eye, Edit, RefreshCw, AlertCircle } from 'lucide-react';
+import { getCashierDashboardStats } from '../../../services/cashierDashboardService';
 
 const CashierDashboard = () => {
+  const [data, setData] = useState({
+    total_revenue_today: 0,
+    revenue_percentage_change: 0,
+    stats: {
+      diproses: 0,
+      menunggu_bayar: 0,
+      selesai: 0,
+    },
+    hourly_revenue: [],
+    queue_list: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getCashierDashboardStats();
+      if (response && response.data) {
+        setData(response.data);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Gagal memuat data dashboard kasir.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+  };
+
   // 1. Statistik Ringkasan Shift Aktif
   const shiftStats = [
     {
       title: 'Diproses',
-      value: '12 Antrean',
+      value: `${data.stats.diproses} Antrean`,
       icon: <Wallet className="text-emerald-600 h-5 w-5" />,
       bgIcon: 'bg-emerald-100',
     },
     {
       title: 'Menunggu Bayar',
-      value: '5 Antrean',
+      value: `${data.stats.menunggu_bayar} Antrean`,
       icon: <Clock className="text-orange-600 h-5 w-5" />,
       bgIcon: 'bg-orange-100',
     },
     {
       title: 'Selesai',
-      value: '84 Transaksi',
+      value: `${data.stats.selesai} Transaksi`,
       icon: <CheckCircle className="text-blue-600 h-5 w-5" />,
       bgIcon: 'bg-blue-100',
     },
   ];
 
-  // 2. Data Mockup Antrean Kasir Hari Ini (Disesuaikan untuk Petshop & Klinik)
-  const queueList = [
-    { 
-      id: '#INV-2024-8821', 
-      name: 'Andi Wijaya (Milo - Kucing)', 
-      items: '1x Vaksin F3, 1x Royal Canin Kitten 400g', 
-      time: '10:45 AM', 
-      status: 'Diproses', 
-      statusBg: 'bg-emerald-100 text-emerald-700' 
-    },
-    { 
-      id: '#INV-2024-8820', 
-      name: 'Siti Aminah (Boni - Anjing)', 
-      items: '1x Basic Grooming, 1x Obat Cacing Drontal', 
-      time: '10:42 AM', 
-      status: 'Menunggu', 
-      statusBg: 'bg-orange-100 text-orange-700' 
-    },
-    { 
-      id: '#INV-2024-8819', 
-      name: 'Herman (Panda - Kucing)', 
-      items: '1x Konsultasi Dokter, 1x Tindakan Rawat Luka', 
-      time: '10:35 AM', 
-      status: 'Selesai', 
-      statusBg: 'bg-slate-100 text-slate-700' 
-    },
-    { 
-      id: '#INV-2024-8818', 
-      name: 'Bambang S. (Rocky - Anjing)', 
-      items: '1x Pet Carrier Size L, 2x Jerky Dog Treats', 
-      time: '10:30 AM', 
-      status: 'Selesai', 
-      statusBg: 'bg-slate-100 text-slate-700' 
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center gap-2 text-slate-500 min-h-[400px]">
+        <RefreshCw className="animate-spin text-blue-600" size={24} />
+        <span className="font-medium">Memuat Dashboard Kasir...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto my-8">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center shadow-sm">
+          <div className="flex justify-center mb-3 text-red-500">
+            <AlertCircle size={40} />
+          </div>
+          <h3 className="text-lg font-bold text-red-800 mb-2">Gagal Memuat Dashboard</h3>
+          <p className="text-sm text-red-600 mb-6">{error}</p>
+          <button
+            onClick={fetchData}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-sm text-sm font-semibold hover:bg-red-700 transition shadow-sm"
+          >
+            <RefreshCw size={16} />
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate heights for chart based on max revenue
+  const maxHourlyRev = Math.max(...data.hourly_revenue.map(hr => hr.revenue), 1); 
+  const chartHeights = data.hourly_revenue.length > 0 
+    ? data.hourly_revenue.map(hr => Math.max((hr.revenue / maxHourlyRev) * 100, 5)) 
+    : [5, 5, 5, 5, 5, 5, 5, 5]; // fallback skeleton
 
   return (
     <div className="space-y-6 font-sans">
@@ -71,23 +110,31 @@ const CashierDashboard = () => {
         <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Uang Kasir Sementara</p>
-              <h1 className="text-3xl font-extrabold text-blue-600 mt-1">Rp 12.450.000</h1>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pendapatan Hari Ini</p>
+              <h1 className="text-3xl font-extrabold text-blue-600 mt-1">{formatCurrency(data.total_revenue_today)}</h1>
             </div>
             <div className="text-right">
-              <span className="text-emerald-600 font-bold text-sm flex items-center gap-1 justify-end">
-                ▲ +12%
+              <span className={`${data.revenue_percentage_change >= 0 ? 'text-emerald-600' : 'text-red-600'} font-bold text-sm flex items-center gap-1 justify-end`}>
+                {data.revenue_percentage_change >= 0 ? '▲' : '▼'} {Math.abs(data.revenue_percentage_change)}%
               </span>
               <p className="text-[10px] text-slate-400">vs kemarin</p>
             </div>
           </div>
           
           {/* Minimal Trend Chart Simulation */}
-          <div className="mt-6 h-24 w-full flex items-end gap-2">
-            {[40, 55, 45, 70, 60, 85, 75, 95].map((height, i) => (
-              <div key={i} className="flex-1 bg-blue-50 rounded-t-sm transition-all hover:bg-blue-100" style={{ height: `${height}%` }}></div>
+          <div className="mt-6 h-24 w-full flex items-end gap-2" title="Pendapatan 8 Jam Terakhir">
+            {chartHeights.map((height, i) => (
+              <div 
+                key={i} 
+                className={`flex-1 ${i === chartHeights.length - 1 ? 'bg-blue-600' : 'bg-blue-50'} rounded-t-sm transition-all hover:bg-blue-100 cursor-pointer relative group`} 
+                style={{ height: `${height}%` }}
+              >
+                {/* Tooltip */}
+                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap pointer-events-none transition-opacity">
+                  {data.hourly_revenue[i] ? `${data.hourly_revenue[i].hour} : ${formatCurrency(data.hourly_revenue[i].revenue)}` : 'No data'}
+                </div>
+              </div>
             ))}
-            <div className="flex-1 bg-blue-600 rounded-t-sm" style={{ height: '100%' }}></div>
           </div>
         </div>
 
@@ -113,7 +160,6 @@ const CashierDashboard = () => {
 
       {/* MIDDLE ROW: PRIMARY ACTIONS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tombol dibungkus dengan komponen Link agar area klik berfungsi dengan baik secara keseluruhan */}
         <Link to="/cashier/new-transaction" className="group h-32 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-between p-8 text-white shadow-md transition-all active:scale-[0.98] block">
           <div className="text-left">
             <h2 className="text-xl font-bold">Transaksi Baru</h2>
@@ -133,7 +179,6 @@ const CashierDashboard = () => {
           <div className="w-14 h-14 bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 rounded-full flex items-center justify-center transition-colors">
             <CreditCard className="h-6 w-6 text-slate-600 group-hover:text-blue-600" />
           </div>
-
         </Link>
       </div>
 
@@ -154,7 +199,7 @@ const CashierDashboard = () => {
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4 text-xs">No. Invoice</th>
+                <th className="px-6 py-4 text-xs">No. Invoice/Apt</th>
                 <th className="px-6 py-4 text-xs">Pemilik (Hewan)</th>
                 <th className="px-6 py-4 text-xs">Layanan / Item</th>
                 <th className="px-6 py-4 text-xs">Waktu</th>
@@ -163,41 +208,44 @@ const CashierDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-700">
-              {queueList.map((queue, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-blue-600">{queue.id}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-800">{queue.name}</td>
-                  <td className="px-6 py-4 text-slate-500 max-w-xs truncate">{queue.items}</td>
-                  <td className="px-6 py-4 text-slate-400 font-medium">{queue.time}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${queue.statusBg}`}>
-                      {queue.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-1">
-                    {queue.status === 'Selesai' ? (
-                      <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Eye className="h-4 w-4" /></button>
-                    ) : (
-                      <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Edit className="h-4 w-4" /></button>
-                    )}
-                    <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Printer className="h-4 w-4" /></button>
+              {data.queue_list.length > 0 ? (
+                data.queue_list.map((queue, i) => {
+                  let statusBg = 'bg-slate-100 text-slate-700';
+                  if (queue.status === 'Diproses') statusBg = 'bg-emerald-100 text-emerald-700';
+                  else if (queue.status === 'Menunggu') statusBg = 'bg-orange-100 text-orange-700';
+                  else if (queue.status === 'Selesai') statusBg = 'bg-blue-100 text-blue-700';
+
+                  return (
+                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-blue-600">{queue.id}</td>
+                      <td className="px-6 py-4 font-semibold text-slate-800">{queue.name}</td>
+                      <td className="px-6 py-4 text-slate-500 max-w-xs truncate">{queue.items}</td>
+                      <td className="px-6 py-4 text-slate-400 font-medium">{queue.time}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${statusBg}`}>
+                          {queue.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-1">
+                        {queue.status === 'Selesai' ? (
+                          <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Eye className="h-4 w-4" /></button>
+                        ) : (
+                          <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Edit className="h-4 w-4" /></button>
+                        )}
+                        <button className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors inline-flex items-center"><Printer className="h-4 w-4" /></button>
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500 font-medium bg-slate-50/30">
+                    Belum ada antrean untuk hari ini.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination / Footer Table */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs text-slate-400 font-medium">
-          <p>Menampilkan 4 dari 25 antrean</p>
-          <div className="flex gap-1">
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white hover:bg-slate-50"><ChevronRight className="h-4 w-4 rotate-180" /></button>
-            <button className="w-8 h-8 flex items-center justify-center rounded bg-blue-600 text-white font-bold">1</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white hover:text-blue-600">2</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white hover:text-blue-600">3</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 bg-white hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
-          </div>
         </div>
       </section>
 

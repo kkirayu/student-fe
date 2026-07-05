@@ -33,3 +33,16 @@ export const createInvoice = async (invoiceData) => {
     handleServiceError(error, 'Gagal membuat invoice.');
   }
 };
+
+/**
+ * Mengambil daftar invoice
+ * @param {Object} params - Parameter query (page, status, date, dll)
+ */
+export const getInvoices = async (params = {}) => {
+  try {
+    const response = await api.get('/invoices', { params });
+    return response.data;
+  } catch (error) {
+    handleServiceError(error, 'Gagal memuat daftar invoice.');
+  }
+};
