@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, PawPrint, Activity, X, Save, Eye, FileText, Pill } from 'lucide-react';
+import { ArrowLeft, Edit, PawPrint, Activity, X, Save, Eye, FileText, Pill, Loader2 } from 'lucide-react';
+import api from '../../../services/api';
 
 const PatientMedicalProfile = () => {
   const { id } = useParams();
@@ -9,46 +10,68 @@ const PatientMedicalProfile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
 
-  const [patientData, setPatientData] = useState({
-    appointment_id: 'APT-001',
-    nama: 'Mochi',
-    owner: 'Budhi',
-    doctor_id: 'D-005',
-    subjective: 'Kucing muntah bulu (hairball) 3 kali sejak kemarin, nafsu makan sedikit menurun.',
-    assessment: 'Feline Trichobezoar (Hairball) ringan.',
-    plan: 'Pemberian pasta hairball, edukasi owner untuk rutin menyisir bulu.',
-    weight: '4.2',
-    species: 'Kucing',
-    breed: 'Persia Medium',
-    gender: 'Jantan',
-    age: '2 Tahun 1 Bulan',
-    allergies: 'Tidak ada alergi obat',
-    temperature: '38.5°C'
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [patientData, setPatientData] = useState({});
+  const [medicalHistory, setMedicalHistory] = useState([]);
 
-  const medicalHistory = [
-    {
-      date: '08 Mei 2026',
-      diagnosis: 'Gastritis ringan',
-      vet: 'drh. Bunga',
-      subjective: 'Kucing muntah 2x setelah makan dry food.',
-      objective: 'Suhu 38.6°C, perut sedikit kembung.',
-      plan: 'Ganti makanan ke wet food (Gastrointestinal).',
-      prescriptions: [
-        { name: 'Omeprazole 10mg', qty: 5, instructions: '1/4 tablet 2x sehari' },
-        { name: 'RC Gastrointestinal Wet', qty: 2, instructions: 'Sesuai kebutuhan' }
-      ]
-    },
-    {
-      date: '20 April 2026',
-      diagnosis: 'Vaksinasi Tahunan F3 (Felocell 3)',
-      vet: 'drh. Bunga',
-      subjective: 'Jadwal rutin vaksin tahunan. Kucing sehat.',
-      objective: 'Suhu 38.2°C, mata cerah, telinga bersih.',
-      plan: 'Vaksinasi Felocell 3 diberikan. Observasi 15 menit post-vaksin.',
-      prescriptions: []
-    },
-  ];
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch Pet details
+        const petRes = await api.get(`/pets/${id}`);
+        const pet = petRes.data?.data || petRes.data;
+
+        // Fetch Medical Records
+        const medRes = await api.get('/medical-records', { params: { pet_id: id } });
+        let records = [];
+        const payload = medRes.data;
+        if (Array.isArray(payload)) records = payload;
+        else if (Array.isArray(payload?.data)) records = payload.data;
+        else if (Array.isArray(payload?.data?.data)) records = payload.data.data;
+
+        let ageStr = '-';
+        if (pet.dob) {
+          const birth = new Date(pet.dob);
+          const now = new Date();
+          const diff = now - birth;
+          const ageDate = new Date(diff); 
+          const years = Math.abs(ageDate.getUTCFullYear() - 1970);
+          ageStr = `${years} Tahun`;
+        }
+
+        setPatientData({
+          appointment_id: 'N/A',
+          nama: pet.name || '-',
+          owner: pet.owner?.name || '-',
+          doctor_id: '-',
+          subjective: pet.subjective_complaint || 'Tidak ada keluhan awal.',
+          weight: pet.weight || '-',
+          species: pet.species || '-',
+          breed: pet.breed || '-',
+          gender: pet.gender || '-',
+          age: ageStr,
+          allergies: pet.allergies || 'Tidak ada alergi',
+          temperature: '-'
+        });
+
+        setMedicalHistory(records.map(record => ({
+          date: record.created_at ? new Date(record.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-',
+          diagnosis: record.diagnosis?.disease_name || record.diagnosis_dictionary_id || 'Tidak ada diagnosa',
+          vet: record.doctor?.name || 'Dokter tidak diketahui',
+          subjective: record.subjective || '-',
+          objective: record.objective || '-',
+          plan: record.plan || '-',
+          prescriptions: record.prescriptions || []
+        })));
+      } catch (error) {
+        console.error('Failed to fetch patient profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (id) fetchProfileData();
+  }, [id]);
 
   // Handler untuk menyimpan perubahan profil
   const handleSaveProfile = (e) => {
@@ -85,49 +108,55 @@ const PatientMedicalProfile = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Kolom Kiri: Informasi Dasar */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                <PawPrint className="h-10 w-10" />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64 bg-white rounded-lg border border-slate-200 shadow-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <PawPrint className="h-10 w-10" />
+                </div>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">{patientData.nama}</h2>
+              <p className="text-sm text-slate-500 mb-6 font-medium">Pasien: {patientData.appointment_id}</p>
+
+              <div className="space-y-3 border-t border-slate-100 pt-4 text-left">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Spesies / Ras</span>
+                  <span className="font-semibold text-slate-800">{patientData.species} - {patientData.breed}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Jenis Kelamin</span>
+                  <span className="font-semibold text-slate-800">{patientData.gender}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Umur</span>
+                  <span className="font-semibold text-slate-800">{patientData.age}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Pemilik</span>
+                  <span className="font-semibold text-slate-800">{patientData.owner}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Berat / Suhu</span>
+                  <span className="font-semibold text-slate-800">{patientData.weight} Kg / {patientData.temperature}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Alergi</span>
+                  <span className="font-semibold text-red-600">{patientData.allergies}</span>
+                </div>
+
+                <div className="pt-2 mt-2 border-t border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1 tracking-wider">Keluhan Awal (Subjective)</span>
+                  <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 italic">
+                    "{patientData.subjective}"
+                  </p>
+                </div>
               </div>
             </div>
-            <h2 className="text-xl font-bold text-slate-800">{patientData.nama}</h2>
-            <p className="text-sm text-slate-500 mb-6 font-medium">Pasien: {patientData.appointment_id}</p>
-
-            <div className="space-y-3 border-t border-slate-100 pt-4 text-left">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Spesies / Ras</span>
-                <span className="font-semibold text-slate-800">{patientData.species} - {patientData.breed}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Jenis Kelamin</span>
-                <span className="font-semibold text-slate-800">{patientData.gender}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Umur</span>
-                <span className="font-semibold text-slate-800">{patientData.age}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Pemilik</span>
-                <span className="font-semibold text-slate-800">{patientData.owner}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Berat / Suhu</span>
-                <span className="font-semibold text-slate-800">{patientData.weight} Kg / {patientData.temperature}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Alergi</span>
-                <span className="font-semibold text-red-600">{patientData.allergies}</span>
-              </div>
-
-              <div className="pt-2 mt-2 border-t border-slate-100">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1 tracking-wider">Keluhan Awal (Subjective)</span>
-                <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 italic">
-                  "{patientData.subjective}"
-                </p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Kolom Kanan: Tabel Riwayat Medis */}
@@ -147,21 +176,35 @@ const PatientMedicalProfile = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {medicalHistory.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 text-slate-600 font-medium">{row.date}</td>
-                    <td className="px-6 py-4 text-slate-800">{row.diagnosis}</td>
-                    <td className="px-6 py-4 text-slate-500">{row.vet}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedHistory(row)}
-                        className="inline-flex items-center gap-1 rounded bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Detail
-                      </button>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="4" className="py-10 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-500" />
                     </td>
                   </tr>
-                ))}
+                ) : medicalHistory.length > 0 ? (
+                  medicalHistory.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 text-slate-600 font-medium">{row.date}</td>
+                      <td className="px-6 py-4 text-slate-800">{row.diagnosis}</td>
+                      <td className="px-6 py-4 text-slate-500">{row.vet}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedHistory(row)}
+                          className="inline-flex items-center gap-1 rounded bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Detail
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="py-10 text-center text-slate-500">
+                      Belum ada riwayat medis.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

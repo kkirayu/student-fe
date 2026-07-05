@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, Clock, CheckCircle, Search, Loader2, FileText, Activity, AlertTriangle, X } from 'lucide-react';
+import api from '../../services/api';
 
 const WaitingList = () => {
   const navigate = useNavigate();
@@ -10,27 +11,27 @@ const WaitingList = () => {
   const [selectedPatientForExam, setSelectedPatientForExam] = useState(null);
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchAppointments = async () => {
       try {
-        const response = await fetch('https://dummyjson.com/users?limit=8');
-        const data = await response.json();
+        const response = await api.get('/appointments');
+        const resData = response.data;
+        let data = [];
+        if (Array.isArray(resData)) data = resData;
+        else if (Array.isArray(resData?.data)) data = resData.data;
+        else if (Array.isArray(resData?.data?.data)) data = resData.data.data;
 
-        const petNames = ['Milo', 'Luna', 'Kuro', 'Bella', 'Simba', 'Chloe', 'Max', 'Oreo'];
-        const petTypes = ['Kucing', 'Anjing', 'Kucing', 'Hamster', 'Anjing', 'Kelinci', 'Burung', 'Kucing'];
-
-        const mappedPatients = data.users.map((user, index) => {
-          let statusStr = 'Menunggu';
-          if (index === 0) statusStr = 'Selesai';
-          else if (index === 1) statusStr = 'Sedang Diperiksa';
-
+        const mappedPatients = data
+          .filter(appt => appt.status !== 'Menunggu' && appt.status !== 'Batal')
+          .map((appt) => {
           return {
-            id: user.id,
-            ownerName: `${user.firstName} ${user.lastName}`,
-            petName: petNames[index],
-            petType: petTypes[index],
-            status: statusStr,
-            time: `0${9 + index}:00 AM`, // Waktu simulasi
-            image: user.image
+            id: appt.id,
+            ownerName: appt.pet?.owner?.name || appt.owner?.name || 'Owner Tidak Diketahui',
+            petId: appt.pet_id || appt.pet?.id,
+            petName: appt.pet?.name || 'Hewan Tidak Diketahui',
+            petType: appt.pet?.species || 'Spesies Tidak Diketahui',
+            status: appt.status || 'Menunggu',
+            time: appt.schedule_time || '00:00',
+            image: `https://ui-avatars.com/api/?name=${encodeURIComponent(appt.pet?.owner?.name || appt.owner?.name || 'U')}&background=random`
           };
         });
 
@@ -42,7 +43,7 @@ const WaitingList = () => {
       }
     };
 
-    fetchPatients();
+    fetchAppointments();
   }, []);
 
   const filteredPatients = patients.filter(p =>
@@ -132,7 +133,7 @@ const WaitingList = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          to={`/doctor/patient-profile/${patient.id}`}
+                          to={`/doctor/patient-profile/${patient.petId}`}
                           className="flex items-center gap-1 rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
                           title="Lihat Profil & Rekam Medis"
                         >
@@ -204,7 +205,13 @@ const WaitingList = () => {
                   Batal
                 </button>
                 <button 
-                  onClick={() => navigate('/doctor/soap')}
+                  onClick={() => navigate('/doctor/soap', { 
+                    state: { 
+                      appointmentId: selectedPatientForExam.id, 
+                      petId: selectedPatientForExam.petId,
+                      doctorId: JSON.parse(localStorage.getItem('user') || '{}').id || '1'
+                    } 
+                  })}
                   className="w-full sm:w-auto flex justify-center items-center gap-2 rounded-md bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-md transition-all"
                 >
                   <FileText className="h-4 w-4" /> {selectedPatientForExam.status === 'Sedang Diperiksa' ? 'Lanjutkan Periksa' : 'Mulai Periksa'}

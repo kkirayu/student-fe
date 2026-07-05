@@ -3,6 +3,7 @@ import { Pill, User, Plus, Trash2, FileText, Loader2, ArrowLeft } from 'lucide-r
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { showSuccess, showError, showConfirm, showWarning } from '../../../utils/alertUtils';
 import { doctorService } from '../../../services/doctorService';
+import api from '../../../services/api';
 
 const EReceiptForm = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const EReceiptForm = () => {
 
   // State data dari API
   const [pets, setPets] = useState([]);
+  const [products, setProducts] = useState([]);
   const [isLoadingPets, setIsLoadingPets] = useState(!activeAppointment);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,22 +30,35 @@ const EReceiptForm = () => {
     { medicine_name: '', dosage: '', frequency: '', quantity: 1, doctor_instructions: '' }
   ]);
 
-  // Ambil daftar hewan jika tidak di-pass dari halaman sebelumnya
+  // Ambil daftar hewan jika tidak di-pass dari halaman sebelumnya, dan ambil produk
   useEffect(() => {
-    if (activeAppointment) return;
-    const fetchPetsData = async () => {
+    const fetchInitialData = async () => {
       try {
-        setIsLoadingPets(true);
-        const response = await doctorService.getPets();
-        const petsData = response?.data?.data || response?.data || response;
-        setPets(Array.isArray(petsData) ? petsData : []);
+        if (!activeAppointment) setIsLoadingPets(true);
+        
+        // Fetch Pets (hanya jika activeAppointment tidak ada)
+        if (!activeAppointment) {
+          const response = await doctorService.getPets();
+          const petsData = response?.data?.data || response?.data || response;
+          setPets(Array.isArray(petsData) ? petsData : []);
+        }
+
+        // Fetch Products untuk dropdown
+        const prodRes = await api.get('/products');
+        let prodData = [];
+        const payload = prodRes.data;
+        if (Array.isArray(payload)) prodData = payload;
+        else if (Array.isArray(payload?.data)) prodData = payload.data;
+        else if (Array.isArray(payload?.data?.data)) prodData = payload.data.data;
+        setProducts(prodData);
+
       } catch (error) {
-        console.error('Gagal mengambil data pasien:', error);
+        console.error('Gagal mengambil data:', error);
       } finally {
         setIsLoadingPets(false);
       }
     };
-    fetchPetsData();
+    fetchInitialData();
   }, [activeAppointment]);
 
   const handlePetChange = (petId) => {
@@ -227,14 +242,19 @@ const EReceiptForm = () => {
               >
                 <div className="flex flex-col gap-1 sm:col-span-4">
                   <label className="text-xs font-semibold text-slate-600">Nama Obat</label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    placeholder="Contoh: Amoxicillin 150mg Vet"
                     value={item.medicine_name}
                     onChange={(e) => handleItemChange(index, 'medicine_name', e.target.value)}
                     className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-500"
-                  />
+                  >
+                    <option value="">-- Pilih Obat --</option>
+                    {products.map(prod => (
+                      <option key={prod.id} value={prod.name}>
+                        {prod.name} (Stok: {prod.current_stock ?? 0})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Takaran Dosis */}
