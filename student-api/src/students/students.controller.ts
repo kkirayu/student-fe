@@ -63,7 +63,7 @@ export class StudentsController {
       }
     })
   }))
-  uploadProfilePicture(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+  uploadProfilePicture(@Param('id') id: string, @UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('File is required');
     }

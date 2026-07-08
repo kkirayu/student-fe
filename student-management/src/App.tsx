@@ -57,6 +57,7 @@ function App() {
     if (token) {
       fetchStudents();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, statusFilter, token]);
 
   const fetchStudents = async () => {

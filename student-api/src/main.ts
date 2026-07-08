@@ -17,7 +17,8 @@ async function bootstrap() {
     // Ignore if already exists
   }
 
-  await app.listen(3001);
-  console.log('NestJS running on http://localhost:3001');
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`NestJS running on port ${port}`);
 }
 bootstrap();
