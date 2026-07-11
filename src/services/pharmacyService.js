@@ -1,12 +1,4 @@
-import api from './api';
-
-// Fungsi helper untuk standarisasi penanganan error Axios
-const handleServiceError = (error, defaultMessage) => {
-  if (error.response && error.response.data && error.response.data.message) {
-    throw new Error(error.response.data.message);
-  }
-  throw new Error(defaultMessage);
-};
+import api, { handleServiceError } from './api';
 
 /**
  * Mengambil semua produk untuk halaman Stock Monitoring

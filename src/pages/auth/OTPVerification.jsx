@@ -1,13 +1,12 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import Popup from '../../components/Popup';
+import { showSuccess, showError } from '../../utils/alertUtils';
 import api from '../../services/api';
 
 const OTPVerification = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
@@ -51,13 +50,7 @@ const OTPVerification = () => {
     e.preventDefault();
     const otpCode = otp.join('');
     if (otpCode.length < 6) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Kode Tidak Lengkap',
-        message: 'Silakan masukkan 6 digit kode OTP.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Kode Tidak Lengkap', 'Silakan masukkan 6 digit kode OTP.');
       return;
     }
 
@@ -68,25 +61,11 @@ const OTPVerification = () => {
         otp_code: otpCode
       });
 
-      setPopup({
-        isOpen: true,
-        type: 'success',
-        title: 'Verifikasi Berhasil!',
-        message: 'Akun Anda berhasil dibuat. Silakan masuk untuk melanjutkan.',
-        onConfirm: () => {
-          setPopup((prev) => ({ ...prev, isOpen: false }));
-          navigate('/login');
-        }
-      });
+      await showSuccess('Verifikasi Berhasil!', 'Akun Anda berhasil dibuat. Silakan masuk untuk melanjutkan.');
+      navigate('/login');
     } catch (error) {
       console.error(error);
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Verifikasi Gagal',
-        message: error.response?.data?.message || 'Kode OTP tidak valid.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Verifikasi Gagal', error.response?.data?.message || 'Kode OTP tidak valid.');
     } finally {
       setIsLoading(false);
     }
@@ -170,15 +149,6 @@ const OTPVerification = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
-
-      <Popup
-        isOpen={popup.isOpen}
-        type={popup.type}
-        title={popup.title}
-        message={popup.message}
-        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={popup.onConfirm}
-      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import Popup from '../components/Popup';
+import { showSuccess, showError } from '../utils/alertUtils';
 
 const Feedback = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,7 +14,6 @@ const Feedback = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,23 +31,11 @@ const Feedback = () => {
     try {
       await api.post('/feedbacks', formData);
       
-      setPopup({
-        isOpen: true,
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Terima kasih atas umpan balik Anda!',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showSuccess('Berhasil', 'Terima kasih atas umpan balik Anda!');
       setFormData({ name: '', phone: '', type: 'Pujian', message: '' });
     } catch (err) {
       console.error('Error submitting feedback:', err);
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Gagal',
-        message: 'Terjadi kesalahan saat mengirim umpan balik. Silakan coba lagi.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Gagal', 'Terjadi kesalahan saat mengirim umpan balik. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,15 +169,6 @@ const Feedback = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
-
-      <Popup
-        isOpen={popup.isOpen}
-        type={popup.type}
-        title={popup.title}
-        message={popup.message}
-        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={popup.onConfirm}
-      />
     </div>
   );
 };

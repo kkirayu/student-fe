@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Popup from '../../components/Popup';
+import { showSuccess } from '../../utils/alertUtils';
 
 const ForgotPassword = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   
   // State for flow: 1 = Email, 2 = Code, 3 = New Password
   const [step, setStep] = useState(1);
@@ -73,18 +72,10 @@ const ForgotPassword = () => {
     }
     
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
-      setPopup({
-        isOpen: true,
-        type: 'success',
-        title: 'Sandi Diperbarui',
-        message: 'Kata sandi berhasil diatur ulang! Silakan masuk dengan kata sandi baru Anda.',
-        onConfirm: () => {
-          setPopup((prev) => ({ ...prev, isOpen: false }));
-          navigate('/login');
-        }
-      });
+      await showSuccess('Sandi Diperbarui', 'Kata sandi berhasil diatur ulang! Silakan masuk dengan kata sandi baru Anda.');
+      navigate('/login');
     }, 1500);
   };
 
@@ -277,15 +268,6 @@ const ForgotPassword = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
-
-      <Popup 
-        isOpen={popup.isOpen}
-        type={popup.type}
-        title={popup.title}
-        message={popup.message}
-        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={popup.onConfirm}
-      />
     </div>
   );
 };

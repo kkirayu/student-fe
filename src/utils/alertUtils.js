@@ -1,7 +1,4 @@
 import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
-
-const MySwal = withReactContent(Swal);
 
 // Konfigurasi dasar agar sesuai dengan tema Tailwind
 const baseConfig = {
@@ -16,7 +13,7 @@ const baseConfig = {
 };
 
 export const showSuccess = (title, text) => {
-    return MySwal.fire({
+    return Swal.fire({
         ...baseConfig,
         icon: 'success',
         title: title || 'Berhasil!',
@@ -26,7 +23,7 @@ export const showSuccess = (title, text) => {
 };
 
 export const showError = (title, text) => {
-    return MySwal.fire({
+    return Swal.fire({
         ...baseConfig,
         icon: 'error',
         title: title || 'Terjadi Kesalahan',
@@ -36,7 +33,7 @@ export const showError = (title, text) => {
 };
 
 export const showInfo = (title, text) => {
-    return MySwal.fire({
+    return Swal.fire({
         ...baseConfig,
         icon: 'info',
         title: title || 'Informasi',
@@ -46,7 +43,7 @@ export const showInfo = (title, text) => {
 };
 
 export const showWarning = (title, text) => {
-    return MySwal.fire({
+    return Swal.fire({
         ...baseConfig,
         icon: 'warning',
         title: title || 'Peringatan',
@@ -76,7 +73,7 @@ export const showConfirm = async (title, text, confirmText = 'Ya, Lanjutkan', is
         };
     }
 
-    const result = await MySwal.fire({
+    const result = await Swal.fire({
         ...customConfig,
         icon: isDanger ? 'warning' : 'question',
         title: title || 'Konfirmasi',

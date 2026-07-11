@@ -1,19 +1,4 @@
-import api from './api';
-
-const handleServiceError = (error, defaultMessage) => {
-  if (error.response && error.response.data) {
-    let msg = error.response.data.message || defaultMessage;
-    if (error.response.data.errors) {
-      const errs = error.response.data.errors;
-      const firstKey = Object.keys(errs)[0];
-      if (firstKey) {
-        msg = `${msg}: ${errs[firstKey][0]}`;
-      }
-    }
-    throw new Error(msg);
-  }
-  throw new Error(defaultMessage);
-};
+import api, { handleServiceError } from './api';
 
 /**
  * Memproses pembayaran POS

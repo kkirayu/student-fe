@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import Popup from '../../components/Popup';
+import { showError } from '../../utils/alertUtils';
 import api from '../../services/api';
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -9,7 +9,6 @@ const Login = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -27,26 +26,12 @@ const Login = () => {
 
     const errorMsg = searchParams.get('error');
     if (errorMsg === 'google_auth_not_owner') {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Akses Ditolak',
-        message: 'Maaf, Login dengan Google hanya diperuntukkan bagi Pemilik Hewan (Owner).',
-        onConfirm: () => {
-          setPopup((prev) => ({ ...prev, isOpen: false }));
-          navigate('/login', { replace: true });
-        }
+      showError('Akses Ditolak', 'Maaf, Login dengan Google hanya diperuntukkan bagi Pemilik Hewan (Owner).').then(() => {
+        navigate('/login', { replace: true });
       });
     } else if (errorMsg === 'google_auth_failed') {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Login Gagal',
-        message: 'Terjadi kesalahan saat memproses otentikasi Google.',
-        onConfirm: () => {
-          setPopup((prev) => ({ ...prev, isOpen: false }));
-          navigate('/login', { replace: true });
-        }
+      showError('Login Gagal', 'Terjadi kesalahan saat memproses otentikasi Google.').then(() => {
+        navigate('/login', { replace: true });
       });
     }
 
@@ -56,13 +41,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!captchaVerified) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Verifikasi Gagal',
-        message: 'Silakan centang kotak reCAPTCHA untuk memastikan Anda bukan robot.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Verifikasi Gagal', 'Silakan centang kotak reCAPTCHA untuk memastikan Anda bukan robot.');
       return;
     }
 
@@ -89,13 +68,7 @@ const Login = () => {
 
     } catch (error) {
       console.error(error);
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Login Gagal',
-        message: error.response?.data?.message || 'Terjadi kesalahan pada server.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Login Gagal', error.response?.data?.message || 'Terjadi kesalahan pada server.');
     } finally {
       setIsLoading(false);
     }
@@ -223,13 +196,7 @@ const Login = () => {
                       }
                     } catch (e) {
                       setIsGoogleLoading(false);
-                      setPopup({
-                        isOpen: true,
-                        type: 'error',
-                        title: 'Gagal',
-                        message: 'Login dengan Google sedang tidak tersedia.',
-                        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-                      });
+                      showError('Gagal', 'Login dengan Google sedang tidak tersedia.');
                     }
                   }}
                   disabled={isLoading || isGoogleLoading}
@@ -268,15 +235,6 @@ const Login = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
-
-      <Popup
-        isOpen={popup.isOpen}
-        type={popup.type}
-        title={popup.title}
-        message={popup.message}
-        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={popup.onConfirm}
-      />
     </div>
   );
 };

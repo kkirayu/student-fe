@@ -1,11 +1,4 @@
-import api from './api';
-
-const handleServiceError = (error, defaultMessage) => {
-  if (error.response && error.response.data && error.response.data.message) {
-    throw new Error(error.response.data.message);
-  }
-  throw new Error(defaultMessage);
-};
+import api, { handleServiceError } from './api';
 
 export const createRestock = async (data) => {
   try {

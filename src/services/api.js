@@ -94,4 +94,20 @@ api.interceptors.response.use(
   }
 );
 
+export const handleServiceError = (error, defaultMessage) => {
+  if (error.response && error.response.data) {
+    let msg = error.response.data.message || defaultMessage;
+    if (error.response.data.errors) {
+      const errs = error.response.data.errors;
+      const firstKey = Object.keys(errs)[0];
+      if (firstKey) {
+        const errorDetail = errs[firstKey];
+        msg = `${msg}: ${Array.isArray(errorDetail) ? errorDetail[0] : errorDetail}`;
+      }
+    }
+    throw new Error(msg);
+  }
+  throw new Error(defaultMessage);
+};
+
 export default api;

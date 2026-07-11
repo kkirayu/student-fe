@@ -1,13 +1,12 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Popup from '../../components/Popup';
+import { showError } from '../../utils/alertUtils';
 import api from '../../services/api';
 
 const Register = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const [popup, setPopup] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,46 +33,22 @@ const Register = () => {
     e.preventDefault();
 
     if (!formData.email.endsWith('@gmail.com')) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Gagal Mendaftar',
-        message: 'Email harus berformat @gmail.com!',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Gagal Mendaftar', 'Email harus berformat @gmail.com!');
       return;
     }
 
     if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Gagal Mendaftar',
-        message: 'Nama hanya boleh berisi huruf!',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Gagal Mendaftar', 'Nama hanya boleh berisi huruf!');
       return;
     }
 
     if (!/^0\d{0,12}$/.test(formData.phone_number)) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Gagal Mendaftar',
-        message: 'Nomor HP maksimal 13 digit angka dan harus dimulai dengan 0!',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Gagal Mendaftar', 'Nomor HP maksimal 13 digit angka dan harus dimulai dengan 0!');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Gagal Mendaftar',
-        message: 'Kata sandi tidak cocok!',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Gagal Mendaftar', 'Kata sandi tidak cocok!');
       return;
     }
 
@@ -94,13 +69,7 @@ const Register = () => {
       navigate('/otp-verification', { state: { email: formData.email } });
     } catch (error) {
       console.error(error);
-      setPopup({
-        isOpen: true,
-        type: 'error',
-        title: 'Pendaftaran Gagal',
-        message: error.response?.data?.message || 'Terjadi kesalahan pada server.',
-        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-      });
+      showError('Pendaftaran Gagal', error.response?.data?.message || 'Terjadi kesalahan pada server.');
     } finally {
       setIsLoading(false);
     }
@@ -317,13 +286,7 @@ const Register = () => {
                       }
                     } catch (e) {
                       setIsGoogleLoading(false);
-                      setPopup({
-                        isOpen: true,
-                        type: 'error',
-                        title: 'Gagal',
-                        message: 'Pendaftaran dengan Google sedang tidak tersedia.',
-                        onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false }))
-                      });
+                      showError('Gagal', 'Pendaftaran dengan Google sedang tidak tersedia.');
                     }
                   }}
                   disabled={isLoading || isGoogleLoading}
@@ -348,15 +311,6 @@ const Register = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
         <p>&copy; {new Date().getFullYear()} Zeta Connect. All rights reserved.</p>
       </footer>
-
-      <Popup 
-        isOpen={popup.isOpen}
-        type={popup.type}
-        title={popup.title}
-        message={popup.message}
-        onClose={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={popup.onConfirm}
-      />
     </div>
   );
 };
