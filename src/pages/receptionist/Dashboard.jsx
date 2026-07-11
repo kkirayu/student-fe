@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { 
   Users, 
   Clock, 
@@ -25,9 +25,7 @@ const ReceptionistDashboard = () => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('auth_token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const response = await axios.get(`https://zeta-connect-api.vercel.app/api/appointments?date=${selectedDate}`, config);
+        const response = await api.get(`/appointments?date=${selectedDate}`);
         setAppointments(response.data.data.data || []);
       } catch (err) {
         console.error("Error fetching appointments:", err);
@@ -40,8 +38,7 @@ const ReceptionistDashboard = () => {
 
   const handleAcceptBooking = async (req) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${req.rawId}`, { status: 'Disetujui' }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/appointments/${req.rawId}`, { status: 'Disetujui' });
       setAppointments(appointments.map(a => a.id === req.rawId ? { ...a, status: 'Disetujui' } : a));
       setApprovedBooking(req);
       setTimeout(() => {
@@ -54,8 +51,7 @@ const ReceptionistDashboard = () => {
 
   const handleRejectBooking = async (id) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Batal' }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/appointments/${id}`, { status: 'Batal' });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Batal' } : a));
     } catch (err) {
       console.error(err);
@@ -64,8 +60,7 @@ const ReceptionistDashboard = () => {
 
   const handleCallPatient = async (id) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Dalam Periksa' }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/appointments/${id}`, { status: 'Dalam Periksa' });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Dalam Periksa' } : a));
     } catch (err) {
       console.error("Error calling patient:", err);
@@ -75,11 +70,10 @@ const ReceptionistDashboard = () => {
   const handleCallSession = async (sessionTime) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token');
       const patientsToCall = queueData.filter(item => item.time === sessionTime && item.status === 'Disetujui');
       
       await Promise.all(patientsToCall.map(item => 
-        axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${item.rawId}`, { status: 'Dalam Periksa' }, { headers: { Authorization: `Bearer ${token}` } })
+        api.put(`/appointments/${item.rawId}`, { status: 'Dalam Periksa' })
       ));
 
       setAppointments(appointments.map(a => {
@@ -97,8 +91,7 @@ const ReceptionistDashboard = () => {
 
   const handleFinishPatient = async (id) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await axios.put(`https://zeta-connect-api.vercel.app/api/appointments/${id}`, { status: 'Selesai' }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/appointments/${id}`, { status: 'Selesai' });
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: 'Selesai' } : a));
     } catch (err) {
       console.error("Error finishing patient:", err);

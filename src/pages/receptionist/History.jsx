@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { Search, History as HistoryIcon } from 'lucide-react';
 
 const ReceptionistHistory = () => {
@@ -13,9 +13,7 @@ const ReceptionistHistory = () => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('auth_token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const response = await axios.get(`https://zeta-connect-api.vercel.app/api/appointments?date=${selectedDate}`, config);
+        const response = await api.get(`/appointments?date=${selectedDate}`);
         setAppointments(response.data.data.data || []);
       } catch (err) {
         console.error("Error fetching appointments:", err);

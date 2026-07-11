@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 import dokter1 from '../assets/doctor_img/dokter1.webp';
 import dokter2 from '../assets/doctor_img/dokter2.webp';
@@ -65,7 +65,7 @@ const InfoLayanan = () => {
     const fetchTips = async () => {
       try {
         setLoadingTips(true);
-        const response = await axios.get('https://zeta-connect-api.vercel.app/api/pet-tips');
+        const response = await api.get('/pet-tips');
         setTips(response.data);
       } catch (err) {
         console.error("Error fetching tips:", err);
@@ -78,7 +78,7 @@ const InfoLayanan = () => {
     const fetchDoctors = async () => {
       try {
         setLoadingDoctors(true);
-        const response = await axios.get('https://zeta-connect-api.vercel.app/api/doctors');
+        const response = await api.get('/doctors');
         setDoctors(response.data);
       } catch (err) {
         console.error("Error fetching doctors:", err);

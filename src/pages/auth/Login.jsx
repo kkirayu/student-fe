@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Popup from '../../components/Popup';
-import axios from 'axios';
+import api from '../../services/api';
 import ReCAPTCHA from "react-google-recaptcha";
 
 const Login = () => {
@@ -68,7 +68,7 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/login', {
+      const response = await api.post('/auth/login', {
         username: formData.username,
         password: formData.password
       });
@@ -217,8 +217,7 @@ const Login = () => {
                   onClick={async () => {
                     setIsGoogleLoading(true);
                     try {
-                      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api';
-                      const res = await axios.get(`${apiUrl}/auth/google`);
+                      const res = await api.get('/auth/google');
                       if (res.data.url) {
                         window.location.href = res.data.url;
                       }

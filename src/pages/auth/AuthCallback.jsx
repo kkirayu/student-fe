@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -14,8 +14,7 @@ const AuthCallback = () => {
       
       const fetchUser = async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://zeta-connect-api.vercel.app/api';
-          const response = await axios.get(`${apiUrl}/user`, {
+          const response = await api.get('/user', {
             headers: { Authorization: `Bearer ${token}` }
           });
           

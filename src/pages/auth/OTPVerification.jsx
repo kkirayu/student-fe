@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Popup from '../../components/Popup';
-import axios from 'axios';
+import api from '../../services/api';
 
 const OTPVerification = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -63,7 +63,7 @@ const OTPVerification = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://zeta-connect-api.vercel.app/api/auth/verify-otp', {
+      const response = await api.post('/auth/verify-otp', {
         email: email,
         otp_code: otpCode
       });

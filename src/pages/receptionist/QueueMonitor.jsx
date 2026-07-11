@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { 
   Volume2, 
   Clock, 
@@ -32,9 +32,7 @@ const QueueMonitor = () => {
     const fetchQueue = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const token = localStorage.getItem('auth_token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/appointments?date=${today}`, config);
+        const res = await api.get(`/appointments?date=${today}`);
         const data = res.data.data.data || [];
         setAppointments(data);
       } catch (err) {

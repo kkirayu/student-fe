@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import {
   ArrowLeft,
   User,
@@ -48,8 +48,8 @@ const WalkInRegistration = () => {
     const fetchData = async () => {
       try {
         const [resSvc, resDoc] = await Promise.all([
-          axios.get('https://zeta-connect-api.vercel.app/api/services'),
-          axios.get('https://zeta-connect-api.vercel.app/api/doctors')
+          api.get('/services'),
+          api.get('/doctors')
         ]);
         setServices(resSvc.data.data.data || []);
         setDoctors(Array.isArray(resDoc.data) ? resDoc.data : (resDoc.data.data || []));
@@ -72,7 +72,7 @@ const WalkInRegistration = () => {
         if (formData.doctor_id) {
           params.append('doctor_id', formData.doctor_id);
         }
-        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/available-sessions?${params.toString()}`);
+        const res = await api.get(`/available-sessions?${params.toString()}`);
         setAvailableSessions(res.data.data || []);
       } catch (err) {
         console.error("Error fetching available sessions", err);
@@ -93,10 +93,7 @@ const WalkInRegistration = () => {
       }
       setIsSearching(true);
       try {
-        const token = localStorage.getItem('auth_token');
-        const res = await axios.get(`https://zeta-connect-api.vercel.app/api/users?role=Owner&search=${searchQuery}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get(`/users?role=Owner&search=${searchQuery}`);
         setSearchResults(res.data.data.data || []);
       } catch (err) {
         console.error("Error searching users", err);
@@ -114,10 +111,7 @@ const WalkInRegistration = () => {
     setSearchQuery('');
     setSearchResults([]);
     try {
-      const token = localStorage.getItem('auth_token');
-      const res = await axios.get(`https://zeta-connect-api.vercel.app/api/users/${owner.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/users/${owner.id}`);
       setOwnerPets(res.data.data.pets || []);
       if (res.data.data.pets && res.data.data.pets.length > 0) {
         setSelectedPetId(res.data.data.pets[0].id.toString());
@@ -143,11 +137,6 @@ const WalkInRegistration = () => {
     setIsSubmitting(true);
     
     try {
-        const token = localStorage.getItem('auth_token');
-        const config = {
-            headers: { Authorization: `Bearer ${token}` }
-        };
-
         let ownerId, petId, petName, ownerName;
         
         if (isNewUser) {
@@ -161,7 +150,7 @@ const WalkInRegistration = () => {
                 status: "Aktif",
                 address: formData.ownerAddress || "Alamat tidak diisi"
             };
-            const userRes = await axios.post('https://zeta-connect-api.vercel.app/api/users', userPayload, config);
+            const userRes = await api.post('/users', userPayload);
             ownerId = userRes.data.data.id;
             ownerName = formData.ownerName;
 
@@ -172,7 +161,7 @@ const WalkInRegistration = () => {
                 species: formData.species,
                 gender: "Jantan" // default
             };
-            const petRes = await axios.post('https://zeta-connect-api.vercel.app/api/pets', petPayload, config);
+            const petRes = await api.post('/pets', petPayload);
             petId = petRes.data.data.id;
             petName = formData.petName;
         } else {
@@ -204,7 +193,7 @@ const WalkInRegistration = () => {
             initial_complaint: formData.initial_complaint,
             status: "Disetujui"
         };
-        const aptRes = await axios.post('https://zeta-connect-api.vercel.app/api/appointments', appointmentPayload, config);
+        const aptRes = await api.post('/appointments', appointmentPayload);
         const appointment = aptRes.data.data;
 
         setPrintData({

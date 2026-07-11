@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Popup from '../components/Popup';
 
 const Feedback = () => {
@@ -30,10 +30,7 @@ const Feedback = () => {
     setError(null);
     
     try {
-      const token = localStorage.getItem('auth_token'); 
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
-      await axios.post('https://zeta-connect-api.vercel.app/api/feedbacks', formData, { headers });
+      await api.post('/feedbacks', formData);
       
       setPopup({
         isOpen: true,
